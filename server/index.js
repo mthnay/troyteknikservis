@@ -30,8 +30,9 @@ if (!MONGODB_URI) {
 }
 
 mongoose.connect(MONGODB_URI)
-    .then(() => {
+    .then(async () => {
         console.log('SUCCESS: Connected to MongoDB Atlas');
+        await seedData();
     })
     .catch(err => {
         console.error('CRITICAL: MongoDB connection error:', err);

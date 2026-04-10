@@ -6,7 +6,7 @@ const AppContext = createContext();
 export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001/api';
+    const API_URL = import.meta.env.VITE_API_URL || 'https://troyteknikservis.onrender.com/api';
 
     // --- State Definitions ---
     const [servicePoints, setServicePoints] = useState([]);
