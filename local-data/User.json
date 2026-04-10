@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "69d4fbc3ecd43954416e",
+    "id": "u1",
+    "name": "Admin User",
+    "email": "admin@troy.com",
+    "password": "123",
+    "role": "Admin",
+    "storeId": 1,
+    "avatar": "AD",
+    "createdAt": "2026-04-07T12:42:43.776Z",
+    "updatedAt": "2026-04-07T12:42:43.776Z"
+  }
+]

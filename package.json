@@ -1,0 +1,89 @@
+{
+  "name": "mobile-asp",
+  "private": true,
+  "version": "1.4.1",
+  "type": "module",
+  "main": "electron-main.cjs",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "vite --host",
+    "server": "node server/index.js",
+    "start": "node server/index.js",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "electron:dev": "cross-env ELECTRON_START_URL=http://localhost:5173 concurrently \"npm run client\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:package": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --dir",
+    "electron:dmg": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg",
+    "ios:open": "npx cap open ios",
+    "ios:sync": "npm run build && npx cap copy && npx cap update",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.troy.serviceapp",
+    "productName": "Troy Teknik Servis",
+    "asar": false,
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "server/**/*",
+      "public/**/*",
+      "electron-main.cjs",
+      "package.json",
+      "node_modules/**/*",
+      "server/.env"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    }
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "html2pdf.js": "^0.14.0",
+    "lucide-react": "^0.563.0",
+    "mongoose": "^9.1.5",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.10.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-signature-canvas": "^1.1.0-alpha.2",
+    "react-to-print": "^3.2.0",
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
+    "@eslint/js": "^9.39.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react-swc": "^4.2.2",
+    "autoprefixer": "^10.4.23",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^40.1.0",
+    "electron-builder": "^26.4.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "vite": "^7.2.4",
+    "wait-on": "^9.0.3"
+  }
+}

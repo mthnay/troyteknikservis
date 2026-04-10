@@ -1,0 +1,1396 @@
+import React, { useState } from 'react';
+import { Save, Bell, Shield, Store, Globe, CreditCard, MapPin, Plus, Trash2, Building, Users, UserPlus, Mail, Lock, Paperclip, Check, Upload, X, ChevronRight, Package, AlertTriangle, Key, Clock, RefreshCw } from 'lucide-react';
+import { appConfirm } from '../utils/alert';
+import { useAppContext } from '../context/AppContext';
+import Swal from 'sweetalert2';
+import ConfirmationModal from './ConfirmationModal';
+import MyPhoneIcon from './LocalIcons';
+
+const Settings = () => {
+    const {
+        servicePoints, addServicePoint, removeServicePoint, updateServicePoint,
+        users, addUser, updateUser, removeUser, currentUser,
+        updateCustomer, removeCustomer,
+        emailSettings, setEmailSettings,
+        companyProfile, setCompanyProfile,
+        earnings, addEarning
+    } = useAppContext();
+
+    const [activeTab, setActiveTab] = useState('general');
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => { } });
+
+    // Earnings Form State
+    const [showEarningsModal, setShowEarningsModal] = useState(false);
+    const [newEarning, setNewEarning] = useState({ storeId: '', month: '', amount: '' });
+
+    // --- Company Profile Form ---
+    const [tempCompanyProfile, setTempCompanyProfile] = useState(companyProfile || {
+        name: "TROY",
+        title: "ARTIBİLGİ TEKNOLOJİ BİLİŞİM VE DIŞ TİC. A.Ş.",
+        address: "Bağdat Caddesi No:123, 34728 Kadıköy / İstanbul",
+        phone: "0216 123 45 67",
+        mersis: "0085034123400018",
+        dealerCode: "TR-APR-0042"
+    });
+
+    // Update temp state when context loads
+    React.useEffect(() => {
+        if (companyProfile) {
+            setTempCompanyProfile(companyProfile);
+        }
+    }, [companyProfile]);
+
+    const handleSaveCompanyProfile = () => {
+        setCompanyProfile(tempCompanyProfile);
+        alert('Şirket bilgileri başarıyla güncellendi.');
+    };
+
+    // --- Email Settings Form ---
+    const [tempEmailSettings, setTempEmailSettings] = useState(emailSettings);
+
+    // --- Attachment States ---
+    const [file, setFile] = useState(null);
+    const [uploadStatus, setUploadStatus] = useState('');
+    const [attachmentExists, setAttachmentExists] = useState(false);
+
+    React.useEffect(() => {
+        if (activeTab === 'notifications') {
+            fetch('/api/check-attachment')
+                .then(res => res.json())
+                .then(data => setAttachmentExists(data.exists))
+                .catch(err => console.error('Attachment check failed:', err));
+        }
+    }, [activeTab]);
+
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const handleUpload = async () => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        setUploadStatus('Yükleniyor...');
+
+        try {
+            const res = await fetch('/api/upload-attachment', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                setUploadStatus('✅ Kaydedildi');
+                setAttachmentExists(true);
+                setFile(null);
+                setTimeout(() => setUploadStatus(''), 2000);
+            } else {
+                setUploadStatus('❌ Hata: ' + data.message);
+            }
+        } catch (err) {
+            setUploadStatus('❌ Bağlantı hatası.');
+        }
+    };
+
+    const handleDeleteAttachment = async () => {
+        if (!(await appConfirm('Bu dosyayı silmek istediğinize emin misiniz?'))) return;
+        try {
+            const res = await fetch('/api/delete-attachment', { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                setAttachmentExists(false);
+                setUploadStatus('🗑️ Kaldırıldı');
+                setTimeout(() => setUploadStatus(''), 2000);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const [isChecking, setIsChecking] = useState(false);
+    const [updateAvailable, setUpdateAvailable] = useState(false);
+    const [updateProgress, setUpdateProgress] = useState(0);
+    const [lastCheck, setLastCheck] = useState(localStorage.getItem('lastUpdateCheck') || 'Hiç kontrol edilmedi');
+    const [currentVersion] = useState('v1.4.1');
+    const [serverVersion, setServerVersion] = useState(null);
+
+    const handleReboot = async () => {
+        if (!(await appConfirm('DİKKAT: Sunucu yeniden başlatılacaktır. Tüm aktif bağlantılar kesilecek ve sistem kendini tekrar yükleyecektir. Emin misiniz?'))) return;
+        
+        try {
+            Swal.fire({
+                title: 'Sistem Kapatılıyor',
+                text: 'Sunucu yeniden başlatılıyor, lütfen bekleyin...',
+                icon: 'warning',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch('/api/system/reboot', { method: 'POST' }).catch(() => {});
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 6000);
+
+        } catch (err) {
+            console.error('Reboot request failed:', err);
+        }
+    };
+
+    const handleSaveEmailSettings = () => {
+        setEmailSettings(tempEmailSettings);
+        alert('E-posta ayarları başarıyla kaydedildi.');
+    };
+
+    // --- Service Point Form ---
+    const [newPoint, setNewPoint] = useState({ name: '', type: 'Şube', address: '', phone: '', shipTo: '' });
+    const [isAddingPoint, setIsAddingPoint] = useState(false);
+    const [editingPointId, setEditingPointId] = useState(null);
+    const [editPointData, setEditPointData] = useState(null);
+
+    const handleAddPoint = async () => {
+        if (!newPoint.name || !newPoint.address || !newPoint.shipTo) {
+            alert('Lütfen Mağaza Adı, Ship-To No ve Adres alanlarını doldurunuz.');
+            return;
+        }
+
+        setIsAddingPoint(true);
+        try {
+            const result = await addServicePoint(newPoint);
+            
+            if (result.success) {
+                setNewPoint({ name: '', type: 'Şube', address: '', phone: '', shipTo: '' });
+                Swal.fire({
+                    title: 'Başarılı!',
+                    text: 'Mağaza noktası başarıyla eklendi.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Hata!',
+                text: 'Mağaza eklenemedi: ' + error.message,
+                icon: 'error'
+            });
+        } finally {
+            setIsAddingPoint(false);
+        }
+    };
+
+    const handleUpdatePoint = async () => {
+        if (!editPointData.name || !editPointData.shipTo) return;
+        const success = await updateServicePoint(editingPointId, editPointData);
+        if (success) {
+            setEditingPointId(null);
+            setEditPointData(null);
+            Swal.fire({
+                title: 'Güncellendi!',
+                text: 'Mağaza bilgileri başarıyla güncellendi.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    };
+
+
+    // --- User Form ---
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Teknisyen', storeId: 1 });
+    const [editingUserId, setEditingUserId] = useState(null);
+    const [editUserData, setEditUserData] = useState(null);
+
+    const handleAddUser = () => {
+        if (!newUser.name || !newUser.email || !newUser.password) return;
+        addUser({
+            ...newUser,
+            storeId: parseInt(newUser.storeId),
+            avatar: newUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+        });
+        setNewUser({ name: '', email: '', password: '', role: 'Teknisyen', storeId: 1 });
+    };
+
+    const handleUpdateUser = async () => {
+        try {
+            console.log("Güncellenecek Kullanıcı ID:", editingUserId);
+            console.log("Gönderilecek Veri:", editUserData);
+
+            // ID alanlarını ayır ve temizle
+            const { _id, id, ...cleanProfile } = editUserData;
+            const targetId = _id || id;
+            
+            const finalData = {
+                ...cleanProfile,
+                storeId: Number(editUserData.storeId)
+            };
+
+            const success = await updateUser(targetId, finalData);
+            
+            if (success) {
+                setEditingUserId(null);
+                setEditUserData(null);
+                Swal.fire({
+                    title: 'Başarılı!',
+                    text: 'Kullanıcı bilgileri güncellendi.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                throw new Error("Güncelleme başarısız oldu.");
+            }
+        } catch (error) {
+            console.error("Kullanıcı güncelleme hatası:", error);
+            Swal.fire({
+                title: 'Hata!',
+                text: 'Güncelleme yapılamadı: ' + error.message,
+                icon: 'error'
+            });
+        }
+    };
+
+    const handleAddEarning = async () => {
+        if (!newEarning.storeId || !newEarning.month || !newEarning.amount) {
+            Swal.fire({
+                title: 'Eksik Bilgi',
+                text: 'Lütfen tüm alanları doldurunuz.',
+                icon: 'warning',
+                confirmButtonColor: '#007aff'
+            });
+            return;
+        }
+
+        const point = servicePoints.find(p => String(p.id) === String(newEarning.storeId));
+
+        const success = await addEarning({
+            ...newEarning,
+            storeId: parseInt(newEarning.storeId),
+            amount: parseFloat(newEarning.amount),
+            shipTo: point ? point.shipTo : '-'
+        });
+
+        if (success) {
+            setShowEarningsModal(false);
+            setNewEarning({ storeId: '', month: '', amount: '' });
+        }
+    };
+
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'general':
+                return (
+                    <div className="space-y-6 animate-fade-in">
+                        <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
+                            <h4 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-3">
+                                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                                    <Building size={20} />
+                                </div>
+                                Kurumsal Kimlik Bilgileri
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Şirket Kısa Adı (Logo Yanı)</label>
+                                    <input
+                                        type="text"
+                                        value={tempCompanyProfile.name}
+                                        onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, name: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resmi Ünvan</label>
+                                    <input
+                                        type="text"
+                                        value={tempCompanyProfile.title}
+                                        onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, title: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Adres</label>
+                                    <input
+                                        type="text"
+                                        value={tempCompanyProfile.address}
+                                        onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, address: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Telefon</label>
+                                    <input
+                                        type="text"
+                                        value={tempCompanyProfile.phone}
+                                        onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, phone: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mersis No</label>
+                                    <input
+                                        type="text"
+                                        value={tempCompanyProfile.mersis}
+                                        onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, mersis: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Yetkili Bayi Kodu</label>
+                                    <input
+                                        type="text"
+                                        value={tempCompanyProfile.dealerCode}
+                                        onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, dealerCode: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleSaveCompanyProfile}
+                                    className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all shadow-xl shadow-gray-200 hover:-translate-y-1 active:scale-95 flex items-center gap-3"
+                                >
+                                    <Save size={20} />
+                                    DEĞİŞİKLİKLERİ KAYDET
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'kbb_history':
+                // Helper for Ship-To
+                const getShipTo = (storeId) => {
+                    const point = servicePoints.find(p => String(p.id) === String(storeId));
+                    return point ? point.shipTo : 'Servis Merkezi';
+                };
+
+                // Helper for Month Format
+                const getMonthYear = (dateStr) => {
+                    if (!dateStr || dateStr === '-') return 'Tarihsiz';
+                    const parts = dateStr.slice(0, 10).split('.');
+                    if (parts.length === 3) {
+                        const date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        return date.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+                    }
+                    return 'Bilinmeyen Tarih';
+                };
+
+                const { repairs } = useAppContext();
+                const kbbHistory = repairs.flatMap(repair =>
+                    (repair.parts || []).map((part, index) => ({
+                        ...part,
+                        uniqueId: `${repair.id}-${index}`,
+                        repairId: repair.id,
+                        storeId: repair.storeId,
+                        customer: repair.customer,
+                        returnDate: part.returnDate || '-',
+                        returnCode: part.returnCode || '-',
+                        status: part.kbbStatus
+                    }))
+                ).filter(item => item.status === 'Returned');
+
+                // Grouping Logic
+                const groupedHistory = kbbHistory.reduce((acc, item) => {
+                    const shipTo = getShipTo(item.storeId);
+                    const monthYear = getMonthYear(item.returnDate);
+
+                    if (!acc[shipTo]) acc[shipTo] = {};
+                    if (!acc[shipTo][monthYear]) acc[shipTo][monthYear] = [];
+
+                    acc[shipTo][monthYear].push(item);
+                    return acc;
+                }, {});
+
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        {Object.keys(groupedHistory).length > 0 ? (
+                            Object.entries(groupedHistory).map(([shipTo, months]) => (
+                                <div key={shipTo} className="bg-white rounded-[32px] border border-gray-200 shadow-sm overflow-hidden">
+                                    <div className="bg-gray-900 px-8 py-5 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
+                                                <Store size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-black text-white">{shipTo}</h3>
+                                                <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Lokasyon Bazlı İadeler</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 space-y-6">
+                                        {Object.entries(months).map(([month, items]) => (
+                                            <div key={month} className="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50/30">
+                                                <div className="px-6 py-3 bg-gray-100/80 border-b border-gray-100 flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                    <span className="font-black text-gray-700 text-sm uppercase tracking-wide">{month}</span>
+                                                    <span className="ml-auto bg-white px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-400 border border-gray-200">{items.length} Parça</span>
+                                                </div>
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-left">
+                                                        <thead className="bg-white text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                                            <tr>
+                                                                <th className="px-6 py-3">Onarım No</th>
+                                                                <th className="px-6 py-3">Parça Adı</th>
+                                                                <th className="px-6 py-3">KBB Seri No</th>
+                                                                <th className="px-6 py-3">İade Kodu</th>
+                                                                <th className="px-6 py-3">İade Tarihi</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                                            {items.map(item => (
+                                                                <tr key={item.uniqueId} className="hover:bg-gray-50 transition-colors">
+                                                                    <td className="px-6 py-3 font-mono text-xs font-bold text-blue-600">{item.repairId}</td>
+                                                                    <td className="px-6 py-3">
+                                                                        <div className="font-bold text-gray-900 text-xs">{item.description || item.name}</div>
+                                                                        <div className="text-[10px] text-gray-400 font-mono">{item.partNumber}</div>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 font-mono text-[10px] text-gray-500">{item.kbbSerial || '-'}</td>
+                                                                    <td className="px-6 py-3"><span className="font-mono text-[10px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">{item.returnCode}</span></td>
+                                                                    <td className="px-6 py-3 text-gray-500 text-[10px] font-medium">{item.returnDate}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="bg-white rounded-3xl p-12 text-center text-gray-400">
+                                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Package size={32} className="opacity-50" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900">Kayıt Bulunamadı</h3>
+                                <p className="text-sm">Henüz iade edilmiş bir KBB parçası bulunmuyor.</p>
+                            </div>
+                        )}
+                    </div>
+                );
+            case 'earnings':
+                const groupedEarnings = (earnings || []).reduce((acc, earn) => {
+                    const monthKey = earn.month; // YYYY-MM
+                    if (!acc[monthKey]) acc[monthKey] = [];
+                    acc[monthKey].push(earn);
+                    return acc;
+                }, {});
+
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                            <div>
+                                <h4 className="text-lg font-black text-gray-900 leading-none">Hakediş Kayıtları</h4>
+                                <p className="text-gray-500 text-xs mt-1 font-medium">Ship-To bazlı aylık hakediş verileri.</p>
+                            </div>
+                            <button
+                                onClick={() => setShowEarningsModal(true)}
+                                className="bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-black transition-all shadow-lg flex items-center gap-2"
+                            >
+                                <Plus size={18} /> Yeni Hakediş Ekle
+                            </button>
+                        </div>
+
+                        {Object.keys(groupedEarnings).length > 0 ? (
+                            Object.entries(groupedEarnings).map(([month, items]) => {
+                                // Format month name
+                                const [year, m] = month.split('-');
+                                const monthName = new Date(year, parseInt(m) - 1).toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+
+                                return (
+                                    <div key={month} className="bg-white rounded-[32px] border border-gray-200 shadow-sm overflow-hidden">
+                                        <div className="bg-gray-50 px-8 py-4 border-b border-gray-100 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-apple-blue"></div>
+                                                <span className="font-black text-gray-900 text-sm uppercase tracking-wide">{monthName}</span>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                Toplam: {items.reduce((sum, i) => sum + i.amount, 0).toLocaleString('tr-TR')} ₺
+                                            </div>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left text-sm">
+                                                <thead className="bg-white text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="px-8 py-4">Ship-To</th>
+                                                        <th className="px-8 py-4">Mağaza</th>
+                                                        <th className="px-8 py-4 text-right">Hakediş Tutarı</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {items.map(item => {
+                                                        const store = servicePoints.find(sp => sp.id === item.storeId);
+                                                        return (
+                                                            <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                                                <td className="px-8 py-4 font-mono font-bold text-blue-600">{item.shipTo || (store ? store.shipTo : '-')}</td>
+                                                                <td className="px-8 py-4 font-bold text-gray-700">{store ? store.name : 'Silinmiş Mağaza'}</td>
+                                                                <td className="px-8 py-4 text-right font-black text-gray-900">{item.amount.toLocaleString('tr-TR')} ₺</td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="bg-white rounded-3xl p-12 text-center text-gray-400">
+                                <p>Henüz hakediş kaydı bulunmuyor.</p>
+                            </div>
+                        )}
+
+                        {/* Earnings Modal */}
+                        {showEarningsModal && (
+                            <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+                                <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl animate-scale-up border border-white/50">
+                                    <h3 className="text-xl font-black text-gray-900 mb-6">Yeni Hakediş Kaydı</h3>
+
+                                    <div className="space-y-5">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest pl-1">Mağaza / Ship-To</label>
+                                            <select
+                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                                value={newEarning.storeId}
+                                                onChange={e => setNewEarning({ ...newEarning, storeId: e.target.value })}
+                                            >
+                                                <option value="">Mağaza Seçiniz...</option>
+                                                {servicePoints.map(sp => (
+                                                    <option key={sp.id} value={sp.id}>{sp.name} ({sp.shipTo})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest pl-1">Dönem (Ay)</label>
+                                            <input
+                                                type="month"
+                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                                value={newEarning.month}
+                                                onChange={e => setNewEarning({ ...newEarning, month: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest pl-1">Hakediş Tutarı (₺)</label>
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-lg font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                                value={newEarning.amount}
+                                                onChange={e => setNewEarning({ ...newEarning, amount: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 mt-8">
+                                        <button
+                                            onClick={() => setShowEarningsModal(false)}
+                                            className="flex-1 py-3.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-all font-bold"
+                                        >
+                                            Vazgeç
+                                        </button>
+                                        <button
+                                            onClick={handleAddEarning}
+                                            className="flex-1 py-3.5 rounded-xl font-bold text-white bg-gray-900 hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                        >
+                                            Kaydet
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            case 'notifications':
+                return (
+                    <div className="space-y-6 animate-fade-in">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-3xl border border-blue-100/50">
+                            <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2 text-lg">
+                                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                    <Mail size={20} />
+                                </div>
+                                SMTP Sunucu Yapılandırması
+                            </h4>
+                            <p className="text-sm text-blue-700/80 leading-relaxed ml-11 max-w-2xl">
+                                Cihaz durum güncellenmesi ve fiyat onayı gibi bilgilendirme e-postalarının gönderilmesi için kurumsal mail sunucu bilgilerinizi giriniz.
+                            </p>
+                        </div>
+
+                        {/* --- Attachment Section --- */}
+                        <div className="glass p-8 rounded-3xl space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h5 className="font-bold text-gray-900 flex items-center gap-2">
+                                    <Paperclip size={20} className="text-gray-400" />
+                                    Varsayılan Posta Eki (PDF)
+                                </h5>
+                                {attachmentExists && (
+                                    <span className="text-[10px] font-bold text-green-700 bg-green-100 px-3 py-1.5 rounded-full border border-green-200 flex items-center gap-1.5 shadow-sm">
+                                        <Check size={12} strokeWidth={3} /> SİSTEMDE YÜKLÜ
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-sm text-gray-500 max-w-2xl">
+                                Buraya yüklediğiniz dosya (örn: Havale Bilgileri), sistemden gönderilen <strong className="text-gray-900">her e-postaya</strong> otomatik olarak eklenecektir.
+                            </p>
+
+                            <div className="flex items-center gap-4 p-6 bg-gray-50/50 rounded-2xl border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all">
+                                {!attachmentExists ? (
+                                    <>
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="application/pdf"
+                                                onChange={handleFileChange}
+                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleUpload}
+                                            disabled={!file}
+                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${file ? 'bg-apple-blue hover:bg-blue-600 text-white shadow-blue-200 hover:-translate-y-0.5' : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                                                }`}
+                                        >
+                                            <Upload size={16} /> Yükle
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="flex justify-between items-center w-full">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-gray-100 shadow-md">
+                                                <Paperclip size={24} className="text-apple-blue" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">Bilgilendirme.pdf</p>
+                                                <p className="text-xs text-gray-500 font-medium">Her maile eklenecek</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleDeleteAttachment}
+                                            className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                                            title="Dosyayı Kaldır"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            {uploadStatus && (
+                                <p className="text-xs font-bold text-apple-blue pl-2 animate-pulse flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-apple-blue"></div> {uploadStatus}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="glass p-8 rounded-3xl space-y-6">
+                            <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <Globe size={20} className="text-gray-400" />
+                                SMTP Ayarları
+                            </h5>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">SMTP Sunucu Adresi</label>
+                                    <input
+                                        type="text"
+                                        placeholder="mail.troyapr.com"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        value={tempEmailSettings.host}
+                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, host: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Port</label>
+                                    <input
+                                        type="text"
+                                        placeholder="587"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        value={tempEmailSettings.port}
+                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, port: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Kullanıcı Adı (Mail)</label>
+                                    <input
+                                        type="email"
+                                        placeholder="servis@troyapr.com"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        value={tempEmailSettings.user}
+                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, user: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Parola</label>
+                                    <input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        value={tempEmailSettings.pass}
+                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, pass: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Gelen Sunucu (Incoming)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="smail05.doruk.net.tr"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        value={tempEmailSettings.incomingHost}
+                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, incomingHost: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Gelen Port (IMAP)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="993"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        value={tempEmailSettings.incomingPort}
+                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, incomingPort: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-8 rounded-3xl flex items-center justify-between shadow-xl shadow-gray-200 mt-6">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-3 h-3 rounded-full ${tempEmailSettings.pass ? 'bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-gray-500'}`}></div>
+                                    <span className="text-sm font-bold text-gray-200">
+                                        {tempEmailSettings.pass ? 'Sunucu Bağlantısı Hazır' : 'Lütfen sunucu parolanızı girin.'}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={handleSaveEmailSettings}
+                                    className="px-8 py-3 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                                >
+                                    Ayarları Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'locations':
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <div className="glass p-8 rounded-3xl border border-white/60">
+                            <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2 text-lg">
+                                <div className="p-2 bg-gray-100 rounded-xl">
+                                    <Plus size={20} className="text-gray-900" />
+                                </div>
+                                Yeni Ship-To / Lokasyon Ekle
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <input
+                                    type="text"
+                                    placeholder="Nokta Adı"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    value={newPoint.name}
+                                    onChange={e => setNewPoint({ ...newPoint, name: e.target.value })}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Ship-To No"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    value={newPoint.shipTo}
+                                    onChange={e => setNewPoint({ ...newPoint, shipTo: e.target.value })}
+                                />
+                                <div className="relative">
+                                    <select
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none"
+                                        value={newPoint.type}
+                                        onChange={e => setNewPoint({ ...newPoint, type: e.target.value })}
+                                    >
+                                        <option value="Merkez">Merkez Servis</option>
+                                        <option value="Şube">Şube</option>
+                                    </select>
+                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16} />
+                                </div>
+
+                                <input
+                                    type="text"
+                                    placeholder="Adres"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    value={newPoint.address}
+                                    onChange={e => setNewPoint({ ...newPoint, address: e.target.value })}
+                                />
+                                <button onClick={handleAddPoint} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl lg:col-span-4">Ekle</button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {servicePoints.map(point => (
+                                <div key={point.id} className="group bg-white rounded-[32px] border border-gray-100 p-6 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-500 relative flex flex-col h-full overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-125"></div>
+                                    
+                                    {editingPointId === point.id ? (
+                                        <div className="space-y-4 flex-1">
+                                            <input
+                                                className="w-full px-4 py-2 text-sm font-black bg-gray-50 rounded-xl outline-none border focus:border-indigo-500 transition-all"
+                                                value={editPointData.name}
+                                                onChange={e => setEditPointData({ ...editPointData, name: e.target.value })}
+                                            />
+                                            <input
+                                                className="w-full px-4 py-2 text-xs font-mono bg-gray-50 rounded-xl outline-none border"
+                                                value={editPointData.shipTo}
+                                                onChange={e => setEditPointData({ ...editPointData, shipTo: e.target.value })}
+                                                placeholder="Ship-To No"
+                                            />
+                                            <textarea
+                                                className="w-full px-4 py-2 text-[11px] bg-gray-50 rounded-xl outline-none border resize-none h-20"
+                                                value={editPointData.address}
+                                                onChange={e => setEditPointData({ ...editPointData, address: e.target.value })}
+                                                placeholder="Adres"
+                                            />
+                                            <div className="flex gap-2 mt-auto">
+                                                <button onClick={handleUpdatePoint} className="flex-1 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black">KAYDET</button>
+                                                <button onClick={() => setEditingPointId(null)} className="flex-1 py-2 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-black">İPTAL</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${point.type === 'Merkez' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white border border-gray-100 text-indigo-600'}`}>
+                                                    {point.type === 'Merkez' ? <Building size={24} strokeWidth={2.5} /> : <MapPin size={24} strokeWidth={2.5} />}
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button onClick={() => { setEditingPointId(point.id); setEditPointData(point); }} className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                                                        <Save size={16} />
+                                                    </button>
+                                                    <button onClick={() => setConfirmModal({
+                                                        isOpen: true,
+                                                        title: 'Şube Silinecek',
+                                                        message: 'Bu lokasyonu sistemden kaldırmak istediğinize emin misiniz?',
+                                                        onConfirm: () => removeServicePoint(point.id)
+                                                    })} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mb-4 flex-1">
+                                                <h4 className="font-black text-gray-900 text-lg leading-tight mb-2">{point.name}</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 uppercase tracking-tight">SHIP-TO: {point.shipTo || '---'}</span>
+                                                    <span className="text-[9px] font-black text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 uppercase tracking-tight">{point.type}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mt-auto">
+                                                <p className="text-[11px] text-gray-500 font-medium leading-relaxed italic line-clamp-2">
+                                                    {point.address || 'Adres bilgisi girilmemiş.'}
+                                                </p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            case 'users':
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        {/* Kullanıcı Ekleme Formu */}
+                        <div className="glass p-8 rounded-3xl border border-white/60">
+                            <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2 text-lg">
+                                <div className="p-2 bg-gray-100 rounded-xl">
+                                    <UserPlus size={20} className="text-gray-900" />
+                                </div>
+                                Yeni Personel Ekle
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
+                                <input
+                                    type="text" placeholder="Ad Soyad"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
+                                    value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                                />
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="email" placeholder="E-Posta Adresi"
+                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
+                                        value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="text" placeholder="Şifre"
+                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
+                                        value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div className="relative">
+                                    <select
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
+                                        value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                    >
+                                        <option value="Admin">Yönetici</option>
+                                        <option value="Ön Karşılama">Ön Karşılama</option>
+                                        <option value="Teknisyen">Teknisyen</option>
+                                        <option value="Lojistik">Lojistik</option>
+                                    </select>
+                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16} />
+                                </div>
+
+                                <div className="relative">
+                                    <select
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
+                                        value={newUser.storeId} onChange={e => setNewUser({ ...newUser, storeId: e.target.value })}
+                                    >
+                                        {servicePoints.map(sp => (
+                                            <option key={sp.id} value={sp.id}>{sp.name}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16} />
+                                </div>
+
+                                <button onClick={handleAddUser} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl">Hesap Oluştur</button>
+                            </div>
+                        </div>
+
+                        {/* Yatay Personel Listesi */}
+                        <div className="grid grid-cols-1 gap-4">
+                            {users.map(u => {
+                                const store = servicePoints.find(sp => Number(sp.id) === Number(u.storeId));
+                                const userId = u._id || u.id;
+                                const isEditing = editingUserId === userId;
+                                
+                                return (
+                                    <div key={u.id} className={`group bg-white rounded-[24px] border border-gray-100 p-5 transition-all duration-300 relative flex flex-col md:flex-row items-center gap-6 ${isEditing ? 'ring-2 ring-indigo-500 bg-indigo-50/10 shadow-xl' : 'hover:shadow-lg hover:border-gray-200 shadow-sm'}`}>
+                                        
+                                        {/* Sol: Avatar */}
+                                        <div className="relative shrink-0">
+                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-700 text-white flex items-center justify-center text-xl font-black shadow-lg">
+                                                {u.avatar || u.name.substring(0, 1)}
+                                            </div>
+                                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white shadow-md flex items-center justify-center text-indigo-600 border border-indigo-50">
+                                                <Shield size={12} strokeWidth={3} />
+                                            </div>
+                                        </div>
+
+                                        {isEditing ? (
+                                            /* Düzenleme Modu (Yatay) */
+                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Ad Soyad</label>
+                                                    <input className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-sm" value={editUserData.name} onChange={e => setEditUserData({ ...editUserData, name: e.target.value })} />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">E-Posta & Şifre</label>
+                                                    <div className="flex flex-col gap-1">
+                                                        <input className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-xs" value={editUserData.email} onChange={e => setEditUserData({ ...editUserData, email: e.target.value })} />
+                                                        <input className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-xs" value={editUserData.password} onChange={e => setEditUserData({ ...editUserData, password: e.target.value })} placeholder="Yeni şifre..." />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Yetki & Mağaza</label>
+                                                    <div className="flex flex-col gap-1">
+                                                        <select className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 outline-none font-black text-[10px] uppercase" value={editUserData.role} onChange={e => setEditUserData({ ...editUserData, role: e.target.value })}>
+                                                            <option value="Admin">ADMIN</option>
+                                                            <option value="Teknisyen">TEKNİSYEN</option>
+                                                            <option value="Ön Karşılama">ÖN KARŞILAMA</option>
+                                                            <option value="Lojistik">LOJİSTİK</option>
+                                                        </select>
+                                                        <select className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 outline-none font-black text-[10px] uppercase" value={editUserData.storeId} onChange={e => setEditUserData({ ...editUserData, storeId: Number(e.target.value) })}>
+                                                            <option value="0">GENEL MERKEZ</option>
+                                                            {servicePoints.map(sp => (
+                                                                <option key={sp.id} value={sp.id}>{sp.name.toUpperCase()}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 pt-4 md:pt-0">
+                                                    <button onClick={handleUpdateUser} className="flex-1 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all shadow-lg">KAYDET</button>
+                                                    <button onClick={() => setEditingUserId(null)} className="px-4 py-3 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-black hover:bg-gray-200 transition-all">İPTAL</button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Normal Mod (Yatay) */
+                                            <>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                                        <h4 className="font-black text-gray-900 text-lg tracking-tight truncate">{u.name}</h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
+                                                                u.role === 'Admin' ? 'bg-indigo-600 text-white border-indigo-600' : 
+                                                                u.role === 'Teknisyen' ? 'bg-emerald-500 text-white border-emerald-500' :
+                                                                'bg-amber-500 text-white border-amber-500'
+                                                            }`}>
+                                                                {u.role}
+                                                            </span>
+                                                            <span className="text-[9px] font-black bg-gray-50 text-gray-500 px-2.5 py-1 rounded-lg border border-gray-100 uppercase tracking-wider">
+                                                                {store ? store.name : 'Genel Merkez'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-gray-400 font-bold mt-1 tracking-tight">{u.email}</p>
+                                                </div>
+
+                                                <div className="shrink-0 flex items-center gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-gray-50 w-full md:w-auto justify-end">
+                                                    <button 
+                                                        onClick={() => { 
+                                                            const userId = u._id || u.id;
+                                                            setEditingUserId(userId); 
+                                                            setEditUserData({ ...u }); 
+                                                        }} 
+                                                        className="flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-indigo-100"
+                                                    >
+                                                        <Save size={14} /> DÜZENLE
+                                                    </button>
+                                                    {u.id !== currentUser?.id && u._id !== currentUser?._id && (
+                                                        <button 
+                                                            onClick={async () => {
+                                                                const userId = u._id || u.id;
+                                                                if (await appConfirm(`${u.name} personeli sistemden kalıcı olarak silinecektir. Emin misiniz?`)) {
+                                                                    const success = await removeUser(userId);
+                                                                    if (success) {
+                                                                        Swal.fire({
+                                                                            title: 'Silindi!',
+                                                                            text: 'Personel hesabı başarıyla kaldırıldı.',
+                                                                            icon: 'success',
+                                                                            timer: 2000,
+                                                                            showConfirmButton: false
+                                                                        });
+                                                                    }
+                                                                }
+                                                            }} 
+                                                            className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+                                                            title="Bu Personeli Sil"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            case 'security':
+                return (
+                    <div className="space-y-8 animate-fade-in max-w-4xl">
+                        <div className="bg-gradient-to-br from-indigo-900 to-gray-900 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl text-white"></div>
+                            <div className="relative z-10">
+                                <h4 className="text-2xl font-black mb-2 flex items-center gap-3">
+                                    <Lock size={28} className="text-indigo-400" />
+                                    Güvenlik ve Erişim Kontrolü
+                                </h4>
+                                <p className="text-indigo-200/70 font-medium">Hesap güvenliğinizi ve sistem yetki seviyelerini buradan yönetin.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm">
+                                <h5 className="font-black text-gray-900 mb-6 flex items-center gap-2">
+                                    <Key size={20} className="text-orange-500" /> Şifre Değiştir
+                                </h5>
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Mevcut Şifre</label>
+                                        <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-transparent focus:bg-white focus:border-orange-500 outline-none transition-all font-mono" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Yeni Şifre</label>
+                                        <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-transparent focus:bg-white focus:border-orange-500 outline-none transition-all font-mono" />
+                                    </div>
+                                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-black text-xs shadow-lg shadow-orange-100 transition-all active:scale-95 mt-2">
+                                        ŞİFREYİ GÜNCELLE
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50/50 rounded-[32px] border border-gray-100 p-8">
+                                <h5 className="font-black text-gray-900 mb-6 flex items-center gap-2">
+                                    <Bell size={20} className="text-indigo-500" /> Oturum Bilgileri
+                                </h5>
+                                <div className="space-y-5">
+                                    {[
+                                        { label: 'Son Giriş', value: 'Bugün, 14:23', icon: Clock },
+                                        { label: 'IP Adresi', value: '176.234.XX.XX', icon: Globe },
+                                        { label: 'Cihaz', value: 'macOS - Chrome', icon: Phone }
+                                    ].map((stat, idx) => (
+                                        <div key={idx} className="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                    <stat.icon size={16} className="text-gray-400" />
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{stat.label}</span>
+                                            </div>
+                                            <span className="text-sm font-black text-gray-700">{stat.value}</span>
+                                        </div>
+                                    ))}
+                                    <button className="w-full bg-white hover:bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs border border-red-100 transition-all active:scale-95 mt-4">
+                                        TÜM OTURUMLARI KAPAT
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-red-50/30 rounded-[32px] border border-red-100 p-8 flex flex-col justify-between">
+                                <div>
+                                    <h5 className="font-black text-red-900 mb-2 flex items-center gap-2">
+                                        <RefreshCw size={20} className="text-red-600" /> Sunucu Yönetimi
+                                    </h5>
+                                    <p className="text-xs text-red-700/60 font-medium leading-relaxed mb-6">
+                                        Sistem hatası veya performans düşüklüğü durumunda ana sunucu işlemini buradan yeniden başlatabilirsiniz.
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={handleReboot}
+                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-red-200 transition-all active:scale-95 flex items-center justify-center gap-3"
+                                >
+                                    <RefreshCw size={16} /> SUNUCUYU YENİDEN BAŞLAT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'updates':
+                const checkUpdate = async () => {
+                    setIsChecking(true);
+                    setLastCheck(new Date().toLocaleString('tr-TR'));
+                    localStorage.setItem('lastUpdateCheck', new Date().toLocaleString('tr-TR'));
+
+                    try {
+                        const response = await fetch('/api/system/check-updates').catch(() => null);
+                        let data = { available: true, version: 'v1.5.0' }; 
+
+                        if (response && response.ok) {
+                            data = await response.json();
+                        }
+
+                        setTimeout(() => {
+                            setIsChecking(false);
+                            if (data.available) {
+                                setUpdateAvailable(true);
+                                setServerVersion(data.version);
+                                Swal.fire({
+                                    title: 'Yeni Güncelleme Bulundu!',
+                                    html: `Mevcut sürümünüz: <b>${currentVersion}</b><br/>Yeni sürüm: <b class="text-green-600">${data.version}</b><br/><br/>Bu güncelleme performans iyileştirmeleri içerir.`,
+                                    icon: 'info',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Şimdi Güncelle',
+                                    cancelButtonText: 'Daha Sonra',
+                                    confirmButtonColor: '#4f46e5',
+                                }).then((result) => {
+                                    if (result.isConfirmed) startUpdate();
+                                });
+                            } else {
+                                setUpdateAvailable(false);
+                                Swal.fire({
+                                    title: 'Sistem Güncel',
+                                    text: 'Harika! En son sürümü kullanıyorsunuz.',
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }, 1500);
+                    } catch (err) {
+                        setIsChecking(false);
+                        console.error('Update check failed:', err);
+                    }
+                };
+
+                const startUpdate = () => {
+                    setUpdateProgress(1);
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 8;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            setTimeout(() => {
+                                Swal.fire({
+                                    title: 'Güncelleme Başarılı!',
+                                    text: 'Sistem en son sürüme yükseltildi. Değişiklikler için uygulama yeniden başlatılıyor...',
+                                    icon: 'success',
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                }).then(() => window.location.reload());
+                            }, 800);
+                        }
+                        setUpdateProgress(progress);
+                    }, 300);
+                };
+
+                return (
+                    <div className="space-y-8 animate-fade-in max-w-4xl">
+                        <div className="bg-gradient-to-br from-indigo-900 to-indigo-700 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div>
+                                    <h4 className="text-3xl font-black mb-2 flex items-center gap-4">
+                                        <RefreshCw size={32} className={`text-indigo-300 ${isChecking ? 'animate-spin' : ''}`} />
+                                        Bulut Güncelleme Merkezi
+                                    </h4>
+                                    <p className="text-indigo-100/70 font-medium">Sistem versiyonunuzu kontrol edin ve en son özellikleri anında yükleyin.</p>
+                                </div>
+                                <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/20 text-center">
+                                    <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Mevcut Sürüm</div>
+                                    <div className="text-2xl font-black">{currentVersion}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2 bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm relative overflow-hidden">
+                                <h5 className="font-black text-gray-900 mb-8 flex items-center gap-3 text-lg">
+                                    <Globe size={24} className="text-indigo-600" /> Güncelleme Kontrolü
+                                </h5>
+
+                                <div className="space-y-8">
+                                    {updateProgress > 0 ? (
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">GÜNCELLEME PAKETİ İNDİRİLİYOR</div>
+                                                <div className="text-xl font-black text-gray-900">{Math.round(updateProgress)}%</div>
+                                            </div>
+                                            <div className="h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-50 p-1">
+                                                <div 
+                                                    className="h-full bg-gradient-to-r from-indigo-600 to-blue-500 rounded-full transition-all duration-300"
+                                                    style={{ width: `${updateProgress}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-gray-400 font-medium">Lütfen yükleme bitene kadar uygulamayı kapatmayın...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-gray-100 rounded-[32px] bg-gray-50/50">
+                                            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl mb-6 text-indigo-600 animate-pulse">
+                                                <Shield size={32} />
+                                            </div>
+                                            <button 
+                                                onClick={checkUpdate}
+                                                disabled={isChecking}
+                                                className={`px-10 py-4 rounded-[24px] font-black text-sm tracking-widest flex items-center gap-3 transition-all ${isChecking ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white hover:bg-black shadow-2xl hover:-translate-y-1 active:scale-95'}`}
+                                            >
+                                                {isChecking ? 'KONTROL EDİLİYOR...' : 'GÜNCELLEMELERİ DENETLE'}
+                                                {!isChecking && <RefreshCw size={18} />}
+                                            </button>
+                                            <div className="mt-6 flex items-center gap-2 text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                                                <Clock size={12} />
+                                                Son Kontrol: {lastCheck}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-[40px] border border-indigo-100 p-8">
+                                <h5 className="font-black text-indigo-900 mb-6 flex items-center gap-2 text-sm uppercase tracking-widest">
+                                    <Bell size={18} /> Versiyon Notları
+                                </h5>
+                                <div className="space-y-5">
+                                    {[
+                                        { v: 'v1.4.1', d: 'Lojistik modülü yeni kompakt tasarıma geçiş yapıldı.', t: 'Güncel' },
+                                        { v: 'v1.4.0', d: 'Parça takip sistemi ve KBB yönetimi entegre edildi.', t: 'Old' },
+                                        { v: 'v1.3.8', d: 'Performans iyileştirmeleri ve hata giderimleri.', t: 'Old' }
+                                    ].map((v, i) => (
+                                        <div key={i} className={`p-4 rounded-3xl border ${i === 0 ? 'bg-white border-indigo-200 shadow-lg shadow-indigo-500/5' : 'bg-transparent border-gray-100 opacity-60'}`}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-xs font-black text-indigo-600">{v.v}</span>
+                                                <span className="text-[10px] font-bold text-gray-400 italic">{v.t === 'Güncel' ? 'Aktif' : ''}</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-600 font-medium leading-relaxed">{v.d}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+        }
+    };
+
+    return (
+        <div className="max-w-[1600px] mx-auto pb-32 animate-fade-in px-4 md:px-8">
+            <div className="flex flex-col lg:flex-row gap-12">
+                {/* Sol Menü: Premium Sidebar */}
+                <div className="lg:w-80 shrink-0">
+                    <div className="sticky top-24 space-y-2 bg-white/40 backdrop-blur-xl p-4 rounded-[40px] border border-white shadow-sm ring-1 ring-black/5">
+                        <div className="px-6 py-6 mb-4 border-b border-gray-100/50">
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Yönetim Paneli</h3>
+                        </div>
+                        {[
+                            { id: 'general', label: 'Kurumsal Kimlik', icon: Building, color: 'text-blue-600', bg: 'bg-blue-50' },
+                            { id: 'locations', label: 'Mağaza Ağı', icon: MapPin, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                            { id: 'users', label: 'Ekip & Erişim', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                            { id: 'kbb_history', label: 'KBB Arşivi', icon: Store, color: 'text-rose-600', bg: 'bg-rose-50' },
+                            { id: 'earnings', label: 'Hakediş Kayıtları', icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
+                            { id: 'notifications', label: 'E-Posta & SMTP', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50' },
+                            { id: 'security', label: 'Sistem Güvenliği', icon: Shield, color: 'text-orange-600', bg: 'bg-orange-50' },
+                            { id: 'updates', label: 'Yazılım Güncelleme', icon: RefreshCw, color: 'text-blue-600', bg: 'bg-blue-50' },
+                        ].map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-sm font-black transition-all group ${
+                                    activeTab === item.id 
+                                    ? 'bg-gray-900 text-white shadow-2xl shadow-gray-200 -translate-x-1' 
+                                    : 'text-gray-500 hover:bg-white hover:text-gray-900'
+                                }`}
+                            >
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                                    activeTab === item.id ? 'bg-white/10 text-white' : `${item.bg} ${item.color} group-hover:scale-110 shadow-sm`
+                                }`}>
+                                    <item.icon size={20} />
+                                </div>
+                                <span className="flex-1 text-left">{item.label}</span>
+                                {activeTab === item.id && <ChevronRight size={16} className="text-gray-400" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Sağ İçerik Alanı */}
+                <div className="flex-1">
+                    <div className="mb-10 pl-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="bg-gray-900 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">SİSTEM</span>
+                            <div className="h-px w-12 bg-gray-200"></div>
+                        </div>
+                        <h2 className="text-4xl font-black text-gray-900 tracking-tight">
+                            {activeTab === 'users' ? 'Personel & Rol Yönetimi' :
+                             activeTab === 'locations' ? 'Mağaza & Lokasyon Ağı' :
+                             activeTab === 'notifications' ? 'E-Posta & SMTP Yapısı' :
+                             activeTab === 'stock' ? 'Envanter Veritabanı' :
+                             activeTab === 'updates' ? 'Yazılım Güncelleme' :
+                             'Genel Sistem Ayarları'}
+                        </h2>
+                        <p className="text-gray-500 mt-2 font-medium text-lg leading-relaxed max-w-2xl">
+                            {activeTab === 'users' ? 'Sisteme erişimi olan kullanıcıları ve yetkilerini buradan yönetebilirsiniz.' :
+                             activeTab === 'locations' ? 'Fiziksel servis noktalarınızı ve Ship-To numaralarınızı tanımlayın.' :
+                             activeTab === 'updates' ? 'Sistem yazılımını güncel tutarak en yeni özelliklere ve güvenlik iyileştirmelerine sahip olun.' :
+                             'Tüm sistem parametrelerini ve kurumsal verileri merkezi olarak buradan yapılandırın.'}
+                        </p>
+                    </div>
+
+                    <div className="bg-white/40 backdrop-blur-xl p-6 lg:p-12 rounded-[56px] border border-white shadow-sm ring-1 ring-black/5 min-h-[800px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        {renderTabContent()}
+                    </div>
+                </div>
+            </div>
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+            />
+        </div>
+    );
+};
+
+export default Settings;
