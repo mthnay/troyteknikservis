@@ -137,8 +137,26 @@ const CustomerPortal = ({ trackId }) => {
                             <h2 className="text-xl font-bold text-gray-900">Teklif Onayınız Bekleniyor</h2>
                         </div>
                         
-                        <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-gray-700 leading-relaxed">
-                            {diagnosisNotes || "Cihazınızın incelemesi tamamlanmış olup onarım için fiyat çıkartılmıştır."}
+                        <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-gray-700 leading-relaxed border border-gray-100">
+                            <p className="mb-3 font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center justify-between">
+                                <span>Teknisyen Notu:</span>
+                                {repair.quotationDetails?.date && <span className="text-xs text-gray-400 font-normal">{repair.quotationDetails.date}</span>}
+                            </p>
+                            <p className="mb-4">{diagnosisNotes || "Cihazınızın incelemesi tamamlanmış olup onarım için fiyat çıkartılmıştır."}</p>
+                            
+                            {repair.quotationDetails?.items && repair.quotationDetails.items.length > 0 && (
+                                <div className="mt-4 border-t border-gray-200 pt-4">
+                                    <h4 className="text-xs font-black uppercase text-gray-500 mb-3 tracking-widest">Teklif Detayı</h4>
+                                    <div className="space-y-2">
+                                        {repair.quotationDetails.items.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                                <span className="font-medium text-gray-800">{item.name}</span>
+                                                <span className="font-mono text-gray-600 font-bold">{Number(item.price).toLocaleString('tr-TR')} ₺</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">

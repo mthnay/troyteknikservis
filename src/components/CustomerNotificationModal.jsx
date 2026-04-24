@@ -1,69 +1,88 @@
 import React, { useState } from 'react';
 import {
     MessageSquare, Mail, Send, X, Check,
-    Bell, AlertCircle, Eye, ChevronRight, MessageCircle
+    Bell, AlertCircle, Eye, ChevronRight, MessageCircle, History
 } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
 
 const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
-    const { emailSettings, updateRepair, showToast, sendWhatsApp } = useAppContext();
+    const { emailSettings, notificationSettings, notificationTemplates, updateRepair, showToast, sendWhatsApp } = useAppContext();
     const [activeChannel, setActiveChannel] = useState('whatsapp'); // WhatsApp'ı varsayılan yaptık
     const [selectedTemplate, setSelectedTemplate] = useState(repair.status === 'Müşteri Onayı Bekliyor' ? 'status_update' : (repair.quoteAmount && repair.quoteAmount !== '0.00' ? 'repair_requote' : 'status_update'));
     const [isSent, setIsSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyData, setHistoryData] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [recipient, setRecipient] = useState(repair.customerEmail || '');
+
+    React.useEffect(() => {
+        if (showHistory) {
+            fetchHistory();
+        }
+    }, [showHistory]);
+
+    const fetchHistory = async () => {
+        setLoadingHistory(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/notifications?repairId=${repair.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setHistoryData(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch history', err);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+
+    const saveNotification = async (channel, message, subject) => {
+        try {
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/notifications`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    repairId: repair.id,
+                    customerEmail: recipient || repair.customerEmail || 'demo@target.com',
+                    customerPhone: repair.customerPhone || repair.phone || '0000',
+                    channel: channel,
+                    message: message,
+                    subject: subject || ''
+                })
+            });
+        } catch(err) {
+            console.error('Failed to save notification', err);
+        }
+    };
 
     if (!repair) return null;
 
-    const templates = {
-        email: {
-            status_update: {
-                id: 'status_update',
-                title: 'Durum Güncellemesi',
-                subject: 'Servis Kaydınız Hakkında Bilgilendirme - #{serviceNo}',
-                body: 'Sayın {customerName},\n\n{device} cihazınızın servis durumu "{status}" olarak güncellenmiştir.\n\nServis No: #{serviceNo}\n\nDetaylı bilgi için müşteri portalımızı ziyaret edebilir veya bizimle iletişime geçebilirsiniz.\n\nİyi günler dileriz,\nTroy Servis Ekibi'
-            },
-            repair_requote: {
-                id: 'repair_requote',
-                title: 'Fiyat Teklifi / Onay Bekliyor',
-                subject: 'Servis İşlemi İçin Onayınız Bekleniyor - #{serviceNo}',
-                body: 'Sayın {customerName},\n\n{device} cihazınızın arıza tespiti tamamlanmıştır.\n\nServis No: #{serviceNo}\nTahmini Onarım Bedeli: {cost} ₺\n\nİşleme devam edilebilmesi için fiyat teklifini onaylamanız gerekmektedir. Ek detaylar müşteri portalında yer almaktadır.\n\nTeşekkür ederiz,\nTroy Servis Ekibi'
-            },
-            ready_pickup: {
-                id: 'ready_pickup',
-                title: 'Teslime Hazır',
-                subject: 'Cihazınız Teslim Alınmaya Hazır - #{serviceNo}',
-                body: 'Sayın {customerName},\n\n{device} cihazınızın servis işlemleri başarıyla tamamlanmış olup, cihazınız teslime hazırdır.\n\nServis No: #{serviceNo}\nÖdenecek Tutar: {cost} ₺\n\nMüsait olduğunuzda servis noktamızdan cihazınızı teslim alabilirsiniz.\n\nİyi günler dileriz,\nTroy Servis Ekibi'
-            }
-        },
-        sms: {
-            status_update: 'Sayın {customerName}, {device} cihazinizin durumu "{status}" olarak guncellenmistir. Servis No: #{serviceNo}. Bilgi icin: troyservis.com B001',
-            repair_requote: 'Sayın {customerName}, #{serviceNo} nolu cihaziniza ait onarim bedeli {cost} TL olarak belirlenmistir. Onay icin lutfen donus yapiniz. B001',
-            ready_pickup: 'Sayın {customerName}, #{serviceNo} nolu {device} cihazinizin islemleri tamamlanmis olup teslime hazirdir. B001'
-        },
-        whatsapp: {
-            status_update: '🛡️ *TROY TEKNİK SERVİS* 📱\n\nMerhaba *{customerName}*,\n\n*{device}* cihazınızın onarım süreci güncellendi:\n📍 Durum: *{status}*\n🔢 Servis No: #{serviceNo}\n\nCanlı takip için: troy.onlar/track?id={serviceNo}',
-            repair_requote: '⚠️ *ONAYINIZ BEKLENİYOR* ⚠️\n\nMerhaba *{customerName}*,\n\n#{serviceNo} nolu cihazınız için onarım teklifi hazırlandı:\n💰 Tutar: *{cost} TL*\n\nİşleme devam etmek için lütfen portal üzerinden onay veriniz.',
-            ready_pickup: '✅ *CİHAZINIZ HAZIR* ✅\n\nMerhaba *{customerName}*,\n\n#{serviceNo} nolu *{device}* cihazınızın işlemleri tamamlandı! Mesai saatleri içinde teslim alabilirsiniz.\n\nBekliyoruz! 👋'
-        }
-    };
+    const templates = notificationTemplates;
+
 
     const handleSend = async () => {
         if (activeChannel === 'whatsapp') {
             const message = getReplacedText(templates.whatsapp[selectedTemplate]);
             sendWhatsApp(repair.customerPhone || repair.phone, message);
+            await saveNotification('whatsapp', message, '');
             setIsSent(true);
             setTimeout(() => {
                 setIsSent(false);
+                if (onActionComplete) onActionComplete();
                 onClose();
             }, 1000);
             return;
         }
 
         if (activeChannel === 'sms') {
+            const message = getReplacedText(templates.sms[selectedTemplate]);
+            await saveNotification('sms', message, '');
             setIsSent(true);
             setTimeout(() => {
                 setIsSent(false);
+                if (onActionComplete) onActionComplete();
                 onClose();
                 showToast('SMS başarıyla sıraya alındı!', 'success'); // Use Toast
             }, 1500);
@@ -73,20 +92,13 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
         setIsLoading(true);
         try {
             const template = templates.email[selectedTemplate];
-            let finalBody = template.body;
-
-            // Apply common placeholders
-            finalBody = finalBody.replace(/{customerName}/g, repair.customer || '');
-            finalBody = finalBody.replace(/{serviceNo}/g, repair.id || '');
-            finalBody = finalBody.replace(/{cost}/g, repair.quoteAmount || '0.00');
-            finalBody = finalBody.replace(/{device}/g, repair.device || '');
-            finalBody = finalBody.replace(/{status}/g, repair.status || '');
+            let finalBody = getReplacedText(template.body);
 
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: repair.customerEmail || 'demo@target.com',
+                    to: recipient || repair.customerEmail || 'demo@target.com',
                     subject: template.subject.replace(/{serviceNo}/g, repair.id || ''),
                     body: finalBody,
                     auth: emailSettings
@@ -100,6 +112,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
 
             const data = await response.json();
             if (data.success) {
+                await saveNotification('email', finalBody, template.subject.replace(/{serviceNo}/g, repair.id || ''));
                 setIsSent(true);
                 setTimeout(() => {
                     setIsSent(false);
@@ -123,12 +136,20 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
         // Template Replacer Function
     const getReplacedText = (text) => {
         if (!text) return 'İçerik bulunamadı.';
-        return text
+        let res = text
             .replace(/{customerName}/g, repair.customer || '')
             .replace(/{serviceNo}/g, repair.id || '')
             .replace(/{cost}/g, repair.quoteAmount || '0.00')
             .replace(/{device}/g, repair.device || '')
-            .replace(/{status}/g, repair.status || '');
+            .replace(/{status}/g, repair.status || '')
+            .replace(/{damageReason}/g, repair.diagnosisNotes || repair.issue || 'Belirtilmedi');
+            
+        if (notificationSettings?.requireDamageDescription && !text.includes('{damageReason}')) {
+            if (repair.diagnosisNotes) res += `\n\n*Uzman Tanısı:* ${repair.diagnosisNotes}`;
+            else if (repair.issue) res += `\n\n*Müşteri Şikayeti:* ${repair.issue}`;
+        }
+        
+        return res;
     };
 
     return (
@@ -149,14 +170,60 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-white rounded-full hover:bg-gray-100 border border-gray-200 transition-all shadow-sm">
-                        <X size={20} className="text-gray-400" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setShowHistory(!showHistory)} 
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${showHistory ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                        >
+                            <History size={14} />
+                            {showHistory ? 'Yeni Bildirim' : 'Geçmiş'}
+                        </button>
+                        <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-white rounded-full hover:bg-gray-100 border border-gray-200 transition-all shadow-sm">
+                            <X size={20} className="text-gray-400" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Body */}
                 <div className="p-8 flex flex-col gap-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    {/* Channel Selector */}
+                    {showHistory ? (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                            <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <History size={16} className="text-apple-blue" />
+                                Gönderilen Bildirimler
+                            </h4>
+                            {loadingHistory ? (
+                                <div className="py-10 text-center text-gray-400 text-sm font-medium">Geçmiş yükleniyor...</div>
+                            ) : historyData.length === 0 ? (
+                                <div className="py-10 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400 text-sm font-medium">
+                                    Bu cihaza ait geçmiş bildirim bulunmuyor.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {historyData.map(item => (
+                                        <div key={item._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
+                                            <div className="flex justify-between items-start border-b border-gray-50 pb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`p-2 rounded-lg text-white ${item.channel === 'whatsapp' ? 'bg-emerald-500' : item.channel === 'email' ? 'bg-blue-500' : 'bg-orange-500'}`}>
+                                                        {item.channel === 'whatsapp' ? <MessageCircle size={14} /> : item.channel === 'email' ? <Mail size={14} /> : <MessageSquare size={14} />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-black uppercase tracking-wider text-gray-900">{item.channel}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400">{new Date(item.sentAt).toLocaleString('tr-TR')}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] font-bold bg-green-50 text-green-600 px-2 py-1 rounded uppercase tracking-widest border border-green-100">Başarılı</span>
+                                            </div>
+                                            {item.subject && <p className="text-sm font-bold text-gray-800">{item.subject}</p>}
+                                            <p className="text-xs text-gray-600 font-medium whitespace-pre-wrap">{item.message}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            {/* Channel Selector */}
                     <div className="flex p-1.5 bg-gray-100/80 rounded-2xl border border-gray-100 gap-1">
                         <button
                             onClick={() => setActiveChannel('whatsapp')}
@@ -181,8 +248,22 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                         </button>
                     </div>
 
-                    {/* Template Selector */}
-                    <div className="space-y-3">
+                    {activeChannel === 'email' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1 mb-2 block">Alıcı E-Posta Adresleri (Virgülle Ayırın)</label>
+                            <input 
+                                type="text"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-sm text-gray-700"
+                                value={recipient}
+                                onChange={(e) => setRecipient(e.target.value)}
+                                placeholder="ornek@mail.com, ikincimail@mail.com"
+                            />
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-[1fr_1.5fr] gap-6">
+                        {/* Template Selector */}
+                        <div className="space-y-3">
                         <div className="flex justify-between items-end pl-1">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">İçerik Şablonu</label>
                             <span className="text-[10px] font-bold text-apple-blue cursor-pointer hover:underline">Tümünü Gör</span>
@@ -252,8 +333,12 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                         )}
                     </div>
                 </div>
+                </>
+            )}
+        </div>
 
                 {/* Footer */}
+                {!showHistory && (
                 <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3 px-8 sticky bottom-0 z-20">
                     <button
                         onClick={onClose}
@@ -287,7 +372,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                         )}
                     </button>
                 </div>
-
+                )}
             </div>
         </div>
     );

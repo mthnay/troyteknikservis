@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, User, ChevronRight, AlertCircle, Calendar, ArrowRight, Eye, Search, Filter, LayoutGrid, List as ListIcon, MoreHorizontal, Truck, Check } from 'lucide-react';
+import { Clock, User, ChevronRight, AlertCircle, Calendar, ArrowRight, Eye, Search, Filter, LayoutGrid, List as ListIcon, MoreHorizontal, Truck, Check, Fingerprint } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import RepairDiagnosisModal from './RepairDiagnosisModal';
 import RepairHistoryModal from './RepairHistoryModal';
@@ -273,9 +273,15 @@ const PendingRepairs = ({ setActiveTab }) => {
                                         {/* Device & Customer - Col Span 4 */}
                                         <div className="md:col-span-4">
                                             <h3 className="font-bold text-gray-900 text-lg group-hover:text-orange-600 transition-colors truncate">{repair.device}</h3>
-                                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                                <User size={14} className="text-gray-400" />
-                                                <span className="font-medium truncate">{repair.customer}</span>
+                                            <div className="flex flex-col gap-1 mt-1">
+                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                    <User size={14} className="text-gray-400" />
+                                                    <span className="font-medium truncate">{repair.customer}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 self-start">
+                                                    <Fingerprint size={10} />
+                                                    <span className="font-bold uppercase">{repair.serial || repair.serialNumber || 'SN YOK'}</span>
+                                                </div>
                                             </div>
                                         </div>
 

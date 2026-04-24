@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
-import { Package, Search, Plus, AlertTriangle, Monitor, Battery, Cpu, Filter, ArrowUpRight, ArrowDownRight, X, ChevronDown, Check, Box, Tag, Layers, Trash2, RotateCcw } from 'lucide-react';
+import { Package, Search, Plus, AlertTriangle, Monitor, Battery, Cpu, Filter, ArrowUpRight, ArrowDownRight, X, ChevronDown, Check, Box, Tag, Layers, Trash2, RotateCcw, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { getProductImage } from '../utils/productImages';
 import MyPhoneIcon from './LocalIcons';
+import { hasPermission } from '../utils/permissions';
 
 const StockManagement = () => {
-    const { inventory, addInventoryItem, updateInventoryItem, removeInventoryItem, servicePoints, currentUser } = useAppContext();
+    const { inventory, addInventoryItem, updateInventoryItem, removeInventoryItem, servicePoints, currentUser, showToast, transferInventorySerial } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
-    const [warehouseType, setWarehouseType] = useState('KGB'); // 'KGB' (Yeni/Temiz) or 'KBB' (Eski/Arızalı)
-    const [storeFilter, setStoreFilter] = useState('all'); // Store-based filter
+    // Using simple boolean or exact match for 'KGB'/'KBB'
+    const [warehouseType, setWarehouseType] = useState('KGB'); 
+    const [storeFilter, setStoreFilter] = useState('all');
     const [showStoreDropdown, setShowStoreDropdown] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedPartDetails, setSelectedPartDetails] = useState(null);
-    const [transferPart, setTransferPart] = useState(null); // For custom transfer modal
-    const [confirmDelete, setConfirmDelete] = useState(null); // For custom delete confirmation
+    const [transferPart, setTransferPart] = useState(null);
+    const [selectedSerialsToTransfer, setSelectedSerialsToTransfer] = useState([]);
+    const [confirmDelete, setConfirmDelete] = useState(null);
     const [newPart, setNewPart] = useState({ name: '', id: '', category: 'iPhone', type: 'Ekran', quantity: 0, minLevel: 5, price: 0, location: '', warehouseType: 'KGB' });
 
     const categories = [
-        { id: 'all', label: 'Tümü', icon: Package },
-        { id: 'iPhone', label: 'iPhone', icon: MyPhoneIcon },
-        { id: 'Mac', label: 'Mac', icon: Monitor },
-        { id: 'iPad', label: 'iPad', icon: Cpu },
-        { id: 'Aksesuar', label: 'Aksesuar', icon: Battery },
+        { id: 'all', label: 'Tümü' },
+        { id: 'iPhone', label: 'iPhone' },
+        { id: 'Mac', label: 'Mac' },
+        { id: 'iPad', label: 'iPad' },
+        { id: 'Aksesuar', label: 'Aksesuar' },
     ];
 
     const baseFilteredParts = inventory.filter(part => {
@@ -47,15 +50,19 @@ const StockManagement = () => {
 
     const totalItems = baseFilteredParts.reduce((acc, part) => acc + part.quantity, 0);
     const lowStockItems = baseFilteredParts.filter(part => part.quantity <= part.minLevel).length;
-    const totalValue = baseFilteredParts.reduce((acc, part) => acc + (part.price * part.quantity), 0);
+    const totalValue = baseFilteredParts.reduce((acc, part) => acc + ((part.price || 0) * part.quantity), 0);
 
-    const handleAddPart = (e) => {
+    const handleAddPart = async (e) => {
         e.preventDefault();
-        // If admin selected a store, use it. Otherwise use current user's store.
         const targetStoreId = newPart.storeId || currentUser.storeId;
-        addInventoryItem({ ...newPart, storeId: parseInt(targetStoreId) });
-        setShowAddModal(false);
-        setNewPart({ name: '', id: '', category: 'iPhone', type: 'Ekran', quantity: 0, minLevel: 5, price: 0, location: '', warehouseType: 'KGB' });
+        const success = await addInventoryItem({ ...newPart, storeId: parseInt(targetStoreId) });
+        if (success) {
+            setShowAddModal(false);
+            setNewPart({ name: '', id: '', category: 'iPhone', type: 'Ekran', quantity: 0, minLevel: 5, price: 0, location: '', warehouseType: 'KGB' });
+            showToast('Parça başarıyla eklendi', 'success');
+        } else {
+            showToast('Ekleme başarısız! Parça kodu benzersiz olmalıdır veya sunucu hatası.', 'error');
+        }
     };
 
     const updateStock = (id, change) => {
@@ -66,145 +73,115 @@ const StockManagement = () => {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 pb-32 animate-fade-in px-4 md:px-8">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 backdrop-blur-xl bg-white/40 p-6 rounded-[32px] border border-white/50 shadow-sm sticky top-4 z-30">
-                <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-                        <Package size={28} />
-                    </div>
-                    <div>
-                        <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Envanter Yönetimi</h2>
-                        <p className="text-gray-500 font-medium">Stok durumu, parça takibi ve envanter analizleri.</p>
-                    </div>
+        <div className="max-w-[1400px] mx-auto space-y-6 pb-24 animate-fade-in font-sans">
+            {/* Minimalist Apple Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-gray-200/60 mt-4 px-2">
+                <div>
+                    <h1 className="text-[34px] font-semibold text-gray-900 tracking-tight leading-none mb-2">Envanter</h1>
+                    <p className="text-[15px] text-gray-500">Stok durumu, parça takibi ve genel değerlendirme.</p>
                 </div>
-                    <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+                <div className="flex items-center gap-4">
+                    {/* iOS style segmented control */}
+                    <div className="flex bg-gray-100/80 p-1 rounded-lg border border-gray-200/50 backdrop-blur-md">
                         <button 
                             onClick={() => setWarehouseType('KGB')}
-                            className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${warehouseType === 'KGB' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            className={`px-5 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 ${warehouseType === 'KGB' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            KGB Ambar (Yeni)
+                            KGB (Yeni)
                         </button>
                         <button 
                             onClick={() => setWarehouseType('KBB')}
-                            className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${warehouseType === 'KBB' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            className={`px-5 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 ${warehouseType === 'KBB' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            KBB Ambar (Eski)
+                            KBB (Eski)
                         </button>
                     </div>
+                    {hasPermission(currentUser, 'view_all_stores') && (
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowStoreDropdown(!showStoreDropdown)}
+                                className={`h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-medium transition-all ${storeFilter !== 'all' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100/80 hover:bg-gray-200/80 text-gray-700'}`}
+                            >
+                                <Filter size={14} />
+                                {storeFilter !== 'all' ? servicePoints.find(s => String(s.id) === String(storeFilter))?.name : 'Tüm Mağazalar'}
+                            </button>
+                            {showStoreDropdown && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowStoreDropdown(false)}></div>
+                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                        <button onClick={() => { setStoreFilter('all'); setShowStoreDropdown(false); }} className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-black/5 text-gray-700">Tüm Mağazalar</button>
+                                        <div className="h-px bg-gray-200/50 my-1"></div>
+                                        {servicePoints.map(s => (
+                                            <button key={s.id} onClick={() => { setStoreFilter(s.id); setShowStoreDropdown(false); }} className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-black/5 text-gray-700">{s.name}</button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="bg-gray-900 hover:bg-black text-white px-6 py-3.5 rounded-2xl font-bold transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95"
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 rounded-lg text-[13px] font-medium transition-all flex items-center gap-2 shadow-sm"
                     >
-                        <Plus size={20} />
-                        Parça Ekle
+                        <Plus size={16} /> Parça Ekle
                     </button>
+                </div>
             </div>
 
-            {/* Stats Cards */}
+            {/* Apple style Stats grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                    { label: 'Toplam Stok Adedi', value: totalItems, icon: Layers, color: 'text-blue-600', bg: 'bg-white', border: 'group-hover:border-blue-300', iconBg: 'bg-blue-50' },
-                    { label: 'Kritik Stok Uyarısı', value: lowStockItems, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-white', border: 'group-hover:border-red-300', iconBg: 'bg-red-50', animate: true },
-                    { label: 'Toplam Envanter Değeri', value: new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(totalValue), icon: Tag, color: 'text-green-600', bg: 'bg-white', border: 'group-hover:border-green-300', iconBg: 'bg-green-50' }
+                    { label: 'Toplam Parça', value: totalItems, subtitle: 'Envanterdeki parçalar', icon: Package, color: 'text-gray-900', bg: 'bg-white' },
+                    { label: 'Kritik Stok Uyarısı', value: lowStockItems, subtitle: 'Tedarik gerekenler', icon: AlertTriangle, color: lowStockItems > 0 ? 'text-red-500' : 'text-gray-900', bg: 'bg-white' },
+                    { label: 'Envanter Değeri', value: new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(totalValue), subtitle: 'Genel tutar', icon: Tag, color: 'text-gray-900', bg: 'bg-gradient-to-br from-gray-50 to-white' }
                 ].map((stat, idx) => (
-                    <div key={idx} className={`${stat.bg} p-6 rounded-[28px] flex items-center justify-between border border-transparent shadow-lg shadow-gray-200/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-gray-100 ${stat.border}`}>
-                        <div>
-                            <p className={`text-xs font-black uppercase tracking-widest mb-2 opacity-60 ${stat.color === 'text-gray-900' ? 'text-gray-500' : stat.color.replace('600', '500').replace('500', '400')}`}>{stat.label}</p>
-                            <h3 className={`text-4xl font-black ${stat.color} tracking-tight`}>{stat.value}</h3>
+                    <div key={idx} className={`${stat.bg} p-6 rounded-2xl border border-gray-200/60 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.06)]`}> 
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
+                                <stat.icon size={18} className="text-gray-600" />
+                            </div>
                         </div>
-                        <div className={`w-14 h-14 ${stat.iconBg} rounded-2xl flex items-center justify-center ${stat.color} shadow-inner transition-transform group-hover:rotate-6 ${stat.animate ? 'animate-pulse' : ''}`}>
-                            <stat.icon size={28} strokeWidth={2.5} />
-                        </div>
+                        <h3 className={`text-3xl font-semibold ${stat.color} tracking-tight`}>{stat.value}</h3>
+                        <p className="text-[13px] text-gray-500 font-medium mt-1">{stat.label}</p>
                     </div>
                 ))}
             </div>
 
-            {/* Main Content */}
-            <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden min-h-[600px] flex flex-col">
-                {/* Toolbar */}
-                <div className="p-6 border-b border-gray-100 flex flex-col items-center justify-between gap-6 md:flex-row bg-white z-20">
-                    {/* Category Tabs */}
-                    <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full md:w-auto overflow-x-auto shadow-inner no-scrollbar">
+            {/* Main Board */}
+            <div className="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
+                <div className="p-4 border-b border-gray-200/60 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/30">
+                    <div className="flex gap-1 bg-gray-200/50 p-1 rounded-lg">
                         {categories.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap uppercase tracking-wide ${activeCategory === cat.id
-                                    ? 'bg-white text-gray-900 shadow-md transform scale-100'
-                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                                    }`}
+                                className={`px-4 py-1.5 rounded-md text-[13px] font-medium transition-all ${activeCategory === cat.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <cat.icon size={16} className={activeCategory === cat.id ? 'text-indigo-500' : ''} />
                                 {cat.label}
                             </button>
                         ))}
                     </div>
-
-                    {/* Search & Global Filter */}
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-80 group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Parça ara..."
-                                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all shadow-sm group-hover:shadow-md"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-
-                        {currentUser?.role === 'admin' && (
-                            <div className="relative">
-                                <button 
-                                    onClick={() => setShowStoreDropdown(!showStoreDropdown)}
-                                    className={`p-3.5 rounded-2xl border flex items-center gap-2 font-bold transition-all ${storeFilter !== 'all' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-gray-200 text-gray-400 hover:text-gray-700'}`}
-                                >
-                                    <Filter size={20} />
-                                    {storeFilter !== 'all' && (
-                                        <span className="text-xs">{servicePoints.find(s => String(s.id) === String(storeFilter))?.name}</span>
-                                    )}
-                                </button>
-                                
-                                {showStoreDropdown && (
-                                    <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-100 rounded-[28px] shadow-2xl z-[50] py-4 animate-in slide-in-from-top-4 duration-300">
-                                        <h4 className="px-6 text-[10px] font-black uppercase text-gray-400 mb-2">Mağaza Seçiniz</h4>
-                                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                                            <button 
-                                                onClick={() => { setStoreFilter('all'); setShowStoreDropdown(false); }}
-                                                className={`w-full text-left px-6 py-3 font-bold text-sm transition-colors ${storeFilter === 'all' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                                            >
-                                                Tüm Mağazalar
-                                            </button>
-                                            {servicePoints.map(s => (
-                                                <button 
-                                                    key={s.id}
-                                                    onClick={() => { setStoreFilter(s.id); setShowStoreDropdown(false); }}
-                                                    className={`w-full text-left px-6 py-3 font-bold text-sm transition-colors ${String(storeFilter) === String(s.id) ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                                                >
-                                                    {s.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Parça adı veya P/N ile ara..."
+                            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200/80 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto flex-1 custom-scrollbar">
+                <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-50/50">
-                                <th className="px-8 py-5">Görsel</th>
-                                <th className="px-8 py-5">Parça Bilgisi</th>
-                                <th className="px-8 py-5">Kategori / Tip</th>
-                                <th className="px-8 py-5">Lokasyon</th>
-                                <th className="px-8 py-5">Stok Durumu</th>
-                                <th className="px-8 py-5">Birim Fiyat</th>
-                                <th className="px-8 py-5 text-right">İşlem</th>
+                            <tr className="border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider bg-white">
+                                <th className="px-6 py-3 font-medium">BİLGİ</th>
+                                <th className="px-6 py-3 font-medium">KATEGORİ</th>
+                                <th className="px-6 py-3 font-medium">STOK</th>
+                                <th className="px-6 py-3 font-medium">FİYAT</th>
+                                <th className="px-6 py-3 font-medium text-right">İŞLEM</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -213,103 +190,90 @@ const StockManagement = () => {
                                     <tr 
                                         key={part._id || part.id} 
                                         onClick={() => setSelectedPartDetails(part)}
-                                        className="hover:bg-indigo-50/50 cursor-pointer transition-colors group"
+                                        className="hover:bg-gray-50/50 cursor-pointer transition-colors group"
                                     >
-                                        <td className="px-8 py-5">
-                                            <div className="flex flex-col">
-                                                <span className="font-mono font-bold text-gray-500 text-[10px] mb-1">{part.id}</span>
-                                                {currentUser?.role === 'admin' && (
-                                                    <span className="px-2 py-0.5 bg-gray-100 text-[8px] font-black uppercase rounded-lg text-gray-400 w-fit">
-                                                        {servicePoints.find(s => String(s.id) === String(part.storeId))?.name || 'Genel'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="w-12 h-12 bg-gray-50 rounded-xl overflow-hidden border border-gray-100/50 shadow-inner group-hover:scale-110 transition-transform">
-                                                <img src={part.image || getProductImage(part.category, part.name)} alt="" className="w-full h-full object-cover" />
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="font-bold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors">{part.name}</div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-[10px] font-bold text-gray-600 border border-gray-200 uppercase tracking-wide">
-                                                    {part.category}
-                                                </span>
-                                                <span className="text-gray-300 text-[10px]">•</span>
-                                                <span className="text-gray-600 font-medium text-xs">{part.type}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5 text-gray-500 font-mono text-xs font-medium">
-                                            {part.location || '-'}
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex flex-col gap-1.5 w-32">
-                                                <div className={`flex items-center justify-between font-bold text-sm ${part.quantity <= part.minLevel ? 'text-red-600' : 'text-gray-900'
-                                                    }`}>
-                                                    <span>{part.quantity} <span className="text-[10px] font-normal text-gray-400 uppercase">Adet</span></span>
-                                                    {part.quantity <= part.minLevel && (
-                                                        <AlertTriangle size={12} className="text-red-500 animate-pulse" />
-                                                    )}
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-gray-100/80 rounded-lg overflow-hidden border border-gray-200/50 flex-shrink-0 flex items-center justify-center p-1">
+                                                    <img src={part.image || getProductImage(part.category, part.name)} alt="" className="max-w-full max-h-full object-contain mix-blend-multiply" />
                                                 </div>
-                                                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        style={{ width: `${Math.min(100, (part.quantity / (part.minLevel * 3)) * 100)}%` }}
-                                                        className={`h-full rounded-full transition-all duration-500 ${part.quantity <= part.minLevel ? 'bg-red-500' : 'bg-green-500'}`}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5 font-black text-gray-900 text-sm">
-                                            {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(part.price)}
-                                        </td>
-                                        <td className="px-8 py-5 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                                                {currentUser?.role === 'admin' && (
-                                                    <div className="flex items-center gap-2">
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setTransferPart(part);
-                                                            }}
-                                                            className="p-2 hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm hover:shadow-md bg-white border border-gray-200 hover:border-indigo-200"
-                                                            title="Mağazaya Taşı"
-                                                        >
-                                                            <RotateCcw size={16} />
-                                                        </button>
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setConfirmDelete(part);
-                                                            }}
-                                                            className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-xl transition-all shadow-sm hover:shadow-md bg-white border border-gray-200 hover:border-red-200"
-                                                            title="Envanterden Sil"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-[14px] text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{part.name}</span>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[12px] text-gray-500 font-mono">{part.id}</span>
+                                                        {hasPermission(currentUser, 'view_all_stores') && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                                <span className="text-[11px] text-gray-500 bg-gray-100 font-medium px-1.5 rounded leading-tight border border-gray-200">
+                                                                    {servicePoints.find(s => String(s.id) === String(part.storeId))?.name || 'Genel'}
+                                                                </span>
+                                                            </>
+                                                        )}
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[13px] text-gray-700">{part.category}</span>
+                                                <span className="text-[12px] text-gray-500">{part.type}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-[14px] font-medium ${part.quantity <= part.minLevel ? 'text-red-600' : 'text-gray-900'}`}>
+                                                    {part.quantity}
+                                                </span>
+                                                {part.quantity <= part.minLevel && (
+                                                    <AlertCircle size={14} className="text-red-500" />
                                                 )}
-                                                <button onClick={() => updateStock(part.id, 1)} className="p-2 hover:bg-green-50 text-gray-400 hover:text-green-600 rounded-xl transition-all shadow-sm hover:shadow-md bg-white border border-gray-200 hover:border-green-200 active:scale-95" title="Stok Ekle">
-                                                    <ArrowUpRight size={16} strokeWidth={3} />
-                                                </button>
-                                                <button onClick={() => updateStock(part.id, -1)} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-xl transition-all shadow-sm hover:shadow-md bg-white border border-gray-200 hover:border-red-200 active:scale-95" title="Stok Çıkar">
-                                                    <ArrowDownRight size={16} strokeWidth={3} />
-                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-[14px] text-gray-900 font-medium">
+                                                {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(part.price || 0)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {hasPermission(currentUser, 'manage_stock') && (
+                                                    <>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setTransferPart(part); setSelectedSerialsToTransfer([]); }}
+                                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" title="Mağazaya Taşı"
+                                                    >
+                                                            <RotateCcw size={15} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setConfirmDelete(part); }}
+                                                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors mr-2" title="Sil"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                <div className="flex items-center bg-gray-50 rounded-md border border-gray-200 p-0.5" onClick={e=>e.stopPropagation()}>
+                                                    <button onClick={() => updateStock(part.id, -1)} className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded transition-all">
+                                                        <ArrowDownRight size={14} />
+                                                    </button>
+                                                    <div className="w-px h-4 bg-gray-200 mx-0.5"></div>
+                                                    <button onClick={() => updateStock(part.id, 1)} className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded transition-all">
+                                                        <ArrowUpRight size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="7" className="px-8 py-32 text-center text-gray-400">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                                                <Search size={40} className="text-gray-300" />
+                                    <td colSpan="5" className="px-6 py-24 text-center">
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                                <Search size={24} className="text-gray-300" />
                                             </div>
-                                            <h3 className="text-lg font-black text-gray-900 mb-1">Sonuç Bulunamadı</h3>
-                                            <p className="text-sm font-medium text-gray-500">Aradığınız kriterlere uygun parça kaydı mevcut değil.</p>
+                                            <h3 className="text-[15px] font-medium text-gray-900 mb-1">Kayıt Bulunamadı</h3>
+                                            <p className="text-[13px] text-gray-500">Aramanıza uygun bir sonuç eşleşmedi.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -319,67 +283,68 @@ const StockManagement = () => {
                 </div>
             </div>
 
-            {/* Part Detail Modal */}
+            {/* Part Detail Details Modal */}
             {selectedPartDetails && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-[70] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl p-8 animate-scale-up border border-white/50 relative overflow-hidden">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">{selectedPartDetails.name}</h3>
-                                <p className="text-sm text-gray-500 mt-1 font-medium">Seri Numarası & Konum Takibi (P/N: {selectedPartDetails.partNumber || selectedPartDetails.id})</p>
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[500px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-6 relative overflow-hidden ring-1 ring-black/5 animate-scale-up">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center p-1.5">
+                                    <img src={selectedPartDetails.image || getProductImage(selectedPartDetails.category, selectedPartDetails.name)} alt="" className="object-contain w-full h-full mix-blend-multiply" />
+                                </div>
+                                <div>
+                                    <h3 className="text-[17px] font-semibold text-gray-900 leading-tight">{selectedPartDetails.name}</h3>
+                                    <p className="text-[13px] text-gray-500 font-mono mt-0.5">{selectedPartDetails.partNumber || selectedPartDetails.id}</p>
+                                </div>
                             </div>
-                            <button onClick={() => setSelectedPartDetails(null)} className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors text-gray-500 hover:text-gray-900"><X size={20} /></button>
+                            <button onClick={() => setSelectedPartDetails(null)} className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors text-gray-500"><X size={16} /></button>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex items-center gap-4">
-                                <Box className="text-blue-500" size={24} />
-                                <div>
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Toplam Mevcut Stok</p>
-                                    <p className="text-lg font-black text-blue-900">
-                                        {inventory.filter(i => (i.partNumber === selectedPartDetails.partNumber || i.name === selectedPartDetails.name)).reduce((acc, i) => acc + i.quantity, 0)} Adet
+                        <div className="space-y-4">
+                            <div className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                                        <Box className="text-blue-500" size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-widest">Mevcut Stok</p>
+                                        <p className="text-[15px] font-semibold text-gray-900">
+                                            {inventory.filter(i => (i.partNumber === selectedPartDetails.partNumber || i.name === selectedPartDetails.name)).reduce((acc, i) => acc + i.quantity, 0)} Adet
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[11px] font-medium text-gray-500 uppercase tracking-widest">Birim Fiyat</p>
+                                    <p className="text-[15px] font-semibold text-gray-900">
+                                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(selectedPartDetails.price || 0)}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="max-h-96 overflow-y-auto custom-scrollbar border border-gray-100 rounded-3xl">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50/50 sticky top-0 border-b border-gray-100">
+                            <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm max-h-60 overflow-y-auto override-scrollbar">
+                                <table className="w-full text-left text-[13px]">
+                                    <thead className="bg-gray-50/50 border-b border-gray-100">
                                         <tr>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Mağaza / Ambar</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Seri Numaraları</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 text-right">Miktar</th>
+                                            <th className="px-4 py-2.5 font-medium text-gray-500">Konum</th>
+                                            <th className="px-4 py-2.5 font-medium text-gray-500 text-right">Miktar</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
                                         {inventory
                                             .filter(i => (i.partNumber === selectedPartDetails.partNumber || i.name === selectedPartDetails.name))
-                                            .map(item => (
-                                                <tr key={item.id} className="hover:bg-gray-50/50">
-                                                    <td className="px-6 py-5">
+                                            .map((item, idx) => (
+                                                <tr key={idx}>
+                                                    <td className="px-4 py-3">
                                                         <div className="flex flex-col">
-                                                            <span className="font-bold text-gray-900 text-sm">
+                                                            <span className="font-medium text-gray-900">
                                                                 {servicePoints.find(s => String(s.id) === String(item.storeId))?.name}
                                                             </span>
-                                                            <span className="text-[10px] font-black text-gray-400 uppercase mt-0.5">
-                                                                {item.warehouseType || 'KGB'} AMBARI
+                                                            <span className="text-[11px] text-gray-500">
+                                                                {item.warehouseType || 'KGB'} Ambari
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {(item.kbbSerials && item.kbbSerials.length > 0) ? (
-                                                                item.kbbSerials.map((serial, idx) => (
-                                                                    <span key={idx} className="px-2 py-0.5 bg-gray-100 text-[10px] font-mono font-bold text-gray-600 rounded-md border border-gray-200">
-                                                                        {serial}
-                                                                    </span>
-                                                                ))
-                                                            ) : (
-                                                                <span className="text-[10px] text-gray-400 italic">Seri no kaydı yok</span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5 text-right font-black text-gray-900 text-sm">
+                                                    <td className="px-4 py-3 text-right font-medium text-gray-900">
                                                         {item.quantity}
                                                     </td>
                                                 </tr>
@@ -389,221 +354,259 @@ const StockManagement = () => {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex justify-end">
+                        <div className="mt-6 flex justify-end">
                             <button 
                                 onClick={() => setSelectedPartDetails(null)}
-                                className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all"
+                                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors w-full"
                             >
-                                Kapat
+                                Tamam
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+            
+            {/* Minimal Add Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-fade-in">
-                    <form onSubmit={handleAddPart} className="bg-white rounded-[40px] w-full max-w-xl shadow-2xl p-8 animate-scale-up border border-white/50 relative overflow-hidden">
-                        {/* Decorative background blob */}
-                        <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                        <div className="flex justify-between items-center mb-8 relative z-10">
-                            <div>
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Yeni Parça Girişi</h3>
-                                <p className="text-sm text-gray-500 mt-1 font-medium">Envantere yeni bir parça ekleyin.</p>
-                            </div>
-                            <button type="button" onClick={() => setShowAddModal(false)} className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors text-gray-500 hover:text-gray-900"><X size={20} /></button>
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
+                    <form onSubmit={handleAddPart} className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[480px] shadow-2xl p-6 relative overflow-hidden ring-1 ring-black/5 animate-scale-up">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-[17px] font-semibold text-gray-900">Yeni Parça Ekle</h3>
+                            <button type="button" onClick={() => setShowAddModal(false)} className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors text-gray-500"><X size={16} /></button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-5 relative z-10">
-                            <div className="col-span-2 space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Parça Adı</label>
+                        <div className="space-y-4">
+                            <div>
                                 <input
                                     required
-                                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all font-bold text-gray-900 placeholder:font-medium placeholder:text-gray-400"
-                                    placeholder="Örn: iPhone 13 Ekran (Orijinal)"
+                                    className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-[14px]"
+                                    placeholder="Parça Adı (Örn: iPhone 13 Ekran)"
                                     value={newPart.name}
                                     onChange={e => setNewPart({ ...newPart, name: e.target.value })}
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Parça Kodu</label>
+                            <div className="grid grid-cols-2 gap-4">
                                 <input
                                     required
-                                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-mono font-bold text-gray-900 text-sm placeholder:text-gray-400"
-                                    placeholder="STK-001"
+                                    className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-[14px] font-mono"
+                                    placeholder="Parça Kodu (P/N)"
                                     value={newPart.id}
                                     onChange={e => setNewPart({ ...newPart, id: e.target.value })}
                                 />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Kategori</label>
                                 <div className="relative">
                                     <select
-                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all appearance-none font-bold text-gray-900"
+                                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 appearance-none text-[14px]"
                                         value={newPart.category}
                                         onChange={e => setNewPart({ ...newPart, category: e.target.value })}
                                     >
                                         <option>iPhone</option><option>Mac</option><option>iPad</option><option>Aksesuar</option>
                                     </select>
-                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} strokeWidth={2.5} />
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Stok Adedi</label>
-                                <input
-                                    type="number"
-                                    required
-                                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold text-gray-900"
-                                    value={newPart.quantity}
-                                    onChange={e => setNewPart({ ...newPart, quantity: parseInt(e.target.value) })}
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="relative">
+                                    <label className="absolute -top-2 left-2 px-1 bg-white text-[10px] text-gray-500 font-medium tracking-wide">Stok Adedi</label>
+                                    <input
+                                        type="number" required min="0"
+                                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-[14px]"
+                                        value={newPart.quantity === 0 ? '' : newPart.quantity}
+                                        onChange={e => setNewPart({ ...newPart, quantity: parseInt(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div className="relative">
+                                    <label className="absolute -top-2 left-2 px-1 bg-white text-[10px] text-gray-500 font-medium tracking-wide">Kritik Seviye</label>
+                                    <input
+                                        type="number" required min="0"
+                                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-[14px]"
+                                        value={newPart.minLevel === 0 ? '' : newPart.minLevel}
+                                        onChange={e => setNewPart({ ...newPart, minLevel: parseInt(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="relative">
+                                    <label className="absolute -top-2 left-2 px-1 bg-white text-[10px] text-gray-500 font-medium tracking-wide">Birim Fiyat (TL)</label>
+                                    <input
+                                        type="number" required min="0"
+                                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-[14px]"
+                                        value={newPart.price === 0 ? '' : newPart.price}
+                                        onChange={e => setNewPart({ ...newPart, price: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div className="relative border border-gray-300 rounded-lg overflow-hidden bg-gray-100/50 p-1 flex">
+                                    <button type="button" onClick={() => setNewPart({...newPart, warehouseType: 'KGB'})} className={`flex-1 rounded-md text-[12px] font-medium transition-all ${newPart.warehouseType === 'KGB' ? 'bg-white shadow-sm ring-1 ring-black/5 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>KGB (Yeni)</button>
+                                    <button type="button" onClick={() => setNewPart({...newPart, warehouseType: 'KBB'})} className={`flex-1 rounded-md text-[12px] font-medium transition-all ${newPart.warehouseType === 'KBB' ? 'bg-white shadow-sm ring-1 ring-black/5 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>KBB (İade)</button>
+                                </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Kritik Seviye</label>
-                                <input
-                                    type="number"
-                                    required
-                                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold text-gray-900"
-                                    value={newPart.minLevel}
-                                    onChange={e => setNewPart({ ...newPart, minLevel: parseInt(e.target.value) })}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Depo Türü</label>
+                            {hasPermission(currentUser, 'view_all_stores') && (
                                 <div className="relative">
                                     <select
-                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all appearance-none font-bold text-gray-900"
-                                        value={newPart.warehouseType}
-                                        onChange={e => setNewPart({ ...newPart, warehouseType: e.target.value })}
+                                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 appearance-none text-[14px] text-gray-700"
+                                        value={newPart.storeId || ''}
+                                        onChange={e => setNewPart({ ...newPart, storeId: e.target.value })}
+                                        required
                                     >
-                                        <option value="KGB">KGB (Yeni)</option>
-                                        <option value="KBB">KBB (Eski/İade)</option>
+                                        <option value="" disabled>Mağaza Seçiniz...</option>
+                                        {servicePoints.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
                                     </select>
-                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-                                </div>
-                            </div>
-
-                            {currentUser?.role === 'admin' && (
-                                <div className="col-span-2 space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-3">Hedef Mağaza</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all appearance-none font-bold text-gray-900"
-                                            value={newPart.storeId || ''}
-                                            onChange={e => setNewPart({ ...newPart, storeId: e.target.value })}
-                                        >
-                                            <option value="">Mağaza Seçiniz...</option>
-                                            {servicePoints.map(s => (
-                                                <option key={s.id} value={s.id}>{s.name}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-                                    </div>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex gap-4 mt-8 relative z-10">
+                        <div className="flex gap-3 mt-8">
                             <button
                                 type="button"
                                 onClick={() => setShowAddModal(false)}
-                                className="flex-1 py-4 rounded-2xl font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                                className="flex-1 py-2.5 rounded-lg text-[13px] font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
                             >
                                 İptal
                             </button>
                             <button
                                 type="submit"
-                                className="flex-[2] bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-[13px] font-medium shadow-sm transition-all"
                             >
-                                <Check size={20} strokeWidth={3} /> Kaydet ve Ekle
+                                Ekle
                             </button>
                         </div>
                     </form>
                 </div>
             )}
 
-            {/* Move Part Modal */}
+            {/* Transfer Modal */}
             {transferPart && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-[80] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-[40px] w-full max-w-md shadow-2xl p-8 animate-scale-up border border-white/50">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Stok Transferi</h3>
-                            <button onClick={() => setTransferPart(null)} className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"><X size={16} /></button>
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[440px] shadow-2xl p-6 ring-1 ring-black/5 animate-scale-up">
+                        <div className="flex justify-between items-center mb-5">
+                            <h3 className="text-[17px] font-semibold text-gray-900">Transfer Et</h3>
+                            <button onClick={() => { setTransferPart(null); setSelectedSerialsToTransfer([]); }} className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors text-gray-500"><X size={16} /></button>
                         </div>
                         
-                        <div className="mb-6 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
-                            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Transfer Edilecek Parça</p>
-                            <p className="text-sm font-bold text-indigo-900">{transferPart.name}</p>
-                            <p className="text-[10px] font-mono text-indigo-400 mt-1">Stok ID: {transferPart.id}</p>
+                        <div className="bg-gray-50 rounded-lg p-3 mb-5 border border-gray-100 flex items-center justify-between">
+                            <div>
+                                <p className="text-[13px] font-medium text-gray-900">{transferPart.name}</p>
+                                <p className="text-[12px] text-gray-500 font-mono mt-0.5">{transferPart.partNumber || transferPart.id}</p>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{transferPart.warehouseType || 'KGB'}</span>
+                            </div>
                         </div>
 
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Hedef Mağaza Seçin</p>
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        {((transferPart.warehouseType === 'KGB' && transferPart.kgbSerials?.length > 0) || (transferPart.warehouseType === 'KBB' && transferPart.kbbSerials?.length > 0)) ? (
+                            <div className="mb-5">
+                                <div className="flex items-center justify-between mb-2 px-1">
+                                    <p className="text-[12px] font-medium text-gray-500">Transfer Edilecek Seriler</p>
+                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{selectedSerialsToTransfer.length} Seçildi</span>
+                                </div>
+                                <div className="max-h-36 overflow-y-auto override-scrollbar border border-gray-200/60 rounded-xl bg-white p-2 space-y-1 shadow-inner">
+                                    {(transferPart.warehouseType === 'KGB' ? transferPart.kgbSerials : transferPart.kbbSerials).map(serial => (
+                                        <label key={serial} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-all select-none">
+                                            <input 
+                                                type="checkbox" 
+                                                className="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                checked={selectedSerialsToTransfer.includes(serial)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) setSelectedSerialsToTransfer(prev => [...prev, serial]);
+                                                    else setSelectedSerialsToTransfer(prev => prev.filter(s => s !== serial));
+                                                }}
+                                            />
+                                            <span className="text-[13px] font-mono font-medium text-gray-800">{serial}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-5 bg-yellow-50 border border-yellow-100 p-3 rounded-xl flex gap-3 items-start">
+                                <AlertCircle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                                <p className="text-[12px] text-yellow-800 font-medium leading-relaxed">Bu parçaya ait kayıtlı seri numarası bulunmuyor. Sadece envanter adres kaydı hedef mağazaya taşınacaktır.</p>
+                            </div>
+                        )}
+
+                        <p className="text-[12px] font-medium text-gray-500 mb-2 px-1">Hedef Mağaza:</p>
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto override-scrollbar">
                             {servicePoints.map(s => (
                                 <button 
                                     key={s.id}
-                                    onClick={() => {
-                                        updateInventoryItem(transferPart._id || transferPart.id, { storeId: parseInt(s.id) });
+                                    onClick={async () => {
+                                        const hasSerials = (transferPart.warehouseType === 'KGB' && transferPart.kgbSerials?.length > 0) || (transferPart.warehouseType === 'KBB' && transferPart.kbbSerials?.length > 0);
+                                        
+                                        if (hasSerials && selectedSerialsToTransfer.length === 0) {
+                                            showToast('Lütfen transfer edilecek seri numarası seçin', 'error');
+                                            return;
+                                        }
+
+                                        if (hasSerials) {
+                                            const success = await transferInventorySerial(
+                                                transferPart._id || transferPart.id,
+                                                parseInt(s.id),
+                                                selectedSerialsToTransfer,
+                                                (transferPart.warehouseType || 'kgb').toLowerCase()
+                                            );
+                                            if (success) {
+                                                showToast(`${selectedSerialsToTransfer.length} seri başarıyla transfer edildi`, 'success');
+                                            } else {
+                                                showToast('Transfer başarısız oldu', 'error');
+                                            }
+                                        } else {
+                                            await updateInventoryItem(transferPart._id || transferPart.id, { storeId: parseInt(s.id) });
+                                            showToast('Adres güncellendi (Seri numarası yok)', 'success');
+                                        }
                                         setTransferPart(null);
+                                        setSelectedSerialsToTransfer([]);
                                     }}
-                                    className={`w-full text-left p-4 rounded-2xl border transition-all font-bold text-sm flex items-center justify-between group/store ${String(s.id) === String(transferPart.storeId) ? 'bg-indigo-50 border-indigo-100 text-indigo-600 cursor-default opacity-50' : 'bg-gray-50 border-gray-100 hover:bg-white hover:border-indigo-500 text-gray-700 hover:shadow-md'}`}
+                                    className={`w-full text-left px-4 py-3 rounded-xl text-[13px] transition-all flex items-center justify-between group ${String(s.id) === String(transferPart.storeId) ? 'bg-blue-50 text-blue-600 opacity-60 cursor-default ring-1 ring-blue-100/50' : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm text-gray-700'}`}
                                     disabled={String(s.id) === String(transferPart.storeId)}
                                 >
-                                    <span>{s.name}</span>
+                                    <span className="font-semibold">{s.name}</span>
                                     {String(s.id) === String(transferPart.storeId) ? (
-                                        <span className="text-[9px] font-black uppercase text-indigo-400">Şu Anki Konum</span>
+                                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest bg-blue-100/50 px-2 py-0.5 rounded-full">Mevcut konum</span>
                                     ) : (
-                                        <ArrowUpRight size={14} className="opacity-0 group-hover/store:opacity-100 transition-all" />
+                                        <ArrowUpRight size={14} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
                                     )}
                                 </button>
                             ))}
                         </div>
-                        
-                        <button 
-                            onClick={() => setTransferPart(null)}
-                            className="w-full mt-6 py-4 text-gray-500 font-bold hover:bg-gray-100 rounded-2xl transition-all"
-                        >
-                            Vazgeç
-                        </button>
                     </div>
                 </div>
             )}
 
             {/* Custom Delete Confirmation Modal */}
             {confirmDelete && (
-                <div className="fixed inset-0 bg-red-900/20 backdrop-blur-md z-[90] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-[40px] w-full max-w-sm shadow-2xl p-8 animate-scale-up border border-red-50 text-center">
-                        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-6 shadow-inner">
-                            <Trash2 size={32} />
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90] flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[360px] shadow-2xl p-6 ring-1 ring-black/5 text-center animate-scale-up">
+                        <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
+                            <Trash2 size={24} />
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2">Emin misiniz?</h3>
-                        <p className="text-sm font-medium text-gray-500 mb-8 px-4">
-                            <span className="text-red-600 font-bold">{confirmDelete.name}</span> adlı parçayı envanterden tamamen silmek üzeresiniz. Bu işlem <span className="underline">geri alınamaz.</span>
+                        <h3 className="text-[17px] font-semibold text-gray-900 mb-1">Silmeyi Onayla</h3>
+                        <p className="text-[13px] text-gray-500 mb-6 px-2">
+                            <span className="font-medium text-gray-900">{confirmDelete.name}</span> kalıcı olarak envanterden silinecek.
                         </p>
                         <div className="flex gap-3">
-                            <button onClick={() => setConfirmDelete(null)} className="flex-1 py-4 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl font-bold transition-all">Vazgeç</button>
+                            <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-[14px] font-medium transition-colors">İptal</button>
                             <button 
                                 onClick={async () => {
                                     try {
                                         const success = await removeInventoryItem(confirmDelete._id || confirmDelete.id);
                                         if (success) {
-                                            showToast('Parça envanterden silindi.', 'success');
+                                            showToast('Parça silindi', 'success');
                                         } else {
-                                            showToast('Parça silinemedi (ID bulunamadı).', 'error');
+                                            showToast('Silme hatası', 'error');
                                         }
                                     } catch (err) {
-                                        showToast('Silme işlemi sırasında hata oluştu.', 'error');
+                                        showToast('Sunucu hatası', 'error');
                                     }
                                     setConfirmDelete(null);
                                 }} 
-                                className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-xl shadow-red-200 hover:shadow-red-300 transition-all active:scale-95"
+                                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[14px] font-medium transition-colors shadow-sm"
                             >
-                                Evet, Sil
+                                Sil
                             </button>
                         </div>
                     </div>

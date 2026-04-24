@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
-import { Clock, AlertCircle, CheckCircle, Package, Activity, TrendingUp, PieChart, ArrowUpRight, ArrowDownRight, MoreHorizontal, Wallet, Users, Zap, LayoutDashboard, Store } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Clock, AlertCircle, CheckCircle, Package, Activity, TrendingUp, PieChart, ArrowUpRight, ArrowDownRight, MoreHorizontal, Wallet, Users, Zap, LayoutDashboard, Store, X, ChevronRight, ShieldAlert } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { hasPermission } from '../utils/permissions';
 
 const StatCard = ({ title, value, subtitle, icon: Icon, colorClass, trend, trendValue }) => (
     <div className="glass p-6 rounded-3xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
@@ -28,38 +29,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, colorClass, trend, trend
     </div>
 );
 
-const ActivityItem = ({ status, id, device, time, description }) => {
-    const getStatusStyle = (s) => {
-        if (!s) return 'bg-gray-100 text-gray-600 border-gray-200';
-        s = s.toLowerCase();
-        if (s.includes('bekliyor')) return 'bg-orange-50 text-orange-700 border-orange-100';
-        if (s.includes('işlem')) return 'bg-blue-50 text-blue-700 border-blue-100';
-        if (s.includes('tamam')) return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-        return 'bg-gray-50 text-gray-600 border-gray-200';
-    };
-
-    return (
-        <div className="group flex items-center gap-5 p-5 hover:bg-gray-50/80 rounded-2xl transition-all border border-transparent hover:border-gray-100 hover:shadow-sm cursor-default">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-xl group-hover:scale-105 transition-transform">
-                {device?.toLowerCase().includes('iphone') ? '📱' : device?.toLowerCase().includes('mac') ? '💻' : '🎧'}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                    <h4 className="font-bold text-gray-900 truncate text-sm">{device}</h4>
-                    <span className="text-xs font-medium text-gray-400 bg-white px-2 py-0.5 rounded-md border border-gray-100 shadow-sm">{time}</span>
-                </div>
-                <p className="text-xs text-gray-500 truncate mb-1.5">{description}</p>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">#{id}</span>
-                </div>
-            </div>
-            <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${getStatusStyle(status)}`}>
-                {status || 'Bilinmiyor'}
-            </div>
-        </div>
-    );
-};
-
+// ActivityItem extracted out as requested
 const DonutChart = ({ data }) => {
     const total = data.reduce((acc, item) => acc + item.value, 0) || 1;
     let accumulatedAngle = 0;
@@ -97,7 +67,8 @@ const DonutChart = ({ data }) => {
 };
 
 const Dashboard = () => {
-    const { repairs, inventory, currentUser, technicians, earnings, servicePoints, alerts, selectedStoreId } = useAppContext();
+    const { repairs, allRepairs, inventory, currentUser, technicians, earnings, servicePoints, alerts, selectedStoreId } = useAppContext();
+    const [selectedStoreDetails, setSelectedStoreDetails] = useState(null);
 
     // --- Gelişmiş İstatistik Hesaplamaları ---
     const stats = useMemo(() => {
@@ -114,9 +85,37 @@ const Dashboard = () => {
         };
     }, [repairs, alerts, earnings, technicians]);
 
+    // --- Mağaza Bazlı Durum Takip (Grid İçin) ---
+    const storeStatusData = useMemo(() => {
+        const sourceRepairs = allRepairs || repairs;
+        return servicePoints.map(sp => {
+            const storeRepairs = sourceRepairs.filter(r => String(r.storeId) === String(sp.id));
+            const activeRepairs = storeRepairs.filter(r => !['Tamamlandı', 'Teslim Edildi', 'İptal', 'İade'].includes(r.status));
+            
+            // Müşteri beklemede, onay beklemede veya 14 günden eski işlemler kritik sayılabilir
+            const criticalRepairs = activeRepairs.filter(r => {
+                if (r.status?.includes('Bekliyor')) return true;
+                if (!r.date) return false;
+                const [d, m, y] = r.date.split(' ')[0].split('.');
+                if (!d || !m || !y) return false;
+                const repairDate = new Date(y, m - 1, d);
+                const daysPass = Math.floor((new Date() - repairDate) / (1000 * 60 * 60 * 24));
+                return daysPass > 14; 
+            });
+
+            return {
+                ...sp,
+                pendingCount: activeRepairs.length,
+                criticalCount: criticalRepairs.length,
+                activeRepairs,
+                criticalRepairs
+            };
+        }).sort((a,b) => b.pendingCount - a.pendingCount);
+    }, [servicePoints, allRepairs, repairs]);
+
     // --- Mağaza Bazlı Kıyaslama (Admin İçin) ---
     const storePerformance = useMemo(() => {
-        if (currentUser?.role !== 'admin') return [];
+        if (!hasPermission(currentUser, 'view_all_stores')) return [];
         return servicePoints.map(sp => {
             const storeRepairs = repairs.filter(r => String(r.storeId) === String(sp.id));
             const storeEarnings = earnings.filter(e => String(e.storeId) === String(sp.id));
@@ -222,7 +221,7 @@ const Dashboard = () => {
                 {/* Sol Kolon: Aktivite Listesi ve Mağaza Kıyaslama */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Admin Store Comparison */}
-                    {currentUser?.role === 'admin' && (
+                    {hasPermission(currentUser, 'view_all_stores') && (
                         <div className="glass rounded-[32px] overflow-hidden border border-white/50">
                             <div className="p-6 border-b border-gray-100/50 bg-white/40 flex justify-between items-center">
                                 <h3 className="font-black text-gray-900 flex items-center gap-2.5">
@@ -276,35 +275,54 @@ const Dashboard = () => {
                     <div className="glass rounded-[32px] overflow-hidden flex flex-col min-h-[500px] border border-white/50">
                         <div className="p-6 border-b border-gray-100/50 flex justify-between items-center bg-white/40">
                             <h3 className="font-black text-gray-900 flex items-center gap-2.5">
-                                <TrendingUp size={20} className="text-blue-600" />
-                                Son Servis Hareketleri
+                                <LayoutDashboard size={20} className="text-indigo-600" /> 
+                                Mağaza Operasyon Şeması
                             </h3>
                             <button className="p-2 hover:bg-gray-100/50 rounded-xl transition text-gray-400 hover:text-gray-600">
                                 <MoreHorizontal size={20} />
                             </button>
                         </div>
-                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-1">
-                            {repairs.length > 0 ? (
-                                repairs.slice(0, 8).map((r, idx) => (
-                                    <ActivityItem
-                                        key={idx}
-                                        status={r.status}
-                                        id={r.id}
-                                        device={r.device}
-                                        time={r.date?.split(' ')[1] || 'Bugün'}
-                                        description={r.issue || r.issueDescription || r.notes || "Belirtilmedi"}
-                                    />
-                                ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-                                    <Package size={48} className="mb-4 text-gray-300" />
-                                    <p className="font-medium">Henüz bir işlem kaydı bulunmuyor.</p>
+                        <div className="bg-gray-50/30 p-6 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                                {storeStatusData.map(sp => (
+                                    <div 
+                                        key={sp.id} 
+                                        onClick={() => setSelectedStoreDetails(sp)}
+                                        className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative overflow-hidden"
+                                    >
+                                        {sp.criticalCount > 0 && <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-red-500/20 transition-all"></div>}
+                                        <div className="flex items-start justify-between mb-4 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-50 to-blue-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                                                    <Store size={22} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-900 leading-tight">{sp.name}</h4>
+                                                    <p className="text-[10px] font-mono text-gray-500 font-bold">SHIP-TO: {sp.shipTo || 'YOK'}</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight size={18} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 relative z-10">
+                                            <div className="bg-gray-50 rounded-2xl p-3 border border-gray-100/50">
+                                                <p className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">İşlem Bekleyen</p>
+                                                <p className="text-2xl font-black text-gray-900">{sp.pendingCount}</p>
+                                            </div>
+                                            <div className={`rounded-2xl p-3 border ${sp.criticalCount > 0 ? 'bg-red-50/50 border-red-100' : 'bg-emerald-50/50 border-emerald-100'}`}>
+                                                <p className={`text-[10px] uppercase font-black tracking-widest mb-1 ${sp.criticalCount > 0 ? 'text-red-500' : 'text-emerald-600'}`}>Kritik Süre</p>
+                                                <p className={`text-2xl font-black flex items-center gap-2 ${sp.criticalCount > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                                                    {sp.criticalCount}
+                                                    {sp.criticalCount > 0 && <ShieldAlert size={18} className="animate-pulse" />}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
-                </div>
-
                 {/* Sağ Kolon: Charts & Stok */}
                 <div className="flex flex-col gap-6">
                     {/* Dağılım */}
@@ -368,6 +386,89 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Store Details Modal */}
+            {selectedStoreDetails && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] w-full max-w-3xl p-8 shadow-2xl animate-scale-up border border-white/50 overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-gradient-to-tr from-indigo-500 to-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                    <Store size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900 leading-tight">{selectedStoreDetails.name}</h3>
+                                    <div className="flex gap-2 mt-1">
+                                        <span className="text-[10px] font-black uppercase text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">SHIP-TO: {selectedStoreDetails.shipTo || 'YOK'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedStoreDetails(null)} className="w-12 h-12 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl transition-all">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100/50">
+                                    <p className="text-xs font-black uppercase tracking-widest text-blue-900/60 mb-2">Tüm İşlem Bekleyenler</p>
+                                    <h4 className="text-4xl font-black text-blue-900">{selectedStoreDetails.activeRepairs.length}</h4>
+                                </div>
+                                <div className="bg-red-50/50 p-6 rounded-3xl border border-red-100/50">
+                                    <p className="text-xs font-black uppercase tracking-widest text-red-900/60 mb-2">Kritik Süre Olanlar</p>
+                                    <h4 className="text-4xl font-black text-red-600 flex items-center gap-3">
+                                        {selectedStoreDetails.criticalRepairs.length}
+                                        {selectedStoreDetails.criticalRepairs.length > 0 && <ShieldAlert size={28} />}
+                                    </h4>
+                                </div>
+                            </div>
+
+                            {selectedStoreDetails.criticalRepairs.length > 0 && (
+                                <div>
+                                    <h4 className="text-sm font-black text-gray-900 mb-3 flex items-center gap-2">
+                                        <AlertCircle size={16} className="text-red-500"/> Kritik İşlemler ({selectedStoreDetails.criticalRepairs.length})
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {selectedStoreDetails.criticalRepairs.map(r => (
+                                            <div key={r.id} className="flex justify-between items-center bg-white border-2 border-red-100 p-4 rounded-2xl">
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{r.device} - {r.customer}</p>
+                                                    <p className="text-[11px] text-gray-500 font-medium">No: {r.id} | Tarih: {r.date}</p>
+                                                </div>
+                                                <span className="bg-red-100 text-red-700 font-black text-[10px] uppercase px-3 py-1.5 rounded-lg border border-red-200">
+                                                    {r.status || 'Bekliyor'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <h4 className="text-sm font-black text-gray-900 mb-3 flex items-center gap-2">
+                                    <Clock size={16} className="text-blue-500"/> Diğer Açık İşlemler
+                                </h4>
+                                <div className="space-y-2">
+                                    {selectedStoreDetails.activeRepairs.filter(r => !selectedStoreDetails.criticalRepairs.includes(r)).map(r => (
+                                        <div key={r.id} className="flex justify-between items-center bg-gray-50 border border-gray-100 p-4 rounded-2xl">
+                                            <div>
+                                                <p className="font-bold text-gray-900">{r.device} - {r.customer}</p>
+                                                <p className="text-[11px] text-gray-500 font-medium">No: {r.id} | Tarih: {r.date}</p>
+                                            </div>
+                                            <span className="bg-gray-200 text-gray-700 font-black text-[10px] uppercase px-3 py-1.5 rounded-lg">
+                                                {r.status || 'İşlemde'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {selectedStoreDetails.activeRepairs.length === selectedStoreDetails.criticalRepairs.length && (
+                                        <p className="text-sm text-gray-400 font-medium text-center py-4">Sadece kritik onarımlar mevcut.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

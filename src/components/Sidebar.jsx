@@ -1,5 +1,6 @@
 import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { hasPermission } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
@@ -20,7 +21,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         { id: 'technicians', icon: Users, label: 'Teknisyenler' },
         { id: 'reports', icon: BarChart2, label: 'Raporlar' },
         // Only show Settings for Admin
-        ...(currentUser?.role?.toLowerCase() === 'admin' ? [{ id: 'settings', icon: Settings, label: 'Ayarlar' }] : [])
+        ...(hasPermission(currentUser, 'manage_settings') ? [{ id: 'settings', icon: Settings, label: 'Ayarlar' }] : [])
     ];
 
     return (
@@ -39,7 +40,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                             {/* Dynamic Store Info */}
                             <div className="mt-1 flex flex-col bg-white/50 p-1.5 rounded-lg border border-gray-100">
                                 <span className="text-[10px] font-bold text-gray-900 truncate">
-                                    {Number(selectedStoreId) === 0 && currentUser?.role?.toLowerCase() === 'admin'
+                                    {Number(selectedStoreId) === 0 && hasPermission(currentUser, 'view_all_stores')
                                         ? 'Tüm Mağazalar'
                                         : (servicePoints.find(p => Number(p.id) === Number(selectedStoreId || currentUser?.storeId))?.name || 'Mağaza Seçilmedi')}
                                 </span>
@@ -55,7 +56,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             {/* Navigation */}
             <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar py-2 mask-linear-fade">
                 {/* Admin Context Selector */}
-                {currentUser?.role?.toLowerCase() === 'admin' && (
+                {hasPermission(currentUser, 'view_all_stores') && (
                     <div className="mb-8 px-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 block px-1">Görünüm Değiştir</label>
                         <div className="relative group">

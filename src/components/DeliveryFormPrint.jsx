@@ -84,6 +84,14 @@ const DeliveryFormPrint = ({ repair, signature, onClose }) => {
                                         <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">E-Posta</span>
                                         <span className="text-sm font-bold text-gray-700">{repair.customerEmail || '-'}</span>
                                     </div>
+                                    <div className="flex justify-between items-end border-b border-gray-50 pb-2">
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">TC / VKN</span>
+                                        <span className="text-sm font-bold text-gray-700">{repair.tcNo || '-'}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1 pt-1">
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Adres</span>
+                                        <span className="text-[11px] font-medium text-gray-600 leading-tight">{repair.customerAddress || '-'}</span>
+                                    </div>
                                 </div>
                             </div>
 

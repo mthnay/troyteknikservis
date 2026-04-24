@@ -556,6 +556,10 @@ const AppleLogisticsModal = ({ repairId, onClose }) => {
                 <CustomerNotificationModal
                     repair={repair}
                     onClose={() => setShowNotificationModal(false)}
+                    onActionComplete={() => {
+                        setShowNotificationModal(false);
+                        onClose();
+                    }}
                 />
             )}
         </div>

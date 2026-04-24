@@ -10,15 +10,134 @@ import Media from './models/Media.js';
 import Customer from './models/Customer.js';
 import DeviceModel from './models/DeviceModel.js';
 import Earning from './models/Earning.js';
+import Notification from './models/Notification.js';
+import Role from './models/Role.js';
 import multer from 'multer';
 import bcrypt from 'bcryptjs';
 import { sendAutomatedEmail } from './emailService.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isPackaged = process.env.NODE_ENV === 'production';
+const uploadDir = isPackaged
+    ? path.join(process.env.USER_DATA_PATH || process.cwd(), 'troy-uploads')
+    : path.resolve(__dirname, '../uploads');
+
+console.log('Upload Directory initialized at:', uploadDir);
+
+if (!fs.existsSync(uploadDir)) {
+    try { 
+        fs.mkdirSync(uploadDir, { recursive: true }); 
+        console.log('Upload directory created successfully.');
+    } catch (e) { 
+        console.error('FAILED to create upload directory:', e.message);
+    }
+} else {
+    try {
+        fs.accessSync(uploadDir, fs.constants.W_OK);
+        console.log('Upload directory is writable.');
+    } catch (e) {
+        console.error('Upload directory is NOT writable:', e.message);
+    }
+}
+
+const diskStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + ext);
+    }
+});
+
+const uploadDisk = multer({ 
+    storage: diskStorage,
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB Limit
+});
 
 // Multer for memory storage (Database Uploads)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const router = express.Router();
+
+// --- Seed Default Roles ---
+router.post('/system/seed-roles', async (req, res) => {
+    try {
+        const count = await Role.countDocuments();
+        if (count === 0) {
+            const defaultRoles = [
+                { name: 'SuperAdmin', displayName: 'Super Admin', permissions: ['view_all_stores', 'manage_users', 'manage_settings', 'manage_stock'], isSystem: true },
+                { name: 'StoreManager', displayName: 'Mağaza Müdürü', permissions: ['manage_stock', 'delete_repair'], isSystem: true },
+                { name: 'Reception', displayName: 'Resepsiyon', permissions: ['manage_stock'], isSystem: true },
+                { name: 'Technician', displayName: 'Teknisyen', permissions: [], isSystem: true },
+                { name: 'Accountant', displayName: 'Muhasebe', permissions: ['view_all_stores'], isSystem: true },
+            ];
+            await Role.insertMany(defaultRoles);
+            res.json({ success: true, message: 'Default roles seeded successfully' });
+        } else {
+            res.json({ success: true, message: 'Roles already exist' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// --- Roles ---
+router.get('/roles', async (req, res) => {
+    try {
+        const roles = await Role.find({});
+        res.json(roles);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.post('/roles', async (req, res) => {
+    try {
+        const { name, displayName, permissions } = req.body;
+        const roleExists = await Role.findOne({ name });
+        if (roleExists) {
+            return res.status(400).json({ message: 'Bu rol adı zaten mevcut' });
+        }
+        const role = await Role.create({ name, displayName, permissions: permissions || [], isSystem: false });
+        res.status(201).json(role);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+router.put('/roles/:id', async (req, res) => {
+    try {
+        const { displayName, permissions } = req.body;
+        const role = await Role.findById(req.params.id);
+        if (!role) return res.status(404).json({ message: 'Rol bulunamadı' });
+        
+        role.displayName = displayName || role.displayName;
+        role.permissions = permissions || role.permissions;
+        
+        const updatedRole = await role.save();
+        res.json(updatedRole);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+router.delete('/roles/:id', async (req, res) => {
+    try {
+        const role = await Role.findById(req.params.id);
+        if (!role) return res.status(404).json({ message: 'Rol bulunamadı' });
+        if (role.isSystem) return res.status(400).json({ message: 'Sistem rolleri silinemez' });
+        
+        await role.deleteOne();
+        res.json({ message: 'Rol başarıyla silindi' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 // --- System Routes ---
 router.get('/system/check-updates', (req, res) => {
@@ -129,8 +248,21 @@ router.get('/repairs', async (req, res) => {
 });
 
 router.post('/repairs', async (req, res) => {
-    const repair = new Repair(req.body);
     try {
+        // Debug için gelen veriyi dosyaya yaz
+        fs.writeFileSync(path.join(__dirname, '../debug_log.json'), JSON.stringify({
+            timestamp: new Date().toISOString(),
+            body: req.body
+        }, null, 2));
+        
+        console.log('[REPAIR] Incoming data logged to debug_log.json');
+        // Otomatik ID Oluştur (Eğer yoksa)
+        if (!req.body.id || req.body.id.startsWith('TR-')) {
+            const repairCount = await Repair.countDocuments();
+            req.body.id = `S${String(repairCount + 1).padStart(5, '0')}`;
+        }
+        
+        const repair = new Repair(req.body);
         const newRepair = await repair.save();
         
         // Otomatik Kabul E-postası Gönder (Arka Planda)
@@ -147,6 +279,15 @@ router.post('/repairs', async (req, res) => {
 router.put('/repairs/:id', async (req, res) => {
     try {
         const id = req.params.id;
+        
+        // Debug için gelen veriyi dosyaya yaz
+        fs.writeFileSync(path.join(__dirname, '../debug_log.json'), JSON.stringify({
+            timestamp: new Date().toISOString(),
+            type: 'UPDATE',
+            id: id,
+            body: req.body
+        }, null, 2));
+
         const oldRepair = await Repair.findOne({ $or: [{ id: id }, { _id: mongoose.Types.ObjectId.isValid(id) ? id : null }] });
         
         let updatedRepair = await Repair.findOneAndUpdate({ id: id }, req.body, { new: true });
@@ -363,7 +504,7 @@ router.delete('/inventory/:id', async (req, res) => {
 
 // Decrease stock quantity (Part Usage)
 router.post('/inventory/use', async (req, res) => {
-    const { partId, quantity } = req.body;
+    const { partId, quantity, serialNumber, serialType } = req.body;
     try {
         let item = await Inventory.findOne({ id: partId });
         if (!item) {
@@ -376,9 +517,71 @@ router.post('/inventory/use', async (req, res) => {
         if (item.quantity < quantity) {
             return res.status(400).json({ message: 'Yetersiz stok.' });
         }
-        const updatedItem = await Inventory.findOneAndUpdate({ _id: item._id }, { quantity: item.quantity - quantity }, { new: true });
+        
+        const updateData = { quantity: item.quantity - quantity };
+        
+        // Remove serials if provided
+        if (serialNumber && serialType) {
+            const field = serialType === 'kgb' ? 'kgbSerials' : 'kbbSerials';
+            const arr = item[field] || [];
+            updateData[field] = arr.filter(s => s !== serialNumber);
+        }
+
+        const updatedItem = await Inventory.findOneAndUpdate({ _id: item._id }, updateData, { new: true });
         res.json(updatedItem);
     } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Transfer Serials across Stores
+router.post('/inventory/transfer-serial', async (req, res) => {
+    const { sourceItemId, targetStoreId, serialNumbers, serialType } = req.body;
+    try {
+        let sourceItem = await Inventory.findOne({ _id: sourceItemId }) || await Inventory.findOne({ id: sourceItemId });
+        if (!sourceItem) return res.status(404).json({ message: 'Kaynak parça bulunamadı.' });
+
+        const serialField = serialType === 'kgb' ? 'kgbSerials' : 'kbbSerials';
+        let arr = sourceItem[serialField] || [];
+        
+        // Remove from source
+        const newArr = arr.filter(s => !serialNumbers.includes(s));
+        sourceItem[serialField] = newArr;
+        sourceItem.quantity = Math.max(0, sourceItem.quantity - serialNumbers.length);
+        await sourceItem.save();
+
+        // Get matching item in target store
+        let targetItem = await Inventory.findOne({
+            storeId: targetStoreId,
+            partNumber: sourceItem.partNumber || null,
+            name: sourceItem.name,
+            warehouseType: sourceItem.warehouseType
+        });
+
+        if (!targetItem) {
+            targetItem = new Inventory({
+                id: `stk-${Date.now()}`,
+                partNumber: sourceItem.partNumber,
+                name: sourceItem.name,
+                category: sourceItem.category,
+                type: sourceItem.type,
+                price: sourceItem.price,
+                minLevel: sourceItem.minLevel,
+                storeId: targetStoreId,
+                warehouseType: sourceItem.warehouseType,
+                quantity: 0,
+                kgbSerials: [],
+                kbbSerials: []
+            });
+        }
+        
+        if (!targetItem[serialField]) targetItem[serialField] = [];
+        targetItem[serialField] = [...targetItem[serialField], ...serialNumbers];
+        targetItem.quantity += serialNumbers.length;
+        await targetItem.save();
+
+        res.json({ success: true, sourceItem, targetItem });
+    } catch(err) {
         res.status(500).json({ message: err.message });
     }
 });
@@ -493,21 +696,24 @@ router.post('/settings', async (req, res) => {
     }
 });
 
-// --- Media (Images in DB) ---
-router.post('/upload', upload.single('file'), async (req, res) => {
+// --- Media (Images in DB / Disk) ---
+router.post('/upload', uploadDisk.single('file'), async (req, res) => {
+    console.log('[UPLOAD] New request received');
     if (!req.file) {
-        return res.status(400).json({ message: 'Dosya yüklenemedi.' });
+        console.error('[UPLOAD] No file found in request');
+        return res.status(400).json({ message: 'Dosya yüklenemedi. (req.file eksik)' });
     }
     try {
-        const newMedia = new Media({
-            data: req.file.buffer,
-            contentType: req.file.mimetype,
-            name: req.file.originalname
-        });
-        const savedMedia = await newMedia.save();
-        const fullUrl = `${req.protocol}://${req.get('host')}/api/media/${savedMedia._id}`;
-        res.json({ url: fullUrl, id: savedMedia._id });
+        console.log('[UPLOAD] File saved:', req.file.filename);
+        // Render vb. proxy arkasındaki ortamlar için protokol ve host bilgisini daha güvenli alalım
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.headers['x-forwarded-host'] || req.get('host');
+        const fullUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+        
+        console.log('[UPLOAD] Returning URL:', fullUrl);
+        res.json({ success: true, url: fullUrl, id: req.file.filename });
     } catch (err) {
+        console.error('[UPLOAD] Error:', err.message);
         res.status(500).json({ message: err.message });
     }
 });
@@ -685,6 +891,30 @@ router.post('/device-models/seed', async (req, res) => {
         res.json({ message: 'Device models seeded successfully' });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+});
+
+// --- Notifications ---
+router.get('/notifications', async (req, res) => {
+    try {
+        const filter = {};
+        if (req.query.repairId) {
+            filter.repairId = req.query.repairId;
+        }
+        const notifications = await Notification.find(filter).sort({ sentAt: -1 });
+        res.json(notifications);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/notifications', async (req, res) => {
+    try {
+        const notification = new Notification(req.body);
+        const savedNotification = await notification.save();
+        res.status(201).json(savedNotification);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
     }
 });
 

@@ -110,14 +110,16 @@ const DEVICE_DATABASE = [
 
 
 const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
-    const { addRepair, customers, addCustomer } = useAppContext();
+    const { addRepair, customers, addCustomer, companyProfile, uploadMedia } = useAppContext();
     const [step, setStep] = useState(1);
     const [showPrintModal, setShowPrintModal] = useState(false);
+    const [showKioskModal, setShowKioskModal] = useState(false);
     const [lastRepairId, setLastRepairId] = useState(null);
     const [searching, setSearching] = useState(false);
     const [toast, setToast] = useState(null);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
+    const serialInputRef = useRef(null); // Seri No tarama için ayrı ref
 
     // Suggestion State
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -140,7 +142,11 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         if (initialData) {
             setFormData(prev => ({
                 ...prev,
-                ...initialData
+                ...initialData,
+                customerTC: initialData.tcNo || initialData.customerTC || '',
+                customerAddress: initialData.customerAddress || initialData.address || '',
+                serialNumber: initialData.serial || initialData.serialNumber || '',
+                deviceModel: initialData.device || initialData.deviceModel || ''
             }));
             // We set step to 1 (initially), but maybe we can keep it as is.
             // But if we want to visually show the data is filled, user sees it when they reach step 2.
@@ -177,7 +183,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
     // ...
 
-    const handleSubmit = async () => {
+    const handlePrepareSubmission = () => {
         try {
             // 1. Zorunlu Alan Kontrolü
             if (!formData.serialNumber) { setToast({ message: 'Lütfen Seri Numarası giriniz.', type: 'error' }); return; }
@@ -186,22 +192,23 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
             if (!formData.customerName) { setToast({ message: 'Lütfen Müşteri Adı giriniz.', type: 'error' }); return; }
             if (!formData.customerPhone) { setToast({ message: 'Lütfen Müşteri Telefonu giriniz.', type: 'error' }); return; }
             if (!formData.findMyOff) { setToast({ message: 'Lütfen "Cihazımı Bul" özelliğinin kapalı olduğunu teyit ediniz.', type: 'error' }); return; }
-            // if (!formData.issueDescription) { setToast({ message: 'Lütfen Sorun Tanımı giriniz.', type: 'error' }); return; }
 
-            // 2. İmza Kontrolü (Zorunlu)
-            // sigCanvas.current might be null if not mounted or ref not set
-            if (!sigCanvas.current) {
-                setToast({ message: 'İmza alanı yüklenemedi. Lütfen sayfayı yenileyiniz.', type: 'error' });
+            // Geçiş: Form geçerliyse doğrudan full-screen Kiosk Modal aç.
+            setShowKioskModal(true);
+
+        } catch (error) {
+            console.error('Validation Error:', error);
+            setToast({ message: 'İşlem başarısız: ' + (error.message || 'Bilinmeyen Hata'), type: 'error' });
+        }
+    };
+
+    const handleConfirmKiosk = async () => {
+        try {
+            if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+                setToast({ message: 'Lütfen servis formunu parmağınızla imzalayınız.', type: 'error' });
                 return;
             }
 
-            if (sigCanvas.current.isEmpty()) {
-                setToast({ message: 'Lütfen servis formunu imzalayınız. İmza olmadan kayıt açılamaz.', type: 'error' });
-                return;
-            }
-
-            // Get signature data safely
-            // Using standard toDataURL to avoid trimming library errors
             const signatureData = sigCanvas.current.toDataURL('image/png');
 
             // 3. Resim ve Medya Hazırlığı
@@ -214,7 +221,12 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
             const newRepair = await addRepair({
                 ...formData, // Tüm form verilerini aktar
                 device: formData.deviceModel,
+                serial: formData.serialNumber, // Fix Serial Number Mapping
                 customer: formData.customerName,
+                customerPhone: formData.customerPhone,
+                customerEmail: formData.customerEmail,
+                customerAddress: formData.customerAddress,
+                tcNo: formData.customerTC,
                 issue: formData.issueDescription,
                 status: formData.serviceType !== 'repair' ? 'Cihaz Hazır' : 'Beklemede',
                 date: new Date().toLocaleDateString('tr-TR'),
@@ -257,8 +269,8 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                 setToast({ message: `Servis kaydı başarıyla oluşturuldu! Kayıt No: #${repairId}`, type: 'success' });
                 setLastRepairId(repairId);
-                // Print modalına imzalı veriyi gönder
                 setFormData(prev => ({ ...prev, customerSignature: signatureData }));
+                setShowKioskModal(false);
                 setShowPrintModal(true);
             } else {
                 console.error("Dönen Kayıt:", newRepair); // Debug için
@@ -421,7 +433,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
             }
         } catch (error) {
             console.error(error);
-            setToast({ message: 'Dosya yükleme hatası.', type: 'error' });
+            setToast({ message: 'Hata: ' + (error.message || 'Dosya yükleme hatası.'), type: 'error' });
         } finally {
             setUploading(false);
             e.target.value = null; // Reset input
@@ -618,19 +630,34 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                             <input
                                                 type="text"
                                                 placeholder="DX3PL..."
-                                                className="w-full pl-12 pr-12 py-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono tracking-wider text-lg uppercase font-bold text-gray-900"
+                                                className="w-full pl-12 pr-24 py-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono tracking-wider text-lg uppercase font-bold text-gray-900"
                                                 value={formData.serialNumber}
-                                                onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                                                onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value.toUpperCase() })}
                                             />
-                                            <Scan className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                                                <Scan size={20} />
+                                            </div>
 
-                                            <button
-                                                onClick={handleSerialSearch}
-                                                disabled={searching}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors"
-                                            >
-                                                {searching ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Search size={20} strokeWidth={2.5} />}
-                                            </button>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        showToast('Kamera başlatılıyor...', 'info');
+                                                        serialInputRef.current?.click(); // Seri No için özel ref kullan
+                                                    }}
+                                                    title="Kamera ile Tara"
+                                                    className="p-2 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors"
+                                                >
+                                                    <Camera size={20} strokeWidth={2.5} />
+                                                </button>
+                                                <button
+                                                    onClick={handleSerialSearch}
+                                                    disabled={searching}
+                                                    title="Sorgula"
+                                                    className="p-2 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors"
+                                                >
+                                                    {searching ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Search size={20} strokeWidth={2.5} />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -825,6 +852,23 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     onChange={(e) => handleFileChange(e, 'before')}
                                 />
 
+                                <input
+                                    type="file"
+                                    ref={serialInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            showToast('Seri No görseli analiz ediliyor...', 'info');
+                                            // İleride OCR eklenebilir
+                                            setTimeout(() => showToast('Barkod okuma şimdilik manuel giriş gerektiriyor.', 'warning'), 1500);
+                                        }
+                                        e.target.value = null;
+                                    }}
+                                />
+
                                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
                                     {formData.beforeImages?.map((url, index) => (
                                         <div key={index} className="relative aspect-square group rounded-[22px] overflow-hidden border border-gray-100 shadow-sm animate-in zoom-in-95 duration-300">
@@ -909,21 +953,14 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     </label>
                                 </div>
 
-                                <div className="border-t border-gray-100 pt-8">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h4 className="font-bold text-gray-900">Müşteri İmzası</h4>
-                                        <button onClick={clearSignature} className="text-xs font-bold text-red-600 bg-red-50 px-4 py-2 rounded-xl hover:bg-red-100 transition-colors flex items-center gap-2">
-                                            <Eraser size={14} /> Temizle
-                                        </button>
+                                <div className="border-t border-gray-100 pt-8 mt-10">
+                                    <div className="bg-orange-50/50 border border-orange-200 rounded-3xl p-6 text-center">
+                                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                            <FileText size={28} className="text-orange-500" />
+                                        </div>
+                                        <h4 className="font-black text-gray-900 text-lg mb-2">Dijital Sözleşme ve İmza</h4>
+                                        <p className="text-sm text-gray-500 font-medium max-w-md mx-auto">Müşteriye hüküm ve koşullar ile fiyat onayı imzalatmak için formu tamamlayarak <strong className="text-orange-600">Tam Ekran Kiosk Ekranına</strong> geçiş yapılacaktır.</p>
                                     </div>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-3xl overflow-hidden bg-gray-50 hover:bg-white hover:border-blue-300 transition-colors shadow-inner">
-                                        <SignatureCanvas
-                                            ref={sigCanvas}
-                                            penColor="black"
-                                            canvasProps={{ width: 800, height: 300, className: 'sigCanvas w-full h-64 cursor-crosshair' }}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-center text-gray-400 mt-3 font-medium">Yukarıdaki alana dokunarak imzalayabilirsiniz.</p>
                                 </div>
                             </div>
                         </div>
@@ -1069,7 +1106,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                 </button>
                             ) : (
                                 <button
-                                    onClick={handleSubmit}
+                                    onClick={handlePrepareSubmission}
                                     disabled={!formData.findMyOff || uploading}
                                     className={`flex-1 px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] ${
                                         (!formData.findMyOff || uploading) 
@@ -1082,7 +1119,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     ) : (
                                         <>
                                             <Save size={18} strokeWidth={2.5} /> 
-                                            Kaydı Tamamla
+                                            Kiosk Moduna Geç / Tamamla
                                         </>
                                     )}
                                 </button>
@@ -1093,6 +1130,89 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
             </div>
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            
+            {/* Kiosk Full-screen Signature Modal */}
+            {showKioskModal && (
+                <div className="fixed inset-0 bg-white z-[100] flex flex-col md:flex-row animate-in slide-in-from-bottom-5">
+                    {/* Left Pane: T&C and Summary */}
+                    <div className="md:w-[45%] bg-gray-50 flex flex-col p-8 overflow-y-auto">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Kabul Formu<br/><span className="text-blue-600">ve Sözleşme</span></h2>
+                            <button onClick={() => setShowKioskModal(false)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-400 shadow-sm border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm mb-6 flex flex-col gap-4">
+                            <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest border-b border-gray-100 pb-3">Servis Detayları</h3>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-gray-500">Müşteri Adı:</span>
+                                <span className="text-sm font-black text-gray-900">{formData.customerName}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-gray-500">Cihaz Modeli:</span>
+                                <span className="text-sm font-black text-gray-900">{formData.deviceModel}</span>
+                            </div>
+                            {formData.estimatedCost && formData.warrantyStatus === 'out-of-warranty' && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-bold text-gray-500">Onaylanan Ön Tutar:</span>
+                                    <span className="text-lg font-black text-orange-600">{Number(formData.estimatedCost).toLocaleString('tr-TR')} ₺</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="text-xs font-medium text-gray-500 space-y-4 leading-relaxed pr-4 text-justify h-full overflow-y-auto custom-scrollbar bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                            <h3 className="text-base font-black text-gray-900 mb-2">Hüküm ve Koşullar</h3>
+                            <p><strong>1. VERİ GÜVENLİĞİ:</strong> Cihaz içindeki verilerin yedeklenmesi tamamen müşterinin sorumluluğundadır. Servis işlemi sırasında oluşabilecek veri kayıplarından Troy Teknik Servis sorumlu tutulamaz.</p>
+                            <p><strong>2. AKSESUARLAR:</strong> Cihaz üzerindeki cam, kaplama veya sticker gibi aksesuarlar onarım süreci gereği sökülmek zorundadır ve iadesi yapılmaz.</p>
+                            <p><strong>3. RİSK BEYANI:</strong> Açılmayan, sıvı temaslı veya darbeli cihazların arıza tespiti sırasında tamamen kapanma riski müşteriye aittir.</p>
+                            <p><strong>4. TESLİM:</strong> Form ile bırakılan cihazlar, yalnızca imza sahibi veya yetkili yasal temsilcisine ıslak imza karşılığında teslim edilir.</p>
+                            <div className="mt-8 p-4 bg-orange-50 text-orange-800 rounded-2xl italic font-bold">
+                                * Cihazımı sağlam, belirtilen şartlarla uyumlu şekilde Troy Teknik Servise onarım için teslim etmeyi özgür irademle kabul ediyorum.
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Pane: Signature Canvas */}
+                    <div className="md:w-[55%] bg-white flex flex-col p-10 relative">
+                        <div className="flex-1 flex flex-col items-center justify-center relative">
+                            <div className="flex justify-between w-full mb-6 items-end">
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900">Müşteri Dijital İmzası</h3>
+                                    <p className="text-sm text-gray-400 font-bold mt-1">Lütfen aşağıdaki alana parmağınızla veya kalemle imza atınız.</p>
+                                </div>
+                                <button onClick={clearSignature} className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl text-sm font-bold transition-colors flex items-center gap-2">
+                                    <Eraser size={18} /> Temizle
+                                </button>
+                            </div>
+                            
+                            <div className="w-full h-full max-h-[500px] border-[3px] border-blue-100 bg-blue-50/10 rounded-[40px] overflow-hidden relative shadow-inner">
+                                <SignatureCanvas
+                                    ref={sigCanvas}
+                                    penColor="black"
+                                    minWidth={2}
+                                    maxWidth={4}
+                                    canvasProps={{ className: 'sigCanvas w-full h-full cursor-crosshair' }}
+                                />
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-5">
+                                    <FileText size={160} />
+                                </div>
+                            </div>
+                            
+                            <button
+                                onClick={handleConfirmKiosk}
+                                className="w-full mt-8 py-6 rounded-3xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xl shadow-2xl flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
+                            >
+                                <CheckCircle size={28} /> İMZAYI ONAYLA VE KAYDI TAMAMLA
+                            </button>
+                        </div>
+                        <div className="absolute bottom-6 mx-auto text-center w-full right-0 left-0">
+                            <span className="text-[10px] font-black uppercase text-gray-300 tracking-[0.2em]">{companyProfile?.name || "TROY"} SECURE DIGISIGN</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Print Modal */},
             {showPrintModal && (
                 <ServiceFormPrint

@@ -13,7 +13,10 @@ const Settings = () => {
         updateCustomer, removeCustomer,
         emailSettings, setEmailSettings,
         companyProfile, setCompanyProfile,
-        earnings, addEarning
+        notificationSettings, setNotificationSettings,
+        notificationTemplates, setNotificationTemplates,
+        earnings, addEarning,
+        roles, addRole, updateRole, deleteRole
     } = useAppContext();
 
     const [activeTab, setActiveTab] = useState('general');
@@ -47,6 +50,34 @@ const Settings = () => {
 
     // --- Email Settings Form ---
     const [tempEmailSettings, setTempEmailSettings] = useState(emailSettings);
+    const [tempNotifSettings, setTempNotifSettings] = useState(notificationSettings);
+
+    React.useEffect(() => {
+        if (notificationSettings) {
+            setTempNotifSettings(notificationSettings);
+        }
+    }, [notificationSettings]);
+
+    const handleSaveNotificationSettings = () => {
+        setNotificationSettings(tempNotifSettings);
+        alert('Bildirim ayarları başarıyla kaydedildi.');
+    };
+
+    // --- Notification Templates Form ---
+    const [tempNotificationTemplates, setTempNotificationTemplates] = useState(notificationTemplates);
+    const [activeTemplatePlatform, setActiveTemplatePlatform] = useState('whatsapp');
+    const [activeTemplateType, setActiveTemplateType] = useState('status_update');
+
+    React.useEffect(() => {
+        if (notificationTemplates) {
+            setTempNotificationTemplates(notificationTemplates);
+        }
+    }, [notificationTemplates]);
+
+    const handleSaveNotificationTemplates = () => {
+        setNotificationTemplates(tempNotificationTemplates);
+        alert('Şablonlar başarıyla kaydedildi.');
+    };
 
     // --- Attachment States ---
     const [file, setFile] = useState(null);
@@ -200,8 +231,63 @@ const Settings = () => {
     };
 
 
+    // --- Role Management ---
+    const [showRoleModal, setShowRoleModal] = useState(false);
+    const [editingRole, setEditingRole] = useState(null);
+    const [roleForm, setRoleForm] = useState({ name: '', displayName: '', permissions: [] });
+
+    const availablePermissions = [
+        { id: 'view_all_stores', label: 'Tüm Mağazaları Gör' },
+        { id: 'manage_settings', label: 'Sistem Ayarları Yönetimi (Admin)' },
+        { id: 'manage_users', label: 'Kullanıcı Yönetimi' },
+        { id: 'manage_stock', label: 'Stok Yönetimi' },
+        { id: 'view_dashboard', label: 'Dashboard Görüntüleme' },
+        { id: 'edit_repairs', label: 'Servis Kayıtlarını Düzenle' },
+        { id: 'delete_repairs', label: 'Servis Kayıtlarını Sil' },
+        { id: 'view_earnings', label: 'Ciro / Gelir Gör' },
+        { id: 'create_repair', label: 'Yeni Servis Kaydı Aç' },
+        { id: 'view_own_repairs', label: 'Sadece Kendi Kayıtlarını Gör' }
+    ];
+
+    const handleSaveRole = async () => {
+        if (!roleForm.name || !roleForm.displayName) {
+            Swal.fire('Hata', 'Lütfen rol adı ve görünen adı doldurun.', 'error');
+            return;
+        }
+        let success;
+        if (editingRole) {
+            success = await updateRole(editingRole._id, roleForm);
+        } else {
+            success = await addRole(roleForm);
+        }
+        if (success) {
+            Swal.fire('Başarılı', `Rol başarıyla ${editingRole ? 'güncellendi' : 'eklendi'}.`, 'success');
+            setShowRoleModal(false);
+            setRoleForm({ name: '', displayName: '', permissions: [] });
+            setEditingRole(null);
+        }
+    };
+
+    const handleDeleteRole = async (role) => {
+        if (role.isSystem) return;
+        const confirmed = await Swal.fire({
+            title: 'Emin misiniz?',
+            text: `${role.displayName} rolü silinecek.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Sil!',
+            cancelButtonText: 'İptal'
+        });
+        if (confirmed.isConfirmed) {
+            const success = await deleteRole(role._id);
+            if (success) {
+                Swal.fire('Silindi', 'Rol başarıyla silindi.', 'success');
+            }
+        }
+    };
+
     // --- User Form ---
-    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Teknisyen', storeId: 1 });
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
     const [editingUserId, setEditingUserId] = useState(null);
     const [editUserData, setEditUserData] = useState(null);
 
@@ -212,7 +298,7 @@ const Settings = () => {
             storeId: parseInt(newUser.storeId),
             avatar: newUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
         });
-        setNewUser({ name: '', email: '', password: '', role: 'Teknisyen', storeId: 1 });
+        setNewUser({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
     };
 
     const handleUpdateUser = async () => {
@@ -616,11 +702,149 @@ const Settings = () => {
                                 <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                                     <Mail size={20} />
                                 </div>
-                                SMTP Sunucu Yapılandırması
+                                Microsoft Exchange Entegrasyonu
                             </h4>
                             <p className="text-sm text-blue-700/80 leading-relaxed ml-11 max-w-2xl">
-                                Cihaz durum güncellenmesi ve fiyat onayı gibi bilgilendirme e-postalarının gönderilmesi için kurumsal mail sunucu bilgilerinizi giriniz.
+                                E-postalarınız Microsoft Exchange altyapısı üzerinden gönderilecektir. Sisteme sadece kurumsal mail adresinizi ve şifrenizi girmeniz yeterlidir, sunucu verileri otomatik olarak yapılandırılır.
                             </p>
+                        </div>
+
+                        {/* --- Notification Preferences Section --- */}
+                        <div className="glass p-8 rounded-3xl space-y-6">
+                            <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <Bell size={20} className="text-gray-400" />
+                                Bildirim Davranışları ve İçerik Şablonları
+                            </h5>
+
+                            <div className="space-y-4">
+                                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 cursor-pointer hover:bg-gray-100 transition-all">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        checked={tempNotifSettings?.requireDamageDescription || false}
+                                        onChange={e => setTempNotifSettings({...tempNotifSettings, requireDamageDescription: e.target.checked})}
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-sm text-gray-900">Müşteri Bildirimlerinde Hasar Açıklaması (Tanı) Ekle</span>
+                                        <span className="text-xs text-gray-500 font-medium">Bu seçenek aktif olduğunda, gönderilen bildirimlerde tespit edilen arıza/tanı açıklaması da müşteriye iletilir.</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    onClick={handleSaveNotificationSettings}
+                                    className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                >
+                                    Tercihleri Kaydet
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* --- Notification Templates Section --- */}
+                        <div className="glass p-8 rounded-3xl space-y-6">
+                            <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <MessageSquare size={20} className="text-gray-400" />
+                                Bildirim Şablonlarını Düzenle
+                            </h5>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Kullanabileceğiniz değişkenler: <span className="font-mono text-xs bg-gray-100 px-1 rounded">{'{customerName}'}</span>, <span className="font-mono text-xs bg-gray-100 px-1 rounded">{'{device}'}</span>, <span className="font-mono text-xs bg-gray-100 px-1 rounded">{'{status}'}</span>, <span className="font-mono text-xs bg-gray-100 px-1 rounded">{'{serviceNo}'}</span>, <span className="font-mono text-xs bg-gray-100 px-1 rounded">{'{cost}'}</span>, <span className="font-mono text-xs bg-gray-100 px-1 rounded font-bold text-blue-600">{'{damageReason}'}</span>
+                            </p>
+
+                            <div className="flex gap-2">
+                                {['whatsapp', 'sms', 'email'].map(platform => (
+                                    <button 
+                                        key={platform}
+                                        onClick={() => setActiveTemplatePlatform(platform)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold capitalize ${activeTemplatePlatform === platform ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        {platform}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mt-4">
+                                {[
+                                    {id: 'status_update', label: 'Durum Güncellemesi'},
+                                    {id: 'repair_requote', label: 'Fiyat / Onay Bekliyor'},
+                                    {id: 'ready_pickup', label: 'Teslime Hazır'},
+                                    {id: 'general_info', label: 'Genel Bilgilendirme'}
+                                ].map(type => (
+                                    <button 
+                                        key={type.id}
+                                        onClick={() => setActiveTemplateType(type.id)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold ${activeTemplateType === type.id ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                                    >
+                                        {type.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 space-y-4">
+                                {activeTemplatePlatform === 'email' && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">E-Posta Konusu</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm"
+                                            value={tempNotificationTemplates?.email?.[activeTemplateType]?.subject || ''}
+                                            onChange={e => setTempNotificationTemplates(prev => ({
+                                                ...prev,
+                                                email: {
+                                                    ...prev.email,
+                                                    [activeTemplateType]: {
+                                                        ...prev.email?.[activeTemplateType],
+                                                        subject: e.target.value
+                                                    }
+                                                }
+                                            }))}
+                                        />
+                                    </div>
+                                )}
+                                
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Mesaj İçeriği</label>
+                                    <textarea
+                                        rows={8}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm custom-scrollbar"
+                                        value={
+                                            activeTemplatePlatform === 'email' 
+                                                ? tempNotificationTemplates?.email?.[activeTemplateType]?.body || ''
+                                                : tempNotificationTemplates?.[activeTemplatePlatform]?.[activeTemplateType] || ''
+                                        }
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setTempNotificationTemplates(prev => {
+                                                const next = { ...prev };
+                                                if (activeTemplatePlatform === 'email') {
+                                                    next.email = {
+                                                        ...next.email,
+                                                        [activeTemplateType]: {
+                                                            ...next.email?.[activeTemplateType],
+                                                            body: val
+                                                        }
+                                                    };
+                                                } else {
+                                                    next[activeTemplatePlatform] = {
+                                                        ...next[activeTemplatePlatform],
+                                                        [activeTemplateType]: val
+                                                    };
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    onClick={handleSaveNotificationTemplates}
+                                    className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                >
+                                    Şablonları Kaydet
+                                </button>
+                            </div>
                         </div>
 
                         {/* --- Attachment Section --- */}
@@ -691,35 +915,15 @@ const Settings = () => {
                         <div className="glass p-8 rounded-3xl space-y-6">
                             <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
                                 <Globe size={20} className="text-gray-400" />
-                                SMTP Ayarları
+                                Microsoft Exchange Bağlantısı
                             </h5>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">SMTP Sunucu Adresi</label>
-                                    <input
-                                        type="text"
-                                        placeholder="mail.troyapr.com"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
-                                        value={tempEmailSettings.host}
-                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, host: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Port</label>
-                                    <input
-                                        type="text"
-                                        placeholder="587"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
-                                        value={tempEmailSettings.port}
-                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, port: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Kullanıcı Adı (Mail)</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Kurumsal E-Posta Adresi</label>
                                     <input
                                         type="email"
-                                        placeholder="servis@troyapr.com"
+                                        placeholder="ornek@kurum.com"
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
                                         value={tempEmailSettings.user}
                                         onChange={e => setTempEmailSettings({ ...tempEmailSettings, user: e.target.value })}
@@ -733,26 +937,6 @@ const Settings = () => {
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
                                         value={tempEmailSettings.pass}
                                         onChange={e => setTempEmailSettings({ ...tempEmailSettings, pass: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Gelen Sunucu (Incoming)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="smail05.doruk.net.tr"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
-                                        value={tempEmailSettings.incomingHost}
-                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, incomingHost: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Gelen Port (IMAP)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="993"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
-                                        value={tempEmailSettings.incomingPort}
-                                        onChange={e => setTempEmailSettings({ ...tempEmailSettings, incomingPort: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -932,10 +1116,9 @@ const Settings = () => {
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
                                         value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
                                     >
-                                        <option value="Admin">Yönetici</option>
-                                        <option value="Ön Karşılama">Ön Karşılama</option>
-                                        <option value="Teknisyen">Teknisyen</option>
-                                        <option value="Lojistik">Lojistik</option>
+                                        {roles.map(role => (
+                                            <option key={role.name} value={role.name}>{role.displayName}</option>
+                                        ))}
                                     </select>
                                     <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16} />
                                 </div>
@@ -994,10 +1177,11 @@ const Settings = () => {
                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Yetki & Mağaza</label>
                                                     <div className="flex flex-col gap-1">
                                                         <select className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 outline-none font-black text-[10px] uppercase" value={editUserData.role} onChange={e => setEditUserData({ ...editUserData, role: e.target.value })}>
-                                                            <option value="Admin">ADMIN</option>
-                                                            <option value="Teknisyen">TEKNİSYEN</option>
-                                                            <option value="Ön Karşılama">ÖN KARŞILAMA</option>
-                                                            <option value="Lojistik">LOJİSTİK</option>
+                                                            <option value="SuperAdmin">SÜPER ADMIN</option>
+                                                            <option value="StoreManager">MAĞAZA YÖNETİCİSİ</option>
+                                                            <option value="Reception">BANKO / KARŞILAMA</option>
+                                                            <option value="Technician">TEKNİSYEN</option>
+                                                            <option value="Accountant">MUHASEBE</option>
                                                         </select>
                                                         <select className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 outline-none font-black text-[10px] uppercase" value={editUserData.storeId} onChange={e => setEditUserData({ ...editUserData, storeId: Number(e.target.value) })}>
                                                             <option value="0">GENEL MERKEZ</option>
@@ -1020,8 +1204,8 @@ const Settings = () => {
                                                         <h4 className="font-black text-gray-900 text-lg tracking-tight truncate">{u.name}</h4>
                                                         <div className="flex items-center gap-2">
                                                             <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
-                                                                u.role === 'Admin' ? 'bg-indigo-600 text-white border-indigo-600' : 
-                                                                u.role === 'Teknisyen' ? 'bg-emerald-500 text-white border-emerald-500' :
+                                                                (u.role === 'SuperAdmin' || u.role === 'Admin') ? 'bg-indigo-600 text-white border-indigo-600' : 
+                                                                (u.role === 'Technician' || u.role === 'Teknisyen') ? 'bg-emerald-500 text-white border-emerald-500' :
                                                                 'bg-amber-500 text-white border-amber-500'
                                                             }`}>
                                                                 {u.role}
@@ -1310,6 +1494,158 @@ const Settings = () => {
                         </div>
                     </div>
                 );
+            case 'roles':
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <div className="flex justify-between items-center bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                            <div>
+                                <h4 className="text-xl font-black text-gray-900 leading-none">Yetki Grupları (Roller)</h4>
+                                <p className="text-gray-500 text-sm mt-2 font-medium">Sistemdeki kullanıcıların yetki düzeylerini buradan yönetin.</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setEditingRole(null);
+                                    setRoleForm({ name: '', displayName: '', permissions: [] });
+                                    setShowRoleModal(true);
+                                }}
+                                className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl font-black text-xs hover:bg-black transition-all shadow-xl shadow-gray-200 hover:-translate-y-1 active:scale-95 flex items-center gap-2 uppercase tracking-widest"
+                            >
+                                <Plus size={18} /> Yeni Rol Oluştur
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {(roles || []).map((role) => (
+                                <div key={role._id} className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+                                    {role.isSystem && (
+                                        <div className="absolute top-0 right-0 px-4 py-1.5 bg-gray-100 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-bl-2xl">
+                                            SİSTEM
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center">
+                                            <Shield size={28} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-black text-gray-900">{role.displayName}</h4>
+                                            <p className="text-xs font-mono text-gray-400 font-bold">{role.name}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 mb-8">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Aktif Yetkiler ({role.permissions?.length || 0})</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {role.permissions?.slice(0, 4).map(p => (
+                                                <span key={p} className="bg-gray-50 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-lg border border-gray-100 uppercase">
+                                                    {availablePermissions.find(ap => ap.id === p)?.label || p}
+                                                </span>
+                                            ))}
+                                            {role.permissions?.length > 4 && (
+                                                <span className="text-[9px] font-bold text-gray-400 ml-1">+{role.permissions.length - 4} Daha</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 pt-4 border-t border-gray-50">
+                                        <button
+                                            onClick={() => {
+                                                setEditingRole(role);
+                                                setRoleForm({ ...role });
+                                                setShowRoleModal(true);
+                                            }}
+                                            className="flex-1 bg-gray-50 hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                                        >
+                                            DÜZENLE
+                                        </button>
+                                        {!role.isSystem && (
+                                            <button
+                                                onClick={() => handleDeleteRole(role)}
+                                                className="w-12 h-12 flex items-center justify-center bg-gray-50 hover:bg-red-50 text-gray-300 hover:text-red-600 rounded-xl transition-all"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Role Modal */}
+                        {showRoleModal && (
+                            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                                <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 shadow-2xl animate-scale-up border border-white/20">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h3 className="text-2xl font-black text-gray-900">{editingRole ? 'Rolü Düzenle' : 'Yeni Rol Oluştur'}</h3>
+                                        <button onClick={() => setShowRoleModal(false)} className="w-12 h-12 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-2xl flex items-center justify-center transition-all">
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6 mb-8">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sistem Adı (ID)</label>
+                                            <input
+                                                type="text"
+                                                disabled={!!editingRole}
+                                                value={roleForm.name}
+                                                onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
+                                                placeholder="Orn: ServiceManager"
+                                                className="w-full px-5 py-4 bg-gray-50 rounded-[20px] border border-transparent focus:bg-white focus:border-rose-500 outline-none transition-all font-mono font-bold text-sm disabled:opacity-50"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Görünen Ad</label>
+                                            <input
+                                                type="text"
+                                                value={roleForm.displayName}
+                                                onChange={(e) => setRoleForm({ ...roleForm, displayName: e.target.value })}
+                                                placeholder="Orn: Servis Müdürü"
+                                                className="w-full px-5 py-4 bg-gray-50 rounded-[20px] border border-transparent focus:bg-white focus:border-rose-500 outline-none transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 mb-10">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">İzinleri Seçin</label>
+                                        <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {availablePermissions.map(p => (
+                                                <label key={p.id} className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${roleForm.permissions.includes(p.id) ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-white hover:border-gray-200'}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={roleForm.permissions.includes(p.id)}
+                                                        onChange={(e) => {
+                                                            const newPerms = e.target.checked
+                                                                ? [...roleForm.permissions, p.id]
+                                                                : roleForm.permissions.filter(id => id !== p.id);
+                                                            setRoleForm({ ...roleForm, permissions: newPerms });
+                                                        }}
+                                                        className="w-5 h-5 rounded-lg text-rose-600 focus:ring-rose-500 border-gray-300"
+                                                    />
+                                                    <span className="text-xs font-black uppercase tracking-tight">{p.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={() => setShowRoleModal(false)}
+                                            className="flex-1 py-5 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-all"
+                                        >
+                                            VAZGEÇ
+                                        </button>
+                                        <button
+                                            onClick={handleSaveRole}
+                                            className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-rose-200 transition-all active:scale-95"
+                                        >
+                                            {editingRole ? 'GÜNCELLEMELERİ KAYDET' : 'ROLÜ OLUŞTUR'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
         }
     };
 
@@ -1330,6 +1666,7 @@ const Settings = () => {
                             { id: 'earnings', label: 'Hakediş Kayıtları', icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
                             { id: 'notifications', label: 'E-Posta & SMTP', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50' },
                             { id: 'security', label: 'Sistem Güvenliği', icon: Shield, color: 'text-orange-600', bg: 'bg-orange-50' },
+                            { id: 'roles', label: 'Yetki ve İzinler', icon: Key, color: 'text-rose-500', bg: 'bg-rose-50' },
                             { id: 'updates', label: 'Yazılım Güncelleme', icon: RefreshCw, color: 'text-blue-600', bg: 'bg-blue-50' },
                         ].map((item) => (
                             <button
@@ -1366,13 +1703,15 @@ const Settings = () => {
                              activeTab === 'notifications' ? 'E-Posta & SMTP Yapısı' :
                              activeTab === 'stock' ? 'Envanter Veritabanı' :
                              activeTab === 'updates' ? 'Yazılım Güncelleme' :
+                             activeTab === 'roles' ? 'Yetki ve Rol Yönetimi' :
                              'Genel Sistem Ayarları'}
                         </h2>
                         <p className="text-gray-500 mt-2 font-medium text-lg leading-relaxed max-w-2xl">
                             {activeTab === 'users' ? 'Sisteme erişimi olan kullanıcıları ve yetkilerini buradan yönetebilirsiniz.' :
                              activeTab === 'locations' ? 'Fiziksel servis noktalarınızı ve Ship-To numaralarınızı tanımlayın.' :
-                             activeTab === 'updates' ? 'Sistem yazılımını güncel tutarak en yeni özelliklere ve güvenlik iyileştirmelerine sahip olun.' :
-                             'Tüm sistem parametrelerini ve kurumsal verileri merkezi olarak buradan yapılandırın.'}
+                              activeTab === 'updates' ? 'Sistem yazılımını güncel tutarak en yeni özelliklere ve güvenlik iyileştirmelerine sahip olun.' :
+                              activeTab === 'roles' ? 'Sistemdeki rolleri tanımlayabilir ve her rolün hangi sayfalara/işlemlere erişebileceğini belirleyebilirsiniz.' :
+                              'Tüm sistem parametrelerini ve kurumsal verileri merkezi olarak buradan yapılandırın.'}
                         </p>
                     </div>
 

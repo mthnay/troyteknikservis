@@ -32,6 +32,7 @@ if (!MONGODB_URI) {
 mongoose.connect(MONGODB_URI)
     .then(async () => {
         console.log('SUCCESS: Connected to MongoDB Atlas');
+        try { mongoose.connection.db.collection('inventories').dropIndex('id_1').catch(()=>null); } catch (e) {}
         await seedData();
     })
     .catch(err => {
@@ -84,6 +85,8 @@ if (!fs.existsSync(uploadDir)) {
         console.error('Failed to create upload directory:', err);
     }
 }
+
+app.use('/uploads', express.static(uploadDir));
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

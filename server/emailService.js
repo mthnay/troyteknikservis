@@ -21,16 +21,17 @@ export const sendAutomatedEmail = async (repair, statusType) => {
 
         const auth = emailConfigSetting.value;
 
-        // 2. SMTP Transporter Yapılandır
+        // 2. SMTP Transporter Yapılandır (Microsoft Exchange Zorunlu)
         const transporter = nodemailer.createTransport({
-            host: auth.host || 'mail.troyapr.com',
-            port: auth.port || 587,
-            secure: auth.port == 465,
+            host: 'smtp.office365.com',
+            port: 587,
+            secure: false, // 587 portu için STARTTLS kullanılır
+            requireTLS: true,
             auth: {
                 user: auth.user,
                 pass: auth.pass,
             },
-            tls: { rejectUnauthorized: false },
+            tls: { ciphers: 'SSLv3', rejectUnauthorized: false },
             connectionTimeout: 10000,
         });
 
@@ -146,6 +147,7 @@ export const sendAutomatedEmail = async (repair, statusType) => {
         const info = await transporter.sendMail({
             from: `"Troy Apple Yetkili Servis" <${auth.user}>`,
             to: repair.customerEmail || repair.email, // Hem schema hem de legacy destekli
+            cc: 'servis.mavibahce@artitroy.com',
             subject: subject,
             html: html,
             attachments: attachments

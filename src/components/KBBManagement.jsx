@@ -4,6 +4,7 @@ import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
 import { appAlert } from '../utils/alert';
 import { appConfirm, appPrompt } from '../utils/alert';
+import { hasPermission } from '../utils/permissions';
 
 const KBBManagement = () => {
     const { repairs, updateRepair, showToast, currentUser, servicePoints, inventory, updateInventoryItem, addInventoryItem, removeInventoryItem } = useAppContext();
@@ -365,56 +366,75 @@ const KBBManagement = () => {
                             </tbody>
                         </table>
                     ) : activeTab === 'parts' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
-                            {inventory.filter(i => i.category !== 'loaner').map((item) => (
-                                <div 
-                                    key={item._id || item.id} 
-                                    onClick={() => setSelectedStockItem(item)}
-                                    className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all group cursor-pointer relative overflow-hidden"
-                                >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                                            <Package size={22} />
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <button 
-                                                onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    const confirmed = await appConfirm(`<strong>${item.name}</strong> adlı parçayı envanterden tamamen silmek istediğinize emin misiniz?`);
-                                                    if (confirmed) {
-                                                        removeInventoryItem(item._id || item.id);
-                                                        showToast('Parça envanterden silindi.', 'info');
-                                                    }
-                                                }}
-                                                className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                item.quantity <= (item.minLevel || 5) ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'
-                                            }`}>
-                                                {item.quantity <= (item.minLevel || 5) ? 'Düşük Stok' : 'İdeal Stok'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <h4 className="font-bold text-gray-900 mb-1">{item.name}</h4>
-                                    <p className="text-[10px] font-mono text-gray-400 mb-4">{item.partNumber}</p>
-                                    
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Stok Seviyesi</span>
-                                            <span className="text-sm font-black text-gray-900">{item.quantity} / {item.maxLevel || 100}</span>
-                                        </div>
-                                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden shadow-inner">
-                                            <div 
-                                                className={`h-full rounded-full transition-all duration-1000 ${item.quantity <= item.minLevel ? 'bg-red-500' : 'bg-blue-500'}`} 
-                                                style={{ width: `${(item.quantity / (item.maxLevel || 100)) * 100}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                <tr>
+                                    <th className="px-8 py-4">BİLGİ</th>
+                                    <th className="px-4 py-4">P/N KODU</th>
+                                    <th className="px-4 py-4 text-center">STOK SEVİYESİ</th>
+                                    <th className="px-8 py-4 text-right">İŞLEM</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {inventory.filter(i => i.category !== 'loaner').length > 0 ? (
+                                    inventory.filter(i => i.category !== 'loaner').map((item) => (
+                                        <tr key={item._id || item.id} onClick={() => setSelectedStockItem(item)} className="hover:bg-blue-50/50 transition-colors group cursor-pointer">
+                                            <td className="px-8 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex flex-shrink-0 items-center justify-center">
+                                                        <Package size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{item.name}</span>
+                                                        <div className="text-[11px] text-gray-400 font-medium">{item.category || 'Yedek Parça'}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4 font-mono text-xs text-gray-500 font-bold">{item.partNumber || '-'}</td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex flex-col items-center">
+                                                    <span className={`text-[13px] font-black mb-1 ${item.quantity <= (item.minLevel || 5) ? 'text-red-600' : 'text-gray-900'}`}>{item.quantity} Adet</span>
+                                                    <div className="w-24 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className={`h-full rounded-full transition-all ${item.quantity <= (item.minLevel || 5) ? 'bg-red-500' : 'bg-blue-500'}`} 
+                                                            style={{ width: `${Math.min((item.quantity / (item.maxLevel || 100)) * 100, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setSelectedStockItem(item); }}
+                                                        className="h-8 px-3 flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all shadow-sm"
+                                                    >
+                                                        Detay
+                                                    </button>
+                                                    <button 
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            const confirmed = await appConfirm(`<strong>${item.name}</strong> envanterden tamamen silinecek. Emin misiniz?`);
+                                                            if (confirmed) {
+                                                                removeInventoryItem(item._id || item.id);
+                                                                showToast('Parça envanterden silindi.', 'info');
+                                                            }
+                                                        }}
+                                                        className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 rounded-lg transition-all shadow-sm"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="text-center py-16 text-gray-400 font-medium">Envanterde parça bulunamadı.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+
                     ) : (
                         // Loaners Tab
                         <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -664,7 +684,7 @@ const KBBManagement = () => {
                                                 </div>
                                                 
                                                 {/* Admin Only Actions */}
-                                                {((currentUser?.role || '').toLowerCase() === 'admin') && (
+                                                {hasPermission(currentUser, 'manage_settings') && (
                                                     <div className="flex gap-2">
                                                         <button 
                                                             type="button"
@@ -703,7 +723,7 @@ const KBBManagement = () => {
                                                         </button>
                                                     </div>
                                                 )}
-                                                {currentUser?.role?.toLowerCase() !== 'admin' && <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-all" />}
+                                                {!hasPermission(currentUser, 'manage_settings') && <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-all" />}
                                             </div>
                                         ))
                                     ) : (

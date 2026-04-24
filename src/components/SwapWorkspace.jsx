@@ -26,7 +26,10 @@ const SwapWorkspace = ({ repairId, onClose, setActiveTab }) => {
 
     const [steps, setSteps] = useState(() => {
         const found = repairs.find(r => r.id === repairId);
-        return found?.steps || DEFAULT_STEPS;
+        if (found?.steps && found.steps.length > 0) {
+            return found.steps;
+        }
+        return DEFAULT_STEPS;
     });
 
     useEffect(() => {
@@ -136,16 +139,21 @@ const SwapWorkspace = ({ repairId, onClose, setActiveTab }) => {
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-white/95 rounded-[40px] w-full max-w-7xl h-[92vh] flex overflow-hidden shadow-2xl relative border border-white/50 animate-scale-up">
+            <div className="bg-white/95 rounded-[40px] w-full max-w-7xl h-[92vh] flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden shadow-2xl relative border border-white/50 animate-scale-up">
 
-                {/* Sol Panel */}
-                <div className="w-1/3 bg-gray-50/80 backdrop-blur-xl border-r border-gray-100 flex flex-col">
+                {/* Sol Panel - Sipariş & Değişim Adımları */}
+                <div className="w-full lg:w-1/3 bg-gray-50/80 backdrop-blur-xl border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col shrink-0 lg:shrink lg:h-full">
                     <div className="p-8 border-b border-gray-100">
                         <div className="flex items-center gap-3 mb-4">
                             <span className="bg-white text-gray-900 px-3 py-1 rounded-md text-xs font-mono font-bold shadow-sm border border-gray-100">{repair.id}</span>
                             <span className="bg-purple-600 text-white px-3 py-1 rounded-md text-xs font-bold uppercase shadow-sm shadow-purple-200">Değişim / Swap</span>
                         </div>
-                        <h2 className="text-2xl font-black text-gray-900 leading-tight mb-2">{repair.device}</h2>
+                        <h2 className="text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight">{repair.device}</h2>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100">
+                                <span className="font-bold uppercase">S/N: {repair.serial || repair.serialNumber || 'YOK'}</span>
+                            </div>
+                        </div>
                         <div className="text-sm text-gray-500 font-medium">{repair.customer}</div>
                     </div>
 
@@ -156,7 +164,7 @@ const SwapWorkspace = ({ repairId, onClose, setActiveTab }) => {
                         </div>
                         <div className="space-y-3">
                             {steps.map((step, index) => (
-                                <label key={step.id} className={`flex items-center gap-4 p-5 rounded-2xl border cursor-pointer transition-all ${step.checked ? 'bg-purple-600 border-purple-600 shadow-lg text-white' : 'bg-white border-gray-100 hover:border-purple-200'}`}>
+                                <label key={step.id} className={`flex items-center gap-4 p-5 rounded-[24px] border cursor-pointer transition-all ${step.checked ? 'bg-purple-600 border-purple-600 shadow-lg text-white' : 'bg-white border-gray-100 hover:border-purple-200'}`}>
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step.checked ? 'bg-white text-purple-600 border-white' : 'border-gray-200 text-gray-400'}`}>
                                         {step.checked ? <CheckCircle size={16} strokeWidth={4} /> : <step.icon size={16} />}
                                     </div>
@@ -273,7 +281,7 @@ const SwapWorkspace = ({ repairId, onClose, setActiveTab }) => {
                 </div>
 
                 {/* Sağ Panel */}
-                <div className="w-1/4 bg-white border-l border-gray-100 flex flex-col">
+                <div className="w-full lg:w-1/4 bg-white border-t lg:border-t-0 lg:border-l border-gray-100 flex flex-col shrink-0 lg:shrink lg:h-full overflow-y-auto">
                     <div className="p-8 border-b border-gray-100 bg-gray-50/50">
                         <h3 className="text-[9px] font-black uppercase text-gray-400 mb-2 flex items-center gap-2"><FileText size={14} /> Teknisyen Notları</h3>
                         <p className="text-xs font-semibold text-gray-500 leading-relaxed">{repair.diagnosisNotes || repair.notes || 'Not girilmemiş.'}</p>
@@ -288,7 +296,7 @@ const SwapWorkspace = ({ repairId, onClose, setActiveTab }) => {
                         ></textarea>
                     </div>
                     <div className="p-8 border-t border-gray-100">
-                        <button onClick={handleComplete} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black text-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <button onClick={handleComplete} className="w-full py-4 bg-gray-900 text-white rounded-[24px] font-black text-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 tracking-tight">
                             <Save size={18} /> İŞLEMİ TAMAMLA
                         </button>
                     </div>

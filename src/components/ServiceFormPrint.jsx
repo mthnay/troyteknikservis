@@ -206,7 +206,7 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
                                     </div>
                                     <div className="flex justify-between items-end border-b border-gray-50 pb-2">
                                         <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Seri No</span>
-                                        <span className="text-sm font-mono font-black tracking-tight text-gray-900">{formData.serialNumber}</span>
+                                        <span className="text-sm font-mono font-black tracking-tight text-gray-900 uppercase">{formData.serialNumber}</span>
                                     </div>
                                     <div className="flex justify-between items-end border-b border-gray-50 pb-2">
                                         <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Garanti</span>

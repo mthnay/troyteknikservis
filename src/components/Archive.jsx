@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext';
 import { getProductImage } from '../utils/productImages';
 import RepairHistoryModal from './RepairHistoryModal';
 import BatchExportModal from './BatchExportModal';
+import { hasPermission } from '../utils/permissions';
 
 const Archive = () => {
     const { repairs, servicePoints, currentUser } = useAppContext();
@@ -23,8 +24,8 @@ const Archive = () => {
         return (
             (r.customer && r.customer.toLowerCase().includes(searchLower)) ||
             (r.id && r.id.toString().toLowerCase().includes(searchLower)) ||
-            (r.repairId && r.repairId.toString().toLowerCase().includes(searchLower)) ||
             (r.device && r.device.toLowerCase().includes(searchLower)) ||
+            (r.serial && r.serial.toLowerCase().includes(searchLower)) ||
             (r.serialNumber && r.serialNumber.toLowerCase().includes(searchLower))
         );
     });
@@ -33,7 +34,7 @@ const Archive = () => {
     const grouped = {};
     
     // Yalnızca kullanıcının görebileceği mağazaları boş klasör şablonu olarak ekle
-    const allowedStores = currentUser?.role?.toLowerCase() === 'admin'
+    const allowedStores = hasPermission(currentUser, 'view_all_stores')
         ? servicePoints
         : servicePoints.filter(sp => String(sp.id) === String(currentUser?.storeId));
 

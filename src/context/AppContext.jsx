@@ -1,12 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Toast from '../components/Toast';
+import { hasPermission, ROLES, setGlobalRoles } from '../utils/permissions';
 
 const AppContext = createContext();
 
 export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
-    const API_URL = import.meta.env.VITE_API_URL || 'https://troyteknikservis.onrender.com/api';
+    const API_URL = import.meta.env.VITE_API_URL || 
+                    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                     ? 'http://localhost:5001/api' 
+                     : 'https://troyteknikservis.onrender.com/api');
 
     // --- State Definitions ---
     const [servicePoints, setServicePoints] = useState([]);
@@ -42,6 +46,52 @@ export const AppProvider = ({ children }) => {
         dealerCode: "TR-APR-0042"
     });
 
+    const [notificationSettings, setNotificationSettings] = useState({
+        requireDamageDescription: false,
+        includeDiagnosisInEmail: false
+    });
+
+    const [notificationTemplates, setNotificationTemplates] = useState({
+        email: {
+            status_update: {
+                id: 'status_update',
+                title: 'Durum Güncellemesi',
+                subject: 'Servis Kaydınız Hakkında Bilgilendirme - #{serviceNo}',
+                body: 'Sayın {customerName},\n\n{device} cihazınızın servis durumu "{status}" olarak güncellenmiştir.\n\nServis No: #{serviceNo}\nAçıklama: {damageReason}\n\nDetaylı bilgi için müşteri portalımızı ziyaret edebilir veya bizimle iletişime geçebilirsiniz.\n\nİyi günler dileriz,\nTroy Servis Ekibi'
+            },
+            repair_requote: {
+                id: 'repair_requote',
+                title: 'Fiyat Teklifi / Onay Bekliyor',
+                subject: 'Servis İşlemi İçin Onayınız Bekleniyor - #{serviceNo}',
+                body: 'Sayın {customerName},\n\n{device} cihazınızın arıza tespiti tamamlanmıştır.\n\nServis No: #{serviceNo}\nTahmini Onarım Bedeli: {cost} ₺\nTespit Edilen Durum: {damageReason}\n\nİşleme devam edilebilmesi için fiyat teklifini onaylamanız gerekmektedir. Ek detaylar müşteri portalında yer almaktadır.\n\nTeşekkür ederiz,\nTroy Servis Ekibi'
+            },
+            ready_pickup: {
+                id: 'ready_pickup',
+                title: 'Teslime Hazır',
+                subject: 'Cihazınız Teslim Alınmaya Hazır - #{serviceNo}',
+                body: 'Sayın {customerName},\n\n{device} cihazınızın servis işlemleri başarıyla tamamlanmış olup, cihazınız teslime hazırdır.\n\nServis No: #{serviceNo}\nÖdenecek Tutar: {cost} ₺\nYapılan İşlem/Açıklama: {damageReason}\n\nMüsait olduğunuzda servis noktamızdan cihazınızı teslim alabilirsiniz.\n\nİyi günler dileriz,\nTroy Servis Ekibi'
+            },
+            general_info: {
+                id: 'general_info',
+                title: 'Genel Bilgilendirme',
+                subject: 'Servis Kaydınız ile İlgili Bilgilendirme - #{serviceNo}',
+                body: 'Sayın {customerName},\n\n#{serviceNo} kayıt numaralı {device} cihazınız ile ilgili teknik servis ekibimizin bilgilendirmesi aşağıda yer almaktadır:\n\n{damageReason}\n\nİyi günler dileriz,\nTroy Servis Ekibi'
+            }
+        },
+        sms: {
+            status_update: 'Sayın {customerName}, {device} cihazinizin durumu "{status}" olarak guncellenmistir. ({damageReason}) Servis No: #{serviceNo}. Bilgi icin: troyservis.com B001',
+            repair_requote: 'Sayın {customerName}, #{serviceNo} nolu cihaziniza ait onarim bedeli {cost} TL olarak belirlenmistir. ({damageReason}) Onay icin lutfen donus yapiniz. B001',
+            ready_pickup: 'Sayın {customerName}, #{serviceNo} nolu {device} cihazinizin islemleri tamamlanmis olup teslime hazirdir. ({damageReason}) B001',
+            general_info: 'Sayın {customerName}, #{serviceNo} nolu {device} cihaziniz ile ilgili bilgilendirme: {damageReason}. B001'
+        },
+        whatsapp: {
+            status_update: '🛡️ *TROY TEKNİK SERVİS* 📱\n\nMerhaba *{customerName}*,\n\n*{device}* cihazınızın onarım süreci güncellendi:\n📍 Durum: *{status}*\n🔢 Servis No: #{serviceNo}\n📝 Açıklama: *{damageReason}*\n\nCanlı takip için: troy.onlar/track?id={serviceNo}',
+            repair_requote: '⚠️ *ONAYINIZ BEKLENİYOR* ⚠️\n\nMerhaba *{customerName}*,\n\n#{serviceNo} nolu cihazınız için onarım teklifi hazırlandı:\n💰 Tutar: *{cost} TL*\n📝 Tanı: *{damageReason}*\n\nİşleme devam etmek için lütfen portal üzerinden onay veriniz.',
+            ready_pickup: '✅ *CİHAZINIZ HAZIR* ✅\n\nMerhaba *{customerName}*,\n\n#{serviceNo} nolu *{device}* cihazınızın işlemleri tamamlandı! Mesai saatleri içinde teslim alabilirsiniz.\n📝 Ek Bilgi: *{damageReason}*\n\nBekliyoruz! 👋',
+            general_info: 'ℹ️ *GENEL BİLGİLENDİRME* ℹ️\n\nMerhaba *{customerName}*,\n\n#{serviceNo} nolu *{device}* cihazınız ile ilgili ekibimizin notu:\n\n📝 *{damageReason}*\n\nİyi günler dileriz.'
+        }
+    });
+
     const [selectedStoreId, setSelectedStoreId] = useState(0);
     const [repairs, setRepairs] = useState([]);
     const [inventory, setInventory] = useState([]);
@@ -49,6 +99,7 @@ export const AppProvider = ({ children }) => {
     const [customers, setCustomers] = useState([]);
     const [earnings, setEarnings] = useState([]);
     const [alerts, setAlerts] = useState([]);
+    const [roles, setRoles] = useState([]);
 
     // SLA Helper
     const checkSLA = (repair) => {
@@ -100,10 +151,11 @@ export const AppProvider = ({ children }) => {
             if (res.ok) {
                 return await res.json(); // Returns { url, id }
             }
-            return null;
+            const errorData = await res.json().catch(() => ({ message: 'Sunucu hatası' }));
+            throw new Error(errorData.message || 'Yükleme sırasında bir sorun oluştu.');
         } catch (error) {
             console.error("Upload Error:", error);
-            return null;
+            throw error; // Hatayı yukarı fırlat ki bileşen yakalasın
         }
     };
 
@@ -125,20 +177,33 @@ export const AppProvider = ({ children }) => {
                 if (servicePointsRes.ok) setServicePoints(await servicePointsRes.json());
                 if (!currentUser) return;
                 let queryParams = '';
-                const role = currentUser.role?.toLowerCase();
-                if (role !== 'admin' && currentUser.storeId) {
+                if (!hasPermission(currentUser, 'view_all_stores') && currentUser.storeId) {
                     queryParams = `?storeId=${currentUser.storeId}`;
                 }
-                const [repairsRes, inventoryRes, techniciansRes, settingsRes, customersRes, companyRes, earningsRes] = await Promise.all([
+                const [repairsRes, inventoryRes, techniciansRes, settingsRes, customersRes, companyRes, earningsRes, notifSetRes, notifTempRes, rolesRes] = await Promise.all([
                     fetch(`${API_URL}/repairs${queryParams}`),
                     fetch(`${API_URL}/inventory${queryParams}`),
                     fetch(`${API_URL}/technicians${queryParams}`),
                     fetch(`${API_URL}/settings/emailSettings`),
                     fetch(`${API_URL}/customers${queryParams}`),
                     fetch(`${API_URL}/settings/companyProfile`),
-                    fetch(`${API_URL}/earnings${queryParams}`)
+                    fetch(`${API_URL}/earnings${queryParams}`),
+                    fetch(`${API_URL}/settings/notificationSettings`),
+                    fetch(`${API_URL}/settings/notificationTemplates`),
+                    fetch(`${API_URL}/roles`)
                 ]);
-                if (repairsRes.ok) setRepairs(await repairsRes.json());
+                if (repairsRes.ok) {
+                    const data = await repairsRes.json();
+                    // Verileri normalize et (serialNumber -> serial, deviceModel -> device)
+                    const normalizedData = data.map(r => ({
+                        ...r,
+                        serial: r.serial || r.serialNumber || '',
+                        device: r.device || r.deviceModel || '',
+                        tcNo: r.tcNo || r.customerTC || '',
+                        customerAddress: r.customerAddress || r.address || ''
+                    }));
+                    setRepairs(normalizedData);
+                }
                 if (inventoryRes.ok) setInventory(await inventoryRes.json());
                 if (techniciansRes.ok) setTechnicians(await techniciansRes.json());
                 if (earningsRes.ok) setEarnings(await earningsRes.json());
@@ -149,6 +214,19 @@ export const AppProvider = ({ children }) => {
                 if (companyRes.ok) {
                     const profile = await companyRes.json();
                     if (profile) setCompanyProfile(profile);
+                }
+                if (notifSetRes.ok) {
+                    const notifSet = await notifSetRes.json();
+                    if (notifSet) setNotificationSettings(notifSet);
+                }
+                if (notifTempRes.ok) {
+                    const notifTemp = await notifTempRes.json();
+                    if (notifTemp) setNotificationTemplates(notifTemp);
+                }
+                if (rolesRes && rolesRes.ok) {
+                    const fetchedRoles = await rolesRes.json();
+                    setRoles(fetchedRoles);
+                    setGlobalRoles(fetchedRoles);
                 }
                 if (customersRes.ok) setCustomers(await customersRes.json());
             } catch (error) {
@@ -193,7 +271,11 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const logout = () => setCurrentUser(null);
+    const logout = () => {
+        localStorage.clear(); // Tüm verileri temizle
+        setCurrentUser(null);
+        window.location.href = '/'; // Sayfayı kökten yenile ve başa dön
+    };
 
     const addUser = async (user) => {
         try {
@@ -261,6 +343,10 @@ export const AppProvider = ({ children }) => {
     const addRepair = async (repair) => {
         const newRepairInitial = {
             ...repair,
+            tcNo: repair.tcNo || repair.customerTC || '',
+            customerAddress: repair.customerAddress || repair.address || '',
+            serial: repair.serial || repair.serialNumber || '',
+            device: repair.device || repair.deviceModel || '',
             id: repair.id || `TR-${Math.floor(Math.random() * 10000)}`,
             date: new Date().toLocaleString('tr-TR'),
             status: 'Beklemede',
@@ -275,8 +361,15 @@ export const AppProvider = ({ children }) => {
             });
             if (res.ok) {
                 const saved = await res.json();
-                setRepairs(prev => [saved, ...prev]);
-                return saved;
+                const normalized = {
+                    ...saved,
+                    serial: saved.serial || saved.serialNumber || repair.serial || repair.serialNumber || '',
+                    device: saved.device || saved.deviceModel || repair.device || repair.deviceModel || '',
+                    tcNo: saved.tcNo || saved.customerTC || repair.tcNo || repair.customerTC || '',
+                    customerAddress: saved.customerAddress || saved.address || repair.customerAddress || repair.address || ''
+                };
+                setRepairs(prev => [normalized, ...prev]);
+                return normalized;
             }
         } catch (error) { console.error("Error adding repair:", error); return null; }
     };
@@ -311,14 +404,29 @@ export const AppProvider = ({ children }) => {
         }
 
         try {
+            const normalizedUpdates = {
+                ...updates,
+                tcNo: updates.tcNo || updates.customerTC || undefined,
+                customerAddress: updates.customerAddress || updates.address || undefined
+            };
+            // undefined alanları temizle ki DB'deki veriyi silmesin
+            Object.keys(normalizedUpdates).forEach(key => normalizedUpdates[key] === undefined && delete normalizedUpdates[key]);
+
             const res = await fetch(`${API_URL}/repairs/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...updates, ...extraUpdates, history: newHistory })
+                body: JSON.stringify({ ...normalizedUpdates, ...extraUpdates, history: newHistory })
             });
             if (res.ok) {
                 const updated = await res.json();
-                setRepairs(prev => prev.map(r => (r._id === updated._id || r.id === id) ? updated : r));
+                const normalized = {
+                    ...updated,
+                    serial: updated.serial || updated.serialNumber || '',
+                    device: updated.device || updated.deviceModel || '',
+                    tcNo: updated.tcNo || updated.customerTC || '',
+                    customerAddress: updated.customerAddress || updated.address || ''
+                };
+                setRepairs(prev => prev.map(r => (r._id === updated._id || r.id === id) ? normalized : r));
                 return true;
             }
         } catch (error) { console.error("Error updating repair:", error); return false; }
@@ -423,6 +531,21 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const addCustomer = async (customer) => {
+        try {
+            const res = await fetch(`${API_URL}/customers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...customer, id: customer.id || `c${Date.now()}` })
+            });
+            if (res.ok) {
+                const saved = await res.json();
+                setCustomers(prev => [...prev, saved]);
+                return saved;
+            }
+        } catch (error) { console.error("Error adding customer:", error); return null; }
+    };
+
     const updateCustomer = async (id, updates) => {
         try {
             const res = await fetch(`${API_URL}/customers/${id}`, {
@@ -505,6 +628,34 @@ export const AppProvider = ({ children }) => {
         } catch (error) { console.error("Error using part:", error); return false; }
     };
 
+    const transferInventorySerial = async (sourceItemId, targetStoreId, serialNumbers, serialType) => {
+        try {
+            const res = await fetch(`${API_URL}/inventory/transfer-serial`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sourceItemId, targetStoreId, serialNumbers, serialType })
+            });
+            if (res.ok) {
+                const { sourceItem, targetItem } = await res.json();
+                setInventory(prev => {
+                    let next = [...prev];
+                    const sIndex = next.findIndex(i => (i._id === sourceItem._id) || (i.id === sourceItem.id));
+                    if (sIndex > -1) next[sIndex] = sourceItem;
+
+                    const tIndex = next.findIndex(i => (i._id === targetItem._id) || (i.id === targetItem.id));
+                    if (tIndex > -1) next[tIndex] = targetItem;
+                    else next.push(targetItem);
+                    
+                    return next;
+                });
+                return true;
+            }
+        } catch (e) {
+            console.error("Error transferring serial:", e);
+        }
+        return false;
+    };
+
     const addEarning = async (earning) => {
         try {
             const res = await fetch(`${API_URL}/earnings`, {
@@ -524,9 +675,73 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const addRole = async (role) => {
+        try {
+            const res = await fetch(`${API_URL}/roles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(role)
+            });
+            if (res.ok) {
+                const savedRole = await res.json();
+                setRoles(prev => [...prev, savedRole]);
+                return true;
+            } else {
+                const errorData = await res.json();
+                showToast(errorData.message || 'Rol eklenemedi', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error("Error adding role:", error);
+            showToast('Bağlantı hatası', 'error');
+            return false;
+        }
+    };
+
+    const updateRole = async (id, roleData) => {
+        try {
+            const res = await fetch(`${API_URL}/roles/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(roleData)
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setRoles(prev => prev.map(r => r._id === id ? updated : r));
+                return true;
+            } else {
+                const errorData = await res.json();
+                showToast(errorData.message || 'Rol güncellenemedi', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error("Error updating role:", error);
+            return false;
+        }
+    };
+
+    const deleteRole = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/roles/${id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setRoles(prev => prev.filter(r => r._id !== id));
+                return true;
+            } else {
+                const errorData = await res.json();
+                showToast(errorData.message || 'Rol silinemedi', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error("Error deleting role:", error);
+            return false;
+        }
+    };
+
     const getStoreRepairs = () => {
         if (!currentUser) return [];
-        if (currentUser.role?.toLowerCase() === 'admin') {
+        if (hasPermission(currentUser, 'view_all_stores')) {
             if (String(selectedStoreId) === '0') return repairs;
             return repairs.filter(r => String(r.storeId) === String(selectedStoreId));
         }
@@ -554,14 +769,14 @@ export const AppProvider = ({ children }) => {
             users,
             currentUser,
             servicePoints,
-            inventory: inventory.filter(i => currentUser?.role === 'admin' ? (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId)) : String(i.storeId) === String(currentUser?.storeId)),
+            inventory: inventory.filter(i => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId)) : String(i.storeId) === String(currentUser?.storeId)),
             allInventory: inventory,
             technicians: (() => {
-                const baseTechnicians = technicians.filter(t => currentUser?.role === 'admin' ? (selectedStoreId === 0 || String(t.storeId) === String(selectedStoreId)) : String(t.storeId) === String(currentUser?.storeId));
+                const baseTechnicians = technicians.filter(t => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(t.storeId) === String(selectedStoreId)) : String(t.storeId) === String(currentUser?.storeId));
                 
                 // Kullanıcılar arasından teknisyen rolündekileri bul
                 const technicianUsers = users
-                    .filter(u => u.role?.toLowerCase() === 'technician' && (currentUser?.role === 'admin' ? (selectedStoreId === 0 || String(u.storeId) === String(selectedStoreId)) : String(u.storeId) === String(currentUser?.storeId)))
+                    .filter(u => (u.role?.toLowerCase() === 'technician' || u.role === 'Teknisyen') && (hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(u.storeId) === String(selectedStoreId)) : String(u.storeId) === String(currentUser?.storeId)))
                     .map(u => ({
                         ...u,
                         name: u.name,
@@ -581,15 +796,18 @@ export const AppProvider = ({ children }) => {
                 return combined;
             })(),
             allTechnicians: technicians,
-            customers: customers.filter(c => currentUser?.role === 'admin' ? (selectedStoreId === 0 || String(c.storeId) === String(selectedStoreId)) : String(c.storeId) === String(currentUser?.storeId)),
+            customers: customers.filter(c => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(c.storeId) === String(selectedStoreId)) : String(c.storeId) === String(currentUser?.storeId)),
             allCustomers: customers,
-            earnings: earnings.filter(e => currentUser?.role === 'admin' ? (selectedStoreId === 0 || String(e.storeId) === String(selectedStoreId)) : String(e.storeId) === String(currentUser?.storeId)),
+            earnings: earnings.filter(e => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(e.storeId) === String(selectedStoreId)) : String(e.storeId) === String(currentUser?.storeId)),
             allEarnings: earnings,
             login, logout, addUser, updateUser, removeUser, addRepair, removeRepair, updateRepair, updateRepairStatus,
             addTechnician, updateTechnician, removeTechnician, assignTechnician, completeJob, addServicePoint, updateServicePoint, removeServicePoint,
-            updateCustomer, removeCustomer, addInventoryItem, updateInventoryItem, removeInventoryItem, usePart, addEarning,
+            addCustomer, updateCustomer, removeCustomer, addInventoryItem, updateInventoryItem, removeInventoryItem, usePart, transferInventorySerial, addEarning,
             emailSettings, setEmailSettings: (s) => { setEmailSettings(s); saveSettings('emailSettings', s); },
             companyProfile, setCompanyProfile: (p) => { setCompanyProfile(p); saveSettings('companyProfile', p); },
+            notificationSettings, setNotificationSettings: (s) => { setNotificationSettings(s); saveSettings('notificationSettings', s); },
+            notificationTemplates, setNotificationTemplates: (s) => { setNotificationTemplates(s); saveSettings('notificationTemplates', s); },
+            roles, addRole, updateRole, deleteRole,
             selectedStoreId, setSelectedStoreId, showToast, alerts, checkSLA, API_URL, sendWhatsApp, uploadMedia
         }}>
             {children}

@@ -18,6 +18,7 @@ import TrackingInput from './components/TrackingInput';
 import MarketingAutomation from './components/MarketingAutomation';
 import NotificationCenter from './components/NotificationCenter';
 import { useAppContext } from './context/AppContext';
+import { hasPermission } from './utils/permissions';
 
 function App() {
   const { currentUser } = useAppContext();
@@ -66,7 +67,7 @@ function App() {
           {activeTab === 'apple-center' && <RepairCenter type="apple-center" setActiveTab={setActiveTab} />}
           {activeTab === 'reports' && <Reports />}
           {activeTab === 'technicians' && <Technicians />}
-          {activeTab === 'settings' && currentUser?.role?.toLowerCase() === 'admin' && <Settings />}
+          {activeTab === 'settings' && hasPermission(currentUser, 'manage_settings') && <Settings />}
           {activeTab !== 'dashboard' && activeTab !== 'service' && activeTab !== 'in-store' && activeTab !== 'ready-pickup' && activeTab !== 'archive' && activeTab !== 'apple-center' && activeTab !== 'pending-repairs' && activeTab !== 'approval-pending' && activeTab !== 'stock' && activeTab !== 'reports' && activeTab !== 'technicians' && activeTab !== 'settings' && activeTab !== 'customers' && activeTab !== 'marketing' && (
             <div className="flex flex-col items-center justify-center h-[70vh] text-center">
               <h2 className="text-2xl font-bold text-gray-300 mb-2">Sayfa Yapım Aşamasında</h2>

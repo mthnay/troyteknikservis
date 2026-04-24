@@ -206,6 +206,10 @@ const ApprovalPending = ({ setActiveTab }) => {
                 <CustomerNotificationModal
                     repair={selectedRepair}
                     onClose={() => setShowNotifyModal(false)}
+                    onActionComplete={() => {
+                        setShowNotifyModal(false);
+                        setSelectedRepair(null);
+                    }}
                 />
             )}
 
