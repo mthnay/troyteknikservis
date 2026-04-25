@@ -78,10 +78,10 @@ const initialSystemSettings = [
     {
         key: 'emailConfig',
         value: {
-            host: 'mail.troyapr.com',
+            host: 'smtp.office365.com',
             port: 587,
-            user: 'info@troyapr.com',
-            pass: 'password_here'
+            user: 'servis.mavibahce@troyapr.com',
+            pass: '1A@Uv*5k8TOd'
         }
     }
 ];

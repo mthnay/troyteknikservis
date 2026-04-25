@@ -29,9 +29,9 @@ export const AppProvider = ({ children }) => {
     });
 
     const [emailSettings, setEmailSettings] = useState({
-        host: 'smail05.doruk.net.tr',
-        port: '465',
-        incomingHost: 'smail05.doruk.net.tr',
+        host: 'smtp.office365.com',
+        port: '587',
+        incomingHost: 'outlook.office365.com',
         incomingPort: '993',
         user: 'servis.mavibahce@troyapr.com',
         pass: '1A@Uv*5k8TOd'

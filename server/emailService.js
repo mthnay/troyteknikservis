@@ -21,18 +21,23 @@ export const sendAutomatedEmail = async (repair, statusType) => {
 
         const auth = emailConfigSetting.value;
 
-        // 2. SMTP Transporter Yapılandır (Microsoft Exchange Zorunlu)
+        // 2. SMTP Transporter Yapılandır (Microsoft Exchange / Office 365 Uyumlu)
         const transporter = nodemailer.createTransport({
-            host: 'smtp.office365.com',
-            port: 587,
-            secure: false, // 587 portu için STARTTLS kullanılır
-            requireTLS: true,
+            host: auth.host || 'smtp.office365.com',
+            port: auth.port || 587,
+            secure: auth.port == 465, 
+            requireTLS: auth.port == 587 || !auth.port,
             auth: {
                 user: auth.user,
                 pass: auth.pass,
             },
-            tls: { ciphers: 'SSLv3', rejectUnauthorized: false },
-            connectionTimeout: 10000,
+            tls: { 
+                ciphers: 'SSLv3', 
+                rejectUnauthorized: false 
+            },
+            connectionTimeout: 15000,
+            greetingTimeout: 15000,
+            socketTimeout: 30000,
         });
 
         // 3. Şablon ve İçerik Belirle

@@ -140,19 +140,23 @@ app.post('/api/send-email', async (req, res) => {
         });
     }
 
-    // SMTP Ayarları
+    // SMTP Ayarları (Microsoft Exchange / Office 365 Uyumlu)
     const transporter = nodemailer.createTransport({
-        host: auth.host || 'mail.troyapr.com',
+        host: auth.host || 'smtp.office365.com',
         port: auth.port || 587,
-        secure: auth.port == 465,
+        secure: auth.port == 465, // 465 ise true, değilse (587) false
+        requireTLS: auth.port == 587 || !auth.port, 
         auth: {
             user: auth.user,
             pass: auth.pass,
         },
-        tls: { rejectUnauthorized: false },
-        connectionTimeout: 10000, // 10 saniye içinde bağlanamazsa hata ver
-        greetingTimeout: 10000,   // Karşılama mesajı için 10 saniye
-        socketTimeout: 20000,     // İşlem sırasında 20 saniye bekler
+        tls: { 
+            ciphers: 'SSLv3', 
+            rejectUnauthorized: false 
+        },
+        connectionTimeout: 15000, // Exchange bazen yavaş yanıt verebilir
+        greetingTimeout: 15000,
+        socketTimeout: 30000,
     });
 
     // Ekleri hazırla
