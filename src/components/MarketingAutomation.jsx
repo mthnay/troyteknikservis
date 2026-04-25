@@ -19,6 +19,15 @@ const MarketingAutomation = () => {
     const [messageContent, setMessageContent] = useState('');
     const [activeChannel, setActiveChannel] = useState('whatsapp'); // 'whatsapp', 'email', 'sms'
 
+    // Automation Logs (Notifications)
+    const [automationLogs, setAutomationLogs] = useState([
+        { id: 1, type: 'Zap', title: 'Hazır Bildirimi', detail: 'Ahmet Yılmaz (iPhone 13) - WhatsApp iletildi.', time: '2 dk önce', status: 'success' },
+        { id: 2, type: 'Bell', title: 'SLA Uyarısı', detail: 'TR-1024 nolu cihaz 48 saati geçti. Yöneticiye e-posta gönderildi.', time: '15 dk önce', status: 'warning' },
+        { id: 3, type: 'Clock', title: 'Teklif Hatırlatıcı', detail: 'Mehmet Kaya - Teklif hatırlatma SMS sıraya alındı.', time: '1 saat önce', status: 'info' },
+        { id: 4, type: 'Zap', title: 'Kampanya Gönderimi', detail: 'Haftalık bakım bülteni 142 müşteriye ulaştırıldı.', time: '3 saat önce', status: 'success' },
+        { id: 5, type: 'Bell', title: 'Stok Kritik', detail: 'iPhone 13 Ekran stoku kritik seviyenin altına düştü (2 adet).', time: '5 saat önce', status: 'warning' }
+    ]);
+
     // Automation Rules
     const [rules, setRules] = useState([
         { id: 1, title: 'Otomatik SLA Takibi', desc: '48 saati geçen işlemlerde yöneticilere bildirim gönder.', active: true, icon: Bell, color: 'bg-red-50 text-red-500' },
@@ -235,6 +244,37 @@ const MarketingAutomation = () => {
                     </div>
 
                     {/* Automation Rules Quick View */}
+                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
+                        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                            <h3 className="font-black text-gray-900 flex items-center gap-2">
+                                <Zap size={18} className="text-blue-600" /> Akıllı Otomasyon Merkezi
+                            </h3>
+                            <button className="text-[10px] font-black text-blue-600 uppercase hover:underline">Tümünü Gör</button>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            {automationLogs.map(log => (
+                                <div key={log.id} className="flex items-start gap-4 p-4 rounded-2xl bg-white border border-gray-100 hover:shadow-md transition-all group">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                        log.status === 'success' ? 'bg-green-50 text-green-600' : 
+                                        log.status === 'warning' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                                    }`}>
+                                        {log.type === 'Zap' ? <Zap size={18} /> : log.type === 'Bell' ? <Bell size={18} /> : <Clock size={18} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <h4 className="text-sm font-black text-gray-900">{log.title}</h4>
+                                            <span className="text-[9px] font-bold text-gray-400">{log.time}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 font-medium line-clamp-1">{log.detail}</p>
+                                    </div>
+                                    <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ChevronRight size={16} className="text-gray-300" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {rules.map(rule => (
                             <div key={rule.id} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
