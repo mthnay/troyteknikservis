@@ -60,7 +60,9 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
         serial: repair?.serial || repair?.serialNumber || '',
         issue: repair?.issue || '',
         tcNo: repair?.tcNo || '',
-        customerAddress: repair?.customerAddress || ''
+        customerAddress: repair?.customerAddress || '',
+        warrantyStatus: repair?.warrantyStatus || 'Garanti Dışı',
+        quoteAmount: repair?.quoteAmount || ''
     });
 
     const [customerForm, setCustomerForm] = useState({
@@ -82,7 +84,9 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                 serial: repair.serial || repair.serialNumber,
                 issue: repair.issue,
                 tcNo: repair.tcNo || '',
-                customerAddress: repair.customerAddress || ''
+                customerAddress: repair.customerAddress || '',
+                warrantyStatus: repair.warrantyStatus || 'Garanti Dışı',
+                quoteAmount: repair.quoteAmount || ''
             });
             setCustomerForm({
                 customer: repair.customer || '',
@@ -878,12 +882,44 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Müşteri Şikayeti / Arıza Notu</label>
                                     <textarea 
-                                        rows={3} 
+                                        rows={2} 
                                         value={editForm.issue} 
                                         onChange={e => setEditForm({...editForm, issue: e.target.value})} 
                                         disabled={!isAdmin}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-medium text-gray-900 focus:bg-white focus:border-apple-blue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none disabled:opacity-70 custom-scrollbar" 
                                     />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Garanti Durumu</label>
+                                        <select 
+                                            value={editForm.warrantyStatus} 
+                                            onChange={e => setEditForm({...editForm, warrantyStatus: e.target.value})} 
+                                            disabled={!isAdmin}
+                                            className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-bold text-gray-900 focus:bg-white focus:border-apple-blue outline-none transition-all disabled:opacity-70"
+                                        >
+                                            <option value="Garanti İçi">Garanti İçi</option>
+                                            <option value="Garanti Dışı">Garanti Dışı</option>
+                                            <option value="Sınırlı Garanti">Sınırlı Garanti</option>
+                                            <option value="AppleCare+">AppleCare+</option>
+                                            <option value="Tüketici Kanunu">Tüketici Kanunu</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Ücret / Teklif Tutarı (₺)</label>
+                                        <div className="relative">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₺</div>
+                                            <input 
+                                                type="number" 
+                                                value={editForm.quoteAmount} 
+                                                onChange={e => setEditForm({...editForm, quoteAmount: e.target.value})} 
+                                                disabled={!isAdmin}
+                                                placeholder="0.00"
+                                                className="w-full pl-10 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-bold text-gray-900 focus:bg-white focus:border-apple-blue outline-none transition-all disabled:opacity-70" 
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
