@@ -168,12 +168,16 @@ export const AppProvider = ({ children }) => {
     };
 
     useEffect(() => {
+        let isCancelled = false;
         const fetchData = async () => {
             try {
                 const [usersRes, servicePointsRes] = await Promise.all([
                     fetch(`${API_URL}/users`),
                     fetch(`${API_URL}/service-points`)
                 ]);
+                
+                if (isCancelled) return;
+
                 if (usersRes.ok) {
                     const fetchedUsers = await usersRes.json();
                     setUsers(fetchedUsers);
@@ -183,7 +187,9 @@ export const AppProvider = ({ children }) => {
                     }
                 }
                 if (servicePointsRes.ok) setServicePoints(await servicePointsRes.json());
-                if (!currentUser) return;
+                
+                if (!currentUser || isCancelled) return;
+
                 let queryParams = '';
                 if (!hasPermission(currentUser, 'view_all_stores') && currentUser.storeId) {
                     queryParams = `?storeId=${currentUser.storeId}`;
@@ -200,6 +206,9 @@ export const AppProvider = ({ children }) => {
                     fetch(`${API_URL}/settings/notificationTemplates`),
                     fetch(`${API_URL}/roles`)
                 ]);
+
+                if (isCancelled) return;
+
                 if (repairsRes.ok) {
                     const data = await repairsRes.json();
                     // Verileri normalize et (serialNumber -> serial, deviceModel -> device)
@@ -238,10 +247,13 @@ export const AppProvider = ({ children }) => {
                 }
                 if (customersRes.ok) setCustomers(await customersRes.json());
             } catch (error) {
-                console.error("Error fetching data:", error);
+                if (!isCancelled) {
+                    console.error("Error fetching data:", error);
+                }
             }
         };
         fetchData();
+        return () => { isCancelled = true; };
     }, [currentUser]);
 
     useEffect(() => {
@@ -280,9 +292,11 @@ export const AppProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.clear(); // Tüm verileri temizle
+        localStorage.clear();
+        sessionStorage.clear();
         setCurrentUser(null);
-        window.location.href = '/'; // Sayfayı kökten yenile ve başa dön
+        // Force a clean redirect to root
+        window.location.replace('/');
     };
 
     const addUser = async (user) => {
