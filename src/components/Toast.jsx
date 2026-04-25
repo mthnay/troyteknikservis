@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { CheckCircle, AlertCircle, XCircle, Info, X } from 'lucide-react';
 
-const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
+const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
     useEffect(() => {
         if (duration) {
             const timer = setTimeout(() => {
@@ -9,7 +9,7 @@ const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
             }, duration);
             return () => clearTimeout(timer);
         }
-    }, [duration, onClose]);
+    }, [duration, onClose, message]);
 
     const bgColors = {
         success: 'bg-green-50 border-green-200 text-green-800',

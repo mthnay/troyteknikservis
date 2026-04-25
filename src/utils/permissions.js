@@ -25,7 +25,8 @@ const ROLE_PERMISSIONS = {
         'delete_repairs',
         'view_earnings',
         'view_kbb',
-        'view_technicians'
+        'view_technicians',
+        'manage_marketing'
     ],
     [ROLES.STORE_MANAGER]: [
         'view_dashboard', 
@@ -33,7 +34,8 @@ const ROLE_PERMISSIONS = {
         'edit_repairs',
         'view_earnings',
         'view_kbb',
-        'view_technicians'
+        'view_technicians',
+        'manage_marketing'
     ],
     [ROLES.ACCOUNTANT]: [
         'view_earnings',

@@ -154,7 +154,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content w-full max-w-2xl flex flex-col">
+            <div className="modal-content w-full max-w-4xl flex flex-col">
 
                 {/* Header */}
                 <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">

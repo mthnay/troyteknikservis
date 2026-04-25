@@ -246,7 +246,8 @@ const Settings = () => {
         { id: 'delete_repairs', label: 'Servis Kayıtlarını Sil' },
         { id: 'view_earnings', label: 'Ciro / Gelir Gör' },
         { id: 'create_repair', label: 'Yeni Servis Kaydı Aç' },
-        { id: 'view_own_repairs', label: 'Sadece Kendi Kayıtlarını Gör' }
+        { id: 'view_own_repairs', label: 'Sadece Kendi Kayıtlarını Gör' },
+        { id: 'manage_marketing', label: 'Pazarlama & Otomasyon Yönetimi' }
     ];
 
     const handleSaveRole = async () => {

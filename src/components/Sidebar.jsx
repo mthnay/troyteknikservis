@@ -12,7 +12,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         { id: 'pending-repairs', icon: Clock, label: 'İşlem Bekleyenler' },
         { id: 'approval-pending', icon: MessageCircle, label: 'Müşteri Onayı' },
         { id: 'customers', icon: Users, label: 'Müşteriler (CRM)' },
-        { id: 'marketing', icon: Megaphone, label: 'Pzr. & Otomasyon' },
+        ...(hasPermission(currentUser, 'manage_marketing') ? [{ id: 'marketing', icon: Megaphone, label: 'Pzr. & Otomasyon' }] : []),
         { id: 'stock', icon: Package, label: 'Envanter ve Stok' },
         { id: 'in-store', icon: Wrench, label: 'Mağaza İçi Onarım' },
         { id: 'ready-pickup', icon: CheckCircle, label: 'Hazırlar' },
