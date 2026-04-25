@@ -56,14 +56,17 @@ export const sendAutomatedEmail = async (repair, statusType) => {
                 break;
             
             case 'Cihaz Hazır':
+            case 'İade Hazır':
             case 'Hazır':
-                subject = `Onarım Tamamlandı: #${repair.id} - ${repair.device}`;
-                templateTitle = 'Cihazınız Hazır!';
+                subject = `Cihazınız Hazır: #${repair.id} - ${repair.device}`;
+                templateTitle = 'Cihazınız Teslime Hazır!';
                 accentColor = '#28a745'; // Green
                 templateContent = `
-                    İyi haber! <strong>${repair.device}</strong> cihazınızın onarım süreci başarıyla tamamlanmıştır. 
+                    Sayın <strong>${repair.customer}</strong>,<br><br>
+                    <strong>${repair.device}</strong> cihazınızın servis işlemleri tamamlanmış ve teslimata hazır hale getirilmiştir. 
                     Cihazınızı mağazamızdan dilediğiniz zaman teslim alabilirsiniz.<br><br>
                     <strong>Servis Kaydı:</strong> #${repair.id}<br>
+                    <strong>Durum:</strong> ${repair.status}<br>
                     <strong>Çalışma Saatleri:</strong> 09:00 - 18:00
                 `;
                 break;
