@@ -48,7 +48,13 @@ export const AppProvider = ({ children }) => {
 
     const [notificationSettings, setNotificationSettings] = useState({
         requireDamageDescription: false,
-        includeDiagnosisInEmail: false
+        includeDiagnosisInEmail: false,
+        automations: {
+            sla_tracking: true,
+            ready_notification: true,
+            satisfaction_survey: false,
+            quote_reminder: true
+        }
     });
 
     const [notificationTemplates, setNotificationTemplates] = useState({
@@ -127,6 +133,8 @@ export const AppProvider = ({ children }) => {
 
     const computeAlerts = (repairsList) => {
         const newAlerts = [];
+        if (notificationSettings?.automations?.sla_tracking === false) return [];
+        
         repairsList.forEach(r => {
             const sla = checkSLA(r);
             if (sla) {

@@ -21,6 +21,19 @@ export const sendAutomatedEmail = async (repair, statusType) => {
 
         const auth = emailConfigSetting.value;
 
+        // 1.5 Bildirim Ayarlarını Kontrol Et (Otomasyonlar Aktif mi?)
+        const notifSettings = await SystemSetting.findOne({ key: 'notificationSettings' });
+        if (notifSettings && notifSettings.value && notifSettings.value.automations) {
+            const automations = notifSettings.value.automations;
+            
+            // Eğer durum "Hazır" ise ve hazır bildirim otomasyonu kapalıysa gönderimi durdur
+            const readyStatuses = ['Cihaz Hazır', 'İade Hazır', 'Hazır'];
+            if (readyStatuses.includes(statusType) && automations.ready_notification === false) {
+                console.log(`[EmailService] "${statusType}" bildirimi otomasyon ayarlarında kapalı olduğu için iptal edildi.`);
+                return;
+            }
+        }
+
         // 2. SMTP Transporter Yapılandır (Microsoft Exchange / Office 365 Uyumlu)
         const transporter = nodemailer.createTransport({
             host: auth.host || 'smtp.office365.com',

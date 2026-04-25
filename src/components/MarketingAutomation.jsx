@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Megaphone, Users, MessageCircle, Mail, Filter, Search, CheckSquare, 
     Square, ChevronRight, Zap, Bell, ShieldCheck, ToggleLeft, ToggleRight, 
@@ -8,7 +8,7 @@ import { useAppContext } from '../context/AppContext';
 import { appAlert, appConfirm } from '../utils/alert';
 
 const MarketingAutomation = () => {
-    const { allRepairs, emailSettings, showToast, sendWhatsApp } = useAppContext();
+    const { allRepairs, notificationSettings, setNotificationSettings, showToast, sendWhatsApp } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [selectedUsers, setSelectedUsers] = useState([]);
@@ -17,7 +17,7 @@ const MarketingAutomation = () => {
     // Notification Panel State
     const [messageSubject, setMessageSubject] = useState('');
     const [messageContent, setMessageContent] = useState('');
-    const [activeChannel, setActiveChannel] = useState('whatsapp'); // 'whatsapp', 'email', 'sms'
+    const [activeChannel, setActiveChannel] = useState('whatsapp');
 
     // Automation Logs (Notifications)
     const [automationLogs, setAutomationLogs] = useState([
@@ -28,19 +28,27 @@ const MarketingAutomation = () => {
         { id: 5, type: 'Bell', title: 'Stok Kritik', detail: 'iPhone 13 Ekran stoku kritik seviyenin altına düştü (2 adet).', time: '5 saat önce', status: 'warning' }
     ]);
 
-    // Automation Rules
-    const [rules, setRules] = useState([
-        { id: 1, title: 'Otomatik SLA Takibi', desc: '48 saati geçen işlemlerde yöneticilere bildirim gönder.', active: true, icon: Bell, color: 'bg-red-50 text-red-500' },
-        { id: 2, title: 'Hazır Bildirim Otomasyonu', desc: 'Cihaz "Hazır" olduğunda müşteriye WhatsApp & E-Posta gönder.', active: true, icon: Zap, color: 'bg-blue-50 text-blue-500' },
-        { id: 3, title: 'Memnuniyet Anketi', desc: 'Teslimattan 24 saat sonra müşteri portalına NPS anketi ekle.', active: false, icon: ShieldCheck, color: 'bg-green-50 text-green-500' },
-        { id: 4, title: 'Teklif Hatırlatıcı', desc: 'Onay bekleyen teklifleri 2 gün sonra müşteriye tekrar hatırlat.', active: true, icon: Clock, color: 'bg-orange-50 text-orange-500' }
-    ]);
+    // Map global settings to UI rules
+    const rules = [
+        { id: 'sla_tracking', title: 'Otomatik SLA Takibi', desc: '48 saati geçen işlemlerde yöneticilere bildirim gönder.', active: notificationSettings?.automations?.sla_tracking, icon: Bell, color: 'bg-red-50 text-red-500' },
+        { id: 'ready_notification', title: 'Hazır Bildirim Otomasyonu', desc: 'Cihaz "Hazır" olduğunda müşteriye WhatsApp & E-Posta gönder.', active: notificationSettings?.automations?.ready_notification, icon: Zap, color: 'bg-blue-50 text-blue-500' },
+        { id: 'satisfaction_survey', title: 'Memnuniyet Anketi', desc: 'Teslimattan 24 saat sonra müşteri portalına NPS anketi ekle.', active: notificationSettings?.automations?.satisfaction_survey, icon: ShieldCheck, color: 'bg-green-50 text-green-500' },
+        { id: 'quote_reminder', title: 'Teklif Hatırlatıcı', desc: 'Onay bekleyen teklifleri 2 gün sonra müşteriye tekrar hatırlat.', active: notificationSettings?.automations?.quote_reminder, icon: Clock, color: 'bg-orange-50 text-orange-500' }
+    ];
 
-    const toggleRule = (id) => {
-        setRules(prev => prev.map(r => r.id === id ? { ...r, active: !r.active } : r));
+    const toggleRule = (ruleId) => {
+        const updatedAutomations = {
+            ...notificationSettings.automations,
+            [ruleId]: !notificationSettings.automations[ruleId]
+        };
+        setNotificationSettings({
+            ...notificationSettings,
+            automations: updatedAutomations
+        });
+        showToast('Otomasyon kuralı güncellendi.', 'success');
     };
 
-    // Filter Logic: Get unique customers from all repairs
+    // Filter Logic
     let filteredList = allRepairs.map(r => ({
         id: r.id,
         name: r.customer,
@@ -50,12 +58,10 @@ const MarketingAutomation = () => {
         lastDate: r.createdAt || r.date,
         status: r.status
     })).filter((obj, index, self) => 
-        // Remove duplicates by phone number
         index === self.findIndex((t) => (t.phone === obj.phone))
     );
 
     if (filterType === 'old_repairs') {
-        // Mock filtering: Repairs older than some time
         filteredList = filteredList.filter(item => item.status === 'Teslim Edildi' || item.status === 'İade Edildi');
     }
 
@@ -96,14 +102,8 @@ const MarketingAutomation = () => {
         
         if (confirmed) {
             setIsSending(true);
-            
-            // Backend'de toplu gönderim endpoint'i olmadığını varsayarak döngü ile simüle ediyoruz
-            // Gerçek projede bir `/api/bulk-notify` endpoint'i olmalı.
-            
             try {
-                // Simülasyon gecikmesi
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                
                 showToast(`${selectedUsers.length} bildirim başarıyla kuyruğa alındı.`, 'success');
                 setMessageContent('');
                 setMessageSubject('');
@@ -207,16 +207,6 @@ const MarketingAutomation = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-blue-50 rounded-2xl p-4 flex items-start gap-4 border border-blue-100">
-                                <div className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                                    <Info size={18} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-blue-900 leading-tight mb-1">Akıllı Gönderim Özelliği</p>
-                                    <p className="text-[10px] text-blue-700/70 font-medium">Mesajlarınız seçili {selectedUsers.length} kişiye {activeChannel} üzerinden sırayla iletilecektir. Gönderim sırasında sayfayı kapatmayınız.</p>
-                                </div>
-                            </div>
-
                             <button 
                                 onClick={handleBulkSend}
                                 disabled={isSending || selectedUsers.length === 0}
@@ -243,7 +233,7 @@ const MarketingAutomation = () => {
                         </div>
                     </div>
 
-                    {/* Automation Rules Quick View */}
+                    {/* Automation Center & Logs */}
                     <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
                         <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
                             <h3 className="font-black text-gray-900 flex items-center gap-2">
@@ -275,6 +265,7 @@ const MarketingAutomation = () => {
                         </div>
                     </div>
 
+                    {/* Automation Rules Toggles */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {rules.map(rule => (
                             <div key={rule.id} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
@@ -284,7 +275,7 @@ const MarketingAutomation = () => {
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-black text-gray-900">{rule.title}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium">{rule.active ? 'Aktif Çalışıyor' : 'Devre Dışı'}</p>
+                                        <p className="text-[10px] text-gray-400 font-medium">{rule.active ? 'Sistem Aktif' : 'Devre Dışı'}</p>
                                     </div>
                                 </div>
                                 <button onClick={() => toggleRule(rule.id)} className={`transition-all ${rule.active ? 'text-blue-600' : 'text-gray-300'}`}>
@@ -333,7 +324,7 @@ const MarketingAutomation = () => {
                                         onClick={() => setFilterType('old_repairs')}
                                         className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterType === 'old_repairs' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
                                     >
-                                        Eski Müşteriler
+                                        Eski Kayıtlar
                                     </button>
                                 </div>
                             </div>
@@ -370,14 +361,6 @@ const MarketingAutomation = () => {
                                         </div>
                                     </div>
                                 ))}
-                                {filteredList.length === 0 && (
-                                    <div className="py-20 text-center flex flex-col items-center gap-4">
-                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
-                                            <Users size={32} />
-                                        </div>
-                                        <p className="text-sm text-gray-400 font-medium">Kriterlere uygun müşteri bulunamadı.</p>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
