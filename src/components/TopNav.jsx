@@ -66,6 +66,8 @@ const TopNav = ({ activeTab, setActiveTab }) => {
         ? 'Tüm Mağazalar'
         : (servicePoints.find(p => Number(p.id) === Number(selectedStoreId || currentUser?.storeId))?.name || 'Mağaza Seçilmedi');
 
+    const [hoveredCategory, setHoveredCategory] = useState(null);
+
     return (
         <div className="w-full fixed top-0 left-0 z-50">
             {/* Unified Top Navigation Bar */}
@@ -82,28 +84,49 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                     <div className="flex items-center gap-1">
                         {CATEGORIES.map(category => {
                             const isCategoryActive = category.items.some(item => item.id === activeTab);
+                            const isHovered = hoveredCategory === category.id;
                             
                             return (
-                                <div key={category.id} className="relative group">
+                                <div 
+                                    key={category.id} 
+                                    className="relative"
+                                    onMouseEnter={() => setHoveredCategory(category.id)}
+                                    onMouseLeave={() => setHoveredCategory(null)}
+                                >
                                     <button 
-                                        onClick={() => category.id === 'dashboard' ? setActiveTab('dashboard') : null}
+                                        onClick={() => {
+                                            if (category.id === 'dashboard') {
+                                                setActiveTab('dashboard');
+                                                setHoveredCategory(null);
+                                            }
+                                        }}
                                         className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5
                                             ${isCategoryActive ? 'text-apple-blue bg-apple-blue/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'}
                                         `}>
                                         {category.label}
-                                        {category.items.length > 1 && category.id !== 'dashboard' && <ChevronDown size={12} className="opacity-50 group-hover:rotate-180 transition-transform" />}
+                                        {category.items.length > 1 && category.id !== 'dashboard' && (
+                                            <ChevronDown 
+                                                size={12} 
+                                                className={`opacity-50 transition-transform ${isHovered ? 'rotate-180' : ''}`} 
+                                            />
+                                        )}
                                     </button>
 
                                     {/* Dropdown Menu */}
                                     {category.items.length > 1 && (
-                                        <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 opacity-0 translate-y-1 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible transition-all duration-200 z-50">
+                                        <div className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 
+                                            ${isHovered ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-1 invisible'}
+                                        `}>
                                             <div className="bg-white/95 backdrop-blur-xl border border-gray-100 shadow-xl rounded-xl p-1.5 w-56 flex flex-col gap-0.5">
                                                 {category.items.map(item => {
                                                     const isActive = activeTab === item.id;
                                                     return (
                                                         <button
                                                             key={item.id}
-                                                            onClick={() => setActiveTab(item.id)}
+                                                            onClick={() => {
+                                                                setActiveTab(item.id);
+                                                                setHoveredCategory(null); // Tıklanınca kapat
+                                                            }}
                                                             className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-3 transition-colors
                                                                 ${isActive ? 'bg-[#f5f5f7] text-apple-blue' : 'text-gray-600 hover:bg-[#f5f5f7] hover:text-gray-900'}
                                                             `}
