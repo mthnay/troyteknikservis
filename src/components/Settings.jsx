@@ -287,14 +287,14 @@ const Settings = () => {
     };
 
     // --- User Form ---
-    const [newKullanıcı, setNewUser] = useState({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
     const [editingUserId, setEditingUserId] = useState(null);
     const [editUserData, setEditUserData] = useState(null);
 
     const handleAddUser = () => {
         if (!newUser.name || !newUser.email || !newUser.password) return;
         addUser({
-            ...newKullanıcı,
+            ...newUser,
             storeId: parseInt(newUser.storeId),
             avatar: newUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
         });
@@ -1091,14 +1091,14 @@ const Settings = () => {
                                 <input
                                     type="text" placeholder="Ad Soyad"
                                     className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
-                                    value={newUser.name} onChange={e => setNewUser({ ...newKullanıcı, name: e.target.value })}
+                                    value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })}
                                 />
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="email" placeholder="E-Posta Adresi"
                                         className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
-                                        value={newUser.email} onChange={e => setNewUser({ ...newKullanıcı, email: e.target.value })}
+                                        value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                                     />
                                 </div>
                                 <div className="relative">
@@ -1106,7 +1106,7 @@ const Settings = () => {
                                     <input
                                         type="text" placeholder="Şifre"
                                         className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
-                                        value={newUser.password} onChange={e => setNewUser({ ...newKullanıcı, password: e.target.value })}
+                                        value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -1114,7 +1114,7 @@ const Settings = () => {
                                 <div className="relative">
                                     <select
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
-                                        value={newUser.role} onChange={e => setNewUser({ ...newKullanıcı, role: e.target.value })}
+                                        value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
                                     >
                                         {roles.map(role => (
                                             <option key={role.name} value={role.name}>{role.displayName}</option>
@@ -1126,7 +1126,7 @@ const Settings = () => {
                                 <div className="relative">
                                     <select
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
-                                        value={newUser.storeId} onChange={e => setNewUser({ ...newKullanıcı, storeId: e.target.value })}
+                                        value={newUser.storeId} onChange={e => setNewUser({ ...newUser, storeId: e.target.value })}
                                     >
                                         {servicePoints.map(sp => (
                                             <option key={sp.id} value={sp.id}>{sp.name}</option>
