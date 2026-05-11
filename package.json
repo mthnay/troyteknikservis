@@ -18,7 +18,7 @@
     "electron:dmg": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg",
     "ios:open": "npx cap open ios",
     "ios:sync": "npm run build && npx cap copy && npx cap update",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps || true"
   },
   "build": {
     "appId": "com.troy.serviceapp",
