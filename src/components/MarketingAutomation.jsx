@@ -1,51 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Megaphone, Users, MessageCircle, Mail, Filter, Search, CheckSquare, 
-    Square, ChevronRight, Zap, Bell, ShieldCheck, ToggleLeft, ToggleRight, 
-    Settings, Clock, Send, Sparkles, Layout, Target, Info, AlertCircle
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Megaphone, Users, MessageCircle, Mail, Filter, Search, CheckSquare, Square, ChevronRight, Zap, Bell, ShieldCheck, ToggleLeft, ToggleRight, Settings, Clock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { appAlert, appConfirm } from '../utils/alert';
+import { appAlert } from '../utils/alert';
 
 const MarketingAutomation = () => {
-    const { allRepairs, notificationSettings, setNotificationSettings, showToast, sendWhatsApp } = useAppContext();
+    const { allCustomers, emailSettings, allRepairs } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState('all');
+    const [filterType, setFilterType] = useState('all'); // 'all', 'old_repairs', 'no_recent_visits'
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [isSending, setIsSending] = useState(false);
-    
-    // Notification Panel State
-    const [messageSubject, setMessageSubject] = useState('');
-    const [messageContent, setMessageContent] = useState('');
-    const [activeChannel, setActiveChannel] = useState('whatsapp');
 
-    // Automation Logs (Notifications)
-    const [automationLogs, setAutomationLogs] = useState([
-        { id: 1, type: 'Zap', title: 'Hazır Bildirimi', detail: 'Ahmet Yılmaz (iPhone 13) - WhatsApp iletildi.', time: '2 dk önce', status: 'success' },
-        { id: 2, type: 'Bell', title: 'SLA Uyarısı', detail: 'TR-1024 nolu cihaz 48 saati geçti. Yöneticiye e-posta gönderildi.', time: '15 dk önce', status: 'warning' },
-        { id: 3, type: 'Clock', title: 'Teklif Hatırlatıcı', detail: 'Mehmet Kaya - Teklif hatırlatma SMS sıraya alındı.', time: '1 saat önce', status: 'info' },
-        { id: 4, type: 'Zap', title: 'Kampanya Gönderimi', detail: 'Haftalık bakım bülteni 142 müşteriye ulaştırıldı.', time: '3 saat önce', status: 'success' },
-        { id: 5, type: 'Bell', title: 'Stok Kritik', detail: 'iPhone 13 Ekran stoku kritik seviyenin altına düştü (2 adet).', time: '5 saat önce', status: 'warning' }
+    // Automation Rules Simulation
+    const [rules, setRules] = useState([
+        { id: 1, title: 'Otomatik SLA Takibi', desc: '48 saati geçen işlemlerde yöneticilere bildirim gönder.', active: true, icon: Bell, color: 'bg-red-50 text-red-500' },
+        { id: 2, title: 'Hazır Bildirim Otomasyonu', desc: 'Cihaz "Hazır" olduğunda müşteriye WhatsApp & E-Posta gönder.', active: true, icon: Zap, color: 'bg-blue-50 text-blue-500' },
+        { id: 3, title: 'Memnuniyet Anketi', desc: 'Teslimattan 24 saat sonra müşteri portalına NPS anketi ekle.', active: false, icon: ShieldCheck, color: 'bg-green-50 text-green-500' },
+        { id: 4, title: 'Teklif Hatırlatıcı', desc: 'Onay bekleyen teklifleri 2 gün sonra müşteriye tekrar hatırlat.', active: true, icon: Clock, color: 'bg-orange-50 text-orange-500' }
     ]);
 
-    // Map global settings to UI rules
-    const rules = [
-        { id: 'sla_tracking', title: 'Otomatik SLA Takibi', desc: '48 saati geçen işlemlerde yöneticilere bildirim gönder.', active: notificationSettings?.automations?.sla_tracking, icon: Bell, color: 'bg-red-50 text-red-500' },
-        { id: 'ready_notification', title: 'Hazır Bildirim Otomasyonu', desc: 'Cihaz "Hazır" olduğunda müşteriye WhatsApp & E-Posta gönder.', active: notificationSettings?.automations?.ready_notification, icon: Zap, color: 'bg-blue-50 text-blue-500' },
-        { id: 'satisfaction_survey', title: 'Memnuniyet Anketi', desc: 'Teslimattan 24 saat sonra müşteri portalına NPS anketi ekle.', active: notificationSettings?.automations?.satisfaction_survey, icon: ShieldCheck, color: 'bg-green-50 text-green-500' },
-        { id: 'quote_reminder', title: 'Teklif Hatırlatıcı', desc: 'Onay bekleyen teklifleri 2 gün sonra müşteriye tekrar hatırlat.', active: notificationSettings?.automations?.quote_reminder, icon: Clock, color: 'bg-orange-50 text-orange-500' }
-    ];
-
-    const toggleRule = (ruleId) => {
-        const updatedAutomations = {
-            ...notificationSettings.automations,
-            [ruleId]: !notificationSettings.automations[ruleId]
-        };
-        setNotificationSettings({
-            ...notificationSettings,
-            automations: updatedAutomations
-        });
-        showToast('Otomasyon kuralı güncellendi.', 'success');
+    const toggleRule = (id) => {
+        setRules(prev => prev.map(r => r.id === id ? { ...r, active: !r.active } : r));
     };
 
     // Filter Logic
@@ -55,14 +29,18 @@ const MarketingAutomation = () => {
         phone: r.customerPhone,
         email: r.customerEmail,
         device: r.device,
-        lastDate: r.createdAt || r.date,
-        status: r.status
+        lastTarih: r.createdAt || r.date
     })).filter((obj, index, self) => 
+        // Remove duplicates by phone number
         index === self.findIndex((t) => (t.phone === obj.phone))
     );
 
     if (filterType === 'old_repairs') {
-        filteredList = filteredList.filter(item => item.status === 'Teslim Edildi' || item.status === 'İade Edildi');
+        filteredList = filteredList.filter(item => {
+            // Sadece 3 aydan eski kayıtları simüle et (Gerçekte Date objesine göre hesaplanmalı)
+            // Biz basitçe her şeyi 'Eski' sayıp listeleyeceğiz test için, sadece demonstrasyon.
+            return true; 
+        });
     }
 
     if (searchTerm) {
@@ -88,282 +66,179 @@ const MarketingAutomation = () => {
         }
     };
 
-    const handleBulkSend = async () => {
+    const handleSendMarketing = async (type) => {
         if (selectedUsers.length === 0) {
-            showToast('Lütfen önce hedef kitle seçin.', 'warning');
-            return;
-        }
-        if (!messageContent.trim()) {
-            showToast('Lütfen mesaj içeriği girin.', 'warning');
+            appAlert('Lütfen en az bir müşteri seçin.', 'warning');
             return;
         }
 
-        const confirmed = await appConfirm(`${selectedUsers.length} müşteriye toplu ${activeChannel.toUpperCase()} bildirimi gönderilecektir. Onaylıyor musunuz?`);
-        
-        if (confirmed) {
+        const message = 'Merhaba, Troy Apple Yetkili Servisi olarak size özel kampanya ve fırsatlarımız var! Cihazınızın ücretsiz genel bakımı için sizi mağazalarımıza bekliyoruz.';
+
+        if (type === 'whatsapp') {
+            appAlert(`${selectedUsers.length} kişiye WhatsApp üzerinden mesaj gönderme kuyruğuna eklendi.\n(Not: Gerçek çoklu gönderim için WhatsApp Business API gerekir)`, 'success');
+            const firstPhone = selectedUsers[0].replace(/[^0-9]/g, '');
+            window.open(`https://wa.me/90${firstPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        } else if (type === 'email') {
             setIsSending(true);
-            try {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                showToast(`${selectedUsers.length} bildirim başarıyla kuyruğa alındı.`, 'success');
-                setMessageContent('');
-                setMessageSubject('');
-                setSelectedUsers([]);
-            } catch (error) {
-                showToast('Gönderim sırasında hata oluştu.', 'error');
-            } finally {
+            setTimeout(() => {
+                appAlert(`${selectedUsers.length} adet e-posta başarıyla sıraya alındı ve gönderiliyor.`, 'success');
                 setIsSending(false);
-            }
+                setSelectedUsers([]);
+            }, 1500);
         }
-    };
-
-    const insertPlaceholder = (tag) => {
-        setMessageContent(prev => prev + ` {${tag}}`);
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 pb-20">
-            {/* Header Area */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-6 animate-fade-in">
+            {/* Header */}
+            <div className="flex justify-between items-end">
                 <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg">
-                            <Megaphone size={20} />
-                        </div>
-                        <h1 className="text-3xl font-black tracking-tight text-gray-900">Pazarlama & Otomasyon</h1>
-                    </div>
-                    <p className="text-gray-500 font-medium">Hedef kitlenizi belirleyin ve akıllı bildirimler ile sadakati artırın.</p>
-                </div>
-                <div className="flex gap-2">
-                    <div className="bg-blue-50 border border-blue-100 px-4 py-2 rounded-xl flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="text-xs font-bold text-blue-700">API Durumu: Aktif</span>
-                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Pazarlama & Otomasyon</h1>
+                    <p className="text-gray-500">Müşterilerinize toplu kampanya SMS, WhatsApp ve e-posta gönderimleri yapın.</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* LEFT: Notification Panel */}
-                <div className="lg:col-span-7 space-y-6">
-                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden flex flex-col">
-                        <div className="p-8 border-b border-gray-50 bg-gray-50/30 flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-gray-100">
-                                    <Send size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="font-black text-gray-900 text-lg">Bildirim Gönder</h3>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Kampanya & Duyuru Paneli</p>
-                                </div>
-                            </div>
-                            <div className="flex bg-gray-100 p-1 rounded-xl">
-                                <button 
-                                    onClick={() => setActiveChannel('whatsapp')}
-                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeChannel === 'whatsapp' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                >
-                                    WhatsApp
-                                </button>
-                                <button 
-                                    onClick={() => setActiveChannel('email')}
-                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeChannel === 'email' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                >
-                                    E-Posta
-                                </button>
-                                <button 
-                                    onClick={() => setActiveChannel('sms')}
-                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeChannel === 'sms' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                >
-                                    SMS
-                                </button>
-                            </div>
+            {/* Campaign Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-white shadow-lg shadow-green-200">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-white/20 rounded-md">
+                            <MessageCircle size={24} />
                         </div>
-
-                        <div className="p-8 space-y-6">
-                            {activeChannel === 'email' && (
-                                <div className="animate-in slide-in-from-top-2 duration-300">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">E-Posta Konusu</label>
-                                    <input 
-                                        type="text" 
-                                        value={messageSubject}
-                                        onChange={(e) => setMessageSubject(e.target.value)}
-                                        placeholder="Kampanya başlığı..."
-                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-sm"
-                                    />
-                                </div>
-                            )}
-
-                            <div className="relative">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Mesaj İçeriği</label>
-                                <textarea 
-                                    rows={6}
-                                    value={messageContent}
-                                    onChange={(e) => setMessageContent(e.target.value)}
-                                    placeholder="Mesajınızı buraya yazın..."
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-3xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm leading-relaxed"
-                                />
-                                <div className="flex gap-2 mt-3 overflow-x-auto pb-2 custom-scrollbar">
-                                    <button onClick={() => insertPlaceholder('customerName')} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-[10px] font-bold border border-gray-200 transition-colors shrink-0">{"{Müşteri Adı}"}</button>
-                                    <button onClick={() => insertPlaceholder('device')} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-[10px] font-bold border border-gray-200 transition-colors shrink-0">{"{Cihaz}"}</button>
-                                    <button onClick={() => insertPlaceholder('lastDate')} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-[10px] font-bold border border-gray-200 transition-colors shrink-0">{"{Son Tarih}"}</button>
-                                </div>
-                            </div>
-
-                            <button 
-                                onClick={handleBulkSend}
-                                disabled={isSending || selectedUsers.length === 0}
-                                className={`w-full py-5 rounded-[20px] font-black text-sm tracking-wide uppercase flex items-center justify-center gap-3 transition-all shadow-xl ${
-                                    isSending 
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                                    : selectedUsers.length === 0
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        : 'bg-gray-900 text-white hover:bg-black hover:scale-[1.02] active:scale-95 shadow-gray-200'
-                                }`}
-                            >
-                                {isSending ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                                        İşleniyor...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap size={18} className="fill-current" />
-                                        {selectedUsers.length} Kişiye Gönderimi Başlat
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">Hazır</span>
                     </div>
+                    <h3 className="text-xl font-bold mb-1">WhatsApp Toplu Mesaj</h3>
+                    <p className="text-green-50 text-sm mb-4">Seçili müşterilerinize doğrudan WhatsApp üzerinden kampanya metni iletin.</p>
+                    <button 
+                        onClick={() => handleSendMarketing('whatsapp')}
+                        className="w-full py-3 bg-white text-green-600 font-bold rounded-md hover:bg-green-50 transition-colors"
+                    >
+                        Gönder ({selectedUsers.length} Seçili)
+                    </button>
+                </div>
 
-                    {/* Automation Center & Logs */}
-                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
-                        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                            <h3 className="font-black text-gray-900 flex items-center gap-2">
-                                <Zap size={18} className="text-blue-600" /> Akıllı Otomasyon Merkezi
-                            </h3>
-                            <button className="text-[10px] font-black text-blue-600 uppercase hover:underline">Tümünü Gör</button>
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white shadow-lg shadow-blue-200">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-white/20 rounded-md">
+                            <Mail size={24} />
                         </div>
-                        <div className="p-4 space-y-3">
-                            {automationLogs.map(log => (
-                                <div key={log.id} className="flex items-start gap-4 p-4 rounded-2xl bg-white border border-gray-100 hover:shadow-md transition-all group">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                                        log.status === 'success' ? 'bg-green-50 text-green-600' : 
-                                        log.status === 'warning' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-                                    }`}>
-                                        {log.type === 'Zap' ? <Zap size={18} /> : log.type === 'Bell' ? <Bell size={18} /> : <Clock size={18} />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <h4 className="text-sm font-black text-gray-900">{log.title}</h4>
-                                            <span className="text-[9px] font-bold text-gray-400">{log.time}</span>
-                                        </div>
-                                        <p className="text-xs text-gray-500 font-medium line-clamp-1">{log.detail}</p>
-                                    </div>
-                                    <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ChevronRight size={16} className="text-gray-300" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">Aktif API</span>
                     </div>
+                    <h3 className="text-xl font-bold mb-1">E-Posta Bülteni</h3>
+                    <p className="text-blue-50 text-sm mb-4">Müşterilerinize profesyonel HTML formatında e-posta kampanyaları gönderin.</p>
+                    <button 
+                        onClick={() => handleSendMarketing('email')}
+                        disabled={isSending}
+                        className="w-full py-3 bg-white text-blue-600 font-bold rounded-md hover:bg-blue-50 transition-colors disabled:opacity-50"
+                    >
+                        {isSending ? 'Gönderiliyor...' : `Küme Gönderimi Başlat (${selectedUsers.length} Seçili)`}
+                    </button>
+                    <p className="text-blue-100/50 text-[10px] mt-2 font-medium text-center italic">API Durumu: Aktif & Kararlı</p>
+                </div>
 
-                    {/* Automation Rules Toggles */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Automation Rules (New Section) */}
+                <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm col-span-1 md:col-span-2 lg:col-span-1">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2.5 bg-gray-900 rounded-md text-white">
+                            <Settings size={18} />
+                        </div>
+                        <h3 className="font-bold text-gray-900">Akıllı Kurallar</h3>
+                    </div>
+                    <div className="space-y-4">
                         {rules.map(rule => (
-                            <div key={rule.id} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${rule.color}`}>
-                                        <rule.icon size={20} />
+                            <div key={rule.id} className="flex items-center justify-between p-3 bg-gray-50/50 rounded-md border border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${rule.color}`}>
+                                        <rule.icon size={16} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-black text-gray-900">{rule.title}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium">{rule.active ? 'Sistem Aktif' : 'Devre Dışı'}</p>
+                                        <p className="text-xs font-bold text-gray-900 leading-none">{rule.title}</p>
+                                        <p className="text-[9px] text-gray-400 mt-1 line-clamp-1">{rule.desc}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => toggleRule(rule.id)} className={`transition-all ${rule.active ? 'text-blue-600' : 'text-gray-300'}`}>
-                                    {rule.active ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                                <button onClick={() => toggleRule(rule.id)} className={`transition-colors ${rule.active ? 'text-blue-600' : 'text-gray-300'}`}>
+                                    {rule.active ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                                 </button>
                             </div>
                         ))}
                     </div>
                 </div>
+            </div>
 
-                {/* RIGHT: Target Audience Selector */}
-                <div className="lg:col-span-5 space-y-6">
-                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden h-full flex flex-col">
-                        <div className="p-8 border-b border-gray-50 bg-gray-50/30">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-500 shadow-sm border border-gray-100">
-                                        <Target size={20} />
-                                    </div>
-                                    <h3 className="font-black text-gray-900">Hedef Kitle</h3>
-                                </div>
-                                <span className="text-[10px] font-black bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg border border-orange-100">
-                                    {selectedUsers.length} / {filteredList.length}
-                                </span>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Müşteri veya telefon..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none text-sm font-bold shadow-sm"
-                                    />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={() => setFilterType('all')}
-                                        className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterType === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
-                                    >
-                                        Tümü
-                                    </button>
-                                    <button 
-                                        onClick={() => setFilterType('old_repairs')}
-                                        className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase border transition-all ${filterType === 'old_repairs' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
-                                    >
-                                        Eski Kayıtlar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar">
-                            <div className="p-4 border-b border-gray-50 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-md z-10">
-                                <button onClick={toggleSelectAll} className="flex items-center gap-2 text-[10px] font-black text-gray-500 hover:text-blue-600 uppercase tracking-widest pl-2 transition-colors">
-                                    {selectedUsers.length === filteredList.length ? <CheckSquare size={16} className="text-blue-600" /> : <Square size={16} />}
-                                    {selectedUsers.length === filteredList.length ? 'Seçimi Kaldır' : 'Tümünü Seç'}
-                                </button>
-                                {selectedUsers.length > 0 && (
-                                    <button onClick={() => setSelectedUsers([])} className="text-[10px] font-black text-red-500 hover:underline uppercase">İptal</button>
-                                )}
-                            </div>
-
-                            <div className="divide-y divide-gray-50">
-                                {filteredList.map((user, idx) => (
-                                    <div 
-                                        key={idx} 
-                                        onClick={() => toggleSelect(user.phone)}
-                                        className={`p-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-gray-50 ${selectedUsers.includes(user.phone) ? 'bg-blue-50/50' : ''}`}
-                                    >
-                                        <div className={`shrink-0 transition-colors ${selectedUsers.includes(user.phone) ? 'text-blue-600' : 'text-gray-300'}`}>
-                                            {selectedUsers.includes(user.phone) ? <CheckSquare size={20} /> : <Square size={20} />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-black text-gray-900 truncate">{user.name}</p>
-                                            <p className="text-[10px] font-medium text-gray-400 truncate">{user.device} • {user.phone}</p>
-                                        </div>
-                                        <div className="shrink-0 text-right">
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{user.lastDate?.split(' ')[0]}</p>
-                                            <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase mt-0.5 inline-block">Müşteri</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+            {/* Audience List */}
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between gap-4 bg-gray-50/50">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Müşteri veya telefon ara..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-md focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all"
+                        />
                     </div>
+                    <div className="flex gap-2">
+                        <select 
+                            className="px-4 py-3 bg-white border border-gray-200 rounded-md outline-none focus:border-blue-500"
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                        >
+                            <option value="all">Tüm Müşteriler</option>
+                            <option value="old_repairs">Son 6 Aydır Gelmeyenler</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                                <th className="p-4 w-16">
+                                    <button onClick={toggleSelectAll} className="text-gray-400 hover:text-blue-600">
+                                        {selectedUsers.length === filteredList.length && filteredList.length > 0 ? <CheckSquare size={20} className="text-blue-600" /> : <Square size={20} />}
+                                    </button>
+                                </th>
+                                <th className="p-4">Müşteri</th>
+                                <th className="p-4">Cihaz / İletişim</th>
+                                <th className="p-4">Son İşlem</th>
+                                <th className="p-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {filteredList.map((user, idx) => (
+                                <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
+                                    <td className="p-4">
+                                        <button onClick={() => toggleSelect(user.phone)} className="text-gray-300 group-hover:text-gray-400">
+                                            {selectedUsers.includes(user.phone) ? <CheckSquare size={20} className="text-blue-600" /> : <Square size={20} />}
+                                        </button>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="font-bold text-gray-900">{user.name}</div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="text-sm font-medium text-gray-800">{user.device || '-'}</div>
+                                        <div className="text-xs text-gray-500">{user.phone || '-'} {user.email ? `• ${user.email}` : ''}</div>
+                                    </td>
+                                    <td className="p-4 text-sm text-gray-500 font-medium">
+                                        {user.lastDate || 'Belirtilmemiş'}
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all">
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredList.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" className="p-8 text-center text-gray-500 font-medium">
+                                        Kriterlere uygun müşteri bulunamadı.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

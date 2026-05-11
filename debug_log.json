@@ -1,24 +1,22 @@
 {
-  "timestamp": "2026-04-24T19:43:58.497Z",
+  "timestamp": "2026-05-11T21:49:29.982Z",
   "type": "UPDATE",
-  "id": "TR-5802",
+  "id": "S00020",
   "body": {
-    "customer": "özgür yılmaz",
-    "customerPhone": "5332371856",
-    "customerEmail": "sdlkcmsçcsc",
-    "taxOffice": "",
+    "storeId": 1777103096526,
+    "status": "Transferde",
+    "historyNote": "Cihaz Galataport şubesine doğru yola çıktı (Transfer). (İşlem yapan: Metehan Ay)",
     "history": [
       {
         "status": "Kayıt Oluşturuldu",
-        "date": "09.04.2026 15:19:54",
+        "date": "25.04.2026 11:01:42",
         "note": "Cihaz servise kabul edildi.",
-        "_id": "69d7a91f104576532fe4d504"
+        "_id": "69ec74e779488dc6208ec51d"
       },
       {
-        "status": "Apple'a Gönderildi",
-        "date": "09.04.2026 15:20:09",
-        "note": "Apple Onarım Merkezi onarım süreci başlatıldı.",
-        "_id": "69d7a91f104576532fe4d505"
+        "status": "Transferde",
+        "date": "12.05.2026 00:49:29",
+        "note": "Cihaz Galataport şubesine doğru yola çıktı (Transfer). (İşlem yapan: Metehan Ay)"
       }
     ]
   }

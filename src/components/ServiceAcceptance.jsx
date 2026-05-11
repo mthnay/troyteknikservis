@@ -508,31 +508,36 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 pb-32 animate-fade-in px-4 md:px-8">
+        <div className="space-y-6 animate-fade-in">
             {/* Header Steps */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 backdrop-blur-xl bg-white/40 p-6 rounded-[32px] border border-white/50 shadow-sm sticky top-4 z-30">
-                <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Yeni Servis Kaydı</h2>
-                    <p className="text-gray-500 font-medium">Lütfen cihaz ve müşteri bilgilerini eksiksiz doldurun.</p>
+            {/* Header - Ana Sayfa Stili */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4 border-b border-gray-100 mb-6 sticky top-4 z-30 bg-[#f5f5f7]/80 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 rounded-md text-blue-600 border border-blue-100 shadow-sm">
+                        <Wrench size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Servis Kaydı</h2>
+                        <p className="text-gray-500 mt-1 font-medium">Cihaz ve müşteri bilgilerini eksiksiz doldurun.</p>
+                    </div>
                 </div>
 
-                {/* Step Indicator */}
-                <div className="flex items-center gap-2 bg-white/80 p-2 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+                <div className="flex items-center gap-2 bg-white p-1 rounded-md border border-gray-200 shadow-sm">
                     {[1, 2].map(s => (
                         <div
                             key={s}
                             onClick={() => setStep(s)}
-                            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${step === s
-                                ? 'bg-gray-900 text-white shadow-lg'
-                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            className={`px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${step === s
+                                ? 'bg-gray-100 text-gray-900 shadow-sm'
+                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                                 }`}
                         >
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === s ? 'bg-white text-black' : 'bg-gray-200 text-gray-500'}`}>
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === s ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-500'}`}>
                                 {s}
                             </span>
-                            <span className="hidden md:inline">
-                                {s === 1 && 'Servis Bilgileri'}
-                                {s === 2 && 'Onay ve İmza'}
+                            <span className="hidden sm:inline">
+                                {s === 1 && 'BİLGİLER'}
+                                {s === 2 && 'İMZA'}
                             </span>
                         </div>
                     ))}
@@ -547,22 +552,22 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                     {step === 1 && (
                         <div className="space-y-6 animate-scale-up">
                             {/* Cihaz Bilgileri Kartı */}
-                            <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60">
+                            <div className="gsx-card p-6">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-3">
-                                        <div className="p-3 bg-blue-50 rounded-2xl text-blue-600">
+                                    <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+                                        <div className="p-3 bg-blue-50 rounded-md text-blue-600">
                                             <Phone size={24} strokeWidth={2.5} />
                                         </div>
                                         Cihaz Kimliği
                                     </h3>
-                                    <button onClick={openAppleCoverage} className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+                                    <button onClick={openAppleCoverage} className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-md flex items-center gap-2 transition-colors">
                                         Garanti Sorgula <ExternalLink size={14} />
                                     </button>
                                 </div>
 
                                 {/* Ürün Grubu Seçimi */}
                                 <div className="mb-10">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 block ml-1">Ürün Grubu Seçiniz</label>
+                                    <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-4 block ml-1">Ürün Grubu Seçiniz</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                                         {PRODUCT_GROUPS.map((group) => (
                                             <button
@@ -583,15 +588,15 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                         };
                                                     });
                                                 }}
-                                                className={`flex flex-col items-center gap-3 p-4 rounded-[24px] border-2 transition-all duration-300 ${formData.productGroup === group.id
+                                                className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${formData.productGroup === group.id
                                                     ? `border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-200/50 scale-105`
                                                     : 'border-transparent bg-gray-50 hover:bg-white hover:border-gray-200 transform hover:-translate-y-1'
                                                 }`}
                                             >
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md ${formData.productGroup === group.id ? group.color : 'bg-gray-400 opacity-60'}`}>
+                                                <div className={`w-12 h-12 rounded-md flex items-center justify-center text-white shadow-md ${formData.productGroup === group.id ? group.color : 'bg-gray-400 opacity-60'}`}>
                                                     <group.icon size={24} />
                                                 </div>
-                                                <span className={`text-[10px] font-black uppercase tracking-wider ${formData.productGroup === group.id ? 'text-blue-700' : 'text-gray-500'}`}>
+                                                <span className={`text-[10px] font-semibold uppercase tracking-wider ${formData.productGroup === group.id ? 'text-blue-700' : 'text-gray-500'}`}>
                                                     {group.label}
                                                 </span>
                                             </button>
@@ -601,21 +606,21 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                                 {/* Onarım / Değişim Seçimi */}
                                 {formData.productGroup && (
-                                    <div className="mb-8 flex items-center justify-between bg-gray-50 p-2 rounded-2xl border border-gray-100 animate-in slide-in-from-top-2">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">İşlem Türü</span>
+                                    <div className="mb-8 flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-100 animate-in slide-in-from-top-2">
+                                        <span className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-4">İşlem Türü</span>
                                         <div className="flex gap-1">
                                             {/* Sadece iPhone, iPad ve Mac için Onarım seçeneği çıksın */}
                                             {['iphone', 'ipad', 'mac'].includes(formData.productGroup) && (
                                                 <button
                                                     onClick={() => setFormData({ ...formData, serviceType: 'repair' })}
-                                                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${formData.serviceType === 'repair' ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-gray-400 hover:bg-white'}`}
+                                                    className={`px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase transition-all ${formData.serviceType === 'repair' ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-gray-400 hover:bg-white'}`}
                                                 >
                                                     Onarım
                                                 </button>
                                             )}
                                             <button
                                                 onClick={() => setFormData({ ...formData, serviceType: 'exchange' })}
-                                                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${formData.serviceType === 'exchange' ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-gray-400 hover:bg-white'}`}
+                                                className={`px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase transition-all ${formData.serviceType === 'exchange' ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-gray-400 hover:bg-white'}`}
                                             >
                                                 Değişim
                                             </button>
@@ -625,12 +630,12 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="group relative">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Seri No / IMEI</label>
+                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Seri No / IMEI</label>
                                         <div className="relative">
                                             <input
                                                 type="text"
                                                 placeholder="DX3PL..."
-                                                className="w-full pl-12 pr-24 py-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono tracking-wider text-lg uppercase font-bold text-gray-900"
+                                                className="w-full pl-12 pr-24 py-4 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono tracking-wider text-lg uppercase font-bold text-gray-900"
                                                 value={formData.serialNumber}
                                                 onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value.toUpperCase() })}
                                             />
@@ -645,7 +650,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                         serialInputRef.current?.click(); // Seri No için özel ref kullan
                                                     }}
                                                     title="Kamera ile Tara"
-                                                    className="p-2 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors"
+                                                    className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
                                                 >
                                                     <Camera size={20} strokeWidth={2.5} />
                                                 </button>
@@ -653,7 +658,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                     onClick={handleSerialSearch}
                                                     disabled={searching}
                                                     title="Sorgula"
-                                                    className="p-2 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors"
+                                                    className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
                                                 >
                                                     {searching ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Search size={20} strokeWidth={2.5} />}
                                                 </button>
@@ -662,12 +667,12 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     </div>
 
                                     <div className="group relative" ref={suggestionsRef}>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Cihaz Modeli</label>
+                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Cihaz Modeli</label>
                                         <div className="relative">
                                             <input
                                                 type="text"
                                                 placeholder="Örn: iPhone 13..."
-                                                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900"
+                                                className="w-full pl-12 pr-4 py-4 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900"
                                                 value={formData.deviceModel}
                                                 onChange={handleDeviceModelChange}
                                                 onFocus={() => {
@@ -678,9 +683,9 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                                             {/* Suggestions Dropdown */}
                                             {showSuggestions && deviceSuggestions.length > 0 && (
-                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 custom-scrollbar">
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-2xl border border-gray-100 max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 custom-scrollbar">
                                                     <div className="p-2 sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-10">
-                                                        <span className="text-[10px] font-black uppercase text-gray-400 px-2">Önerilen Modeller ({deviceSuggestions.length})</span>
+                                                        <span className="text-[10px] font-semibold uppercase text-gray-400 px-2">Önerilen Modeller ({deviceSuggestions.length})</span>
                                                     </div>
                                                     <div className="p-1.5">
                                                         {deviceSuggestions.map((suggestion, index) => (
@@ -694,7 +699,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                                     }));
                                                                     setShowSuggestions(false);
                                                                 }}
-                                                                className="w-full text-left px-4 py-3 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3 group/item border border-transparent hover:border-blue-100"
+                                                                className="w-full text-left px-4 py-3 rounded-md hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3 group/item border border-transparent hover:border-blue-100"
                                                             >
                                                                 <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover/item:bg-white flex items-center justify-center text-gray-500 transition-colors">
                                                                     {suggestion.includes('iPhone') ? <Phone size={16} /> : <Package size={16} />}
@@ -712,9 +717,9 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                             {/* Durum & Garanti Kartı */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60">
-                                    <h3 className="font-black text-gray-900 mb-6 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
+                                <div className="gsx-card p-6">
+                                    <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-gray-500">
                                             <Shield size={18} strokeWidth={2.5} />
                                         </div>
                                         Garanti Kapsamı
@@ -729,12 +734,12 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                             <button
                                                 key={type.id}
                                                 onClick={() => setFormData({ ...formData, warrantyStatus: type.id })}
-                                                className={`w-full p-4 rounded-2xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group ${formData.warrantyStatus === type.id
+                                                className={`w-full p-4 rounded-md border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group ${formData.warrantyStatus === type.id
                                                     ? 'border-blue-500 bg-blue-50/50 text-blue-900 shadow-md scale-[1.02]'
                                                     : 'border-transparent bg-gray-50 hover:bg-white hover:border-gray-200 text-gray-600'
                                                     }`}
                                             >
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${formData.warrantyStatus === type.id ? 'bg-white text-blue-600 shadow-sm' : 'bg-white text-gray-400'}`}>
+                                                <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${formData.warrantyStatus === type.id ? 'bg-white text-blue-600 shadow-sm' : 'bg-white text-gray-400'}`}>
                                                     <type.icon size={20} strokeWidth={2.5} />
                                                 </div>
                                                 <span className="font-bold text-sm">{type.label}</span>
@@ -746,26 +751,26 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     {/* Garantisiz Seçimi İçin Fiyat Alanı */}
                                     {formData.warrantyStatus === 'out-of-warranty' && (
                                         <div className="mt-6 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-top-4">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Tahmini / Alınan Tutar</label>
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Tahmini / Alınan Tutar</label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     placeholder="0.00"
-                                                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-orange-50/50 border border-orange-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-bold text-lg text-orange-900 placeholder:text-orange-300"
+                                                    className="w-full pl-12 pr-4 py-4 rounded-md bg-orange-50/50 border border-orange-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-bold text-lg text-orange-900 placeholder:text-orange-300"
                                                     value={formData.estimatedCost}
                                                     onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
                                                 />
-                                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-400 font-black text-lg">₺</span>
+                                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-400 font-semibold text-lg">₺</span>
                                             </div>
                                             <p className="text-[10px] text-orange-600/80 font-bold mt-2 ml-1">* Müşteriden onaylanan ön fiyat bilgisi.</p>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60">
+                                <div className="gsx-card p-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="font-black text-gray-900 flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
+                                        <h3 className="font-semibold text-gray-900 flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-gray-500">
                                                 <AlertTriangle size={18} strokeWidth={2.5} />
                                             </div>
                                             Fiziksel Durum
@@ -777,7 +782,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                             <button
                                                 key={item}
                                                 onClick={() => toggleCondition(item)}
-                                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all text-left ${formData.visualCondition.includes(item)
+                                                className={`py-3 px-4 rounded-md text-xs font-bold border transition-all text-left ${formData.visualCondition.includes(item)
                                                     ? 'bg-red-50 border-red-200 text-red-600 shadow-sm'
                                                     : 'bg-gray-50 border-transparent text-gray-500 hover:bg-white hover:border-gray-200'
                                                     }`}
@@ -794,21 +799,21 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                     {step === 1 && (
                         <div className="space-y-6 animate-scale-up">
                             {/* Sorun Tanımı */}
-                            <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60">
-                                <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
-                                    <div className="p-3 bg-orange-50 rounded-2xl text-orange-600">
+                            <div className="gsx-card p-6">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                                    <div className="p-3 bg-orange-50 rounded-md text-orange-600">
                                         <AlertTriangle size={24} strokeWidth={2.5} />
                                     </div>
                                     Sorun Detayları
                                 </h3>
 
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Müşteri Şikayeti</label>
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Müşteri Şikayeti</label>
                                 <textarea
                                     rows="6"
                                     placeholder="Müşterinin belirttiği arızayı, oluşma şeklini ve taleplerini detaylıca yazınız..."
                                     value={formData.issueDescription}
                                     onChange={(e) => setFormData({ ...formData, issueDescription: e.target.value })}
-                                    className="w-full p-6 rounded-3xl bg-gray-50 border border-gray-200 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 resize-none transition-all text-base leading-relaxed font-medium text-gray-700 placeholder:text-gray-400"
+                                    className="w-full p-6 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 resize-none transition-all text-base leading-relaxed font-medium text-gray-700 placeholder:text-gray-400"
                                 ></textarea>
 
                                 <div className="flex flex-wrap gap-2.5 mt-6">
@@ -816,7 +821,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                         <button
                                             key={tag}
                                             onClick={() => setFormData(prev => ({ ...prev, issueDescription: prev.issueDescription ? prev.issueDescription + ', ' + tag : tag }))}
-                                            className="text-xs font-bold px-4 py-2 bg-white border border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
+                                            className="text-xs font-bold px-4 py-2 bg-white border border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 rounded-md transition-all shadow-sm hover:shadow-md active:scale-95"
                                         >
                                             + {tag}
                                         </button>
@@ -825,10 +830,10 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                             </div>
 
                             {/* Fotoğraf Arşivi (Kabul Öncesi) */}
-                            <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60">
+                            <div className="gsx-card p-6">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-3">
-                                        <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
+                                    <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+                                        <div className="p-3 bg-indigo-50 rounded-md text-indigo-600">
                                             <Camera size={24} strokeWidth={2.5} />
                                         </div>
                                         Cihaz Fotoğrafları (Kabul)
@@ -836,7 +841,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     <button 
                                         onClick={handleAddPhoto}
                                         disabled={uploading}
-                                        className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:bg-gray-400"
+                                        className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:bg-gray-400"
                                     >
                                         {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
                                         Fotoğraf Çek / Ekle
@@ -885,15 +890,15 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                             onClick={handleAddPhoto}
                                             className="aspect-square rounded-[22px] border-2 border-dashed border-gray-100 bg-gray-50 flex flex-col items-center justify-center gap-2 text-gray-400 hover:bg-white hover:border-blue-200 hover:text-blue-500 transition-all group"
                                         >
-                                            <div className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-blue-50 transition-colors">
+                                            <div className="p-3 bg-white rounded-md shadow-sm group-hover:bg-blue-50 transition-colors">
                                                 {uploading ? <Loader2 size={24} className="animate-spin text-blue-500" /> : <Camera size={24} strokeWidth={1.5} />}
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest">{uploading ? 'Yükleniyor' : 'Ekle'}</span>
+                                            <span className="text-[10px] font-semibold text-xs uppercase tracking-wide">{uploading ? 'Yükleniyor' : 'Ekle'}</span>
                                         </button>
                                     )}
                                 </div>
 
-                                <p className="mt-6 text-[11px] font-bold text-gray-500 leading-relaxed italic bg-blue-50/50 p-4 rounded-2xl border border-dashed border-blue-200">
+                                <p className="mt-6 text-[11px] font-bold text-gray-500 leading-relaxed italic bg-blue-50/50 p-4 rounded-md border border-dashed border-blue-200">
                                     🌟 <span className="text-blue-700">İpucu:</span> Cihazın dört köşesini ve varsa mevcut çizikleri fotoğraflayarak servis kaydını profesyonelleştirin.
                                 </p>
                             </div>
@@ -902,20 +907,20 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                     {step === 2 && (
                         <div className="space-y-6 animate-scale-up">
-                            <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60">
-                                <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-3">
-                                    <div className="p-3 bg-green-50 rounded-2xl text-green-600">
+                            <div className="gsx-card p-6">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
+                                    <div className="p-3 bg-green-50 rounded-md text-green-600">
                                         <FileText size={24} strokeWidth={2.5} />
                                     </div>
                                     Son Kontroller & Teslim Alma
                                 </h3>
 
                                 <div className="space-y-5 mb-10">
-                                    <label className={`flex items-start gap-5 p-5 rounded-3xl border cursor-pointer transition-all duration-300 ${formData.findMyOff
+                                    <label className={`flex items-start gap-5 p-5 rounded-lg border cursor-pointer transition-all duration-300 ${formData.findMyOff
                                         ? 'bg-green-50/50 border-green-200 shadow-md'
                                         : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                         }`}>
-                                        <div className={`mt-0.5 w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${formData.findMyOff ? 'bg-green-500 border-green-500 text-white scale-110' : 'border-gray-300 bg-white'
+                                        <div className={`mt-0.5 w-7 h-7 rounded-md border-2 flex items-center justify-center transition-all ${formData.findMyOff ? 'bg-green-500 border-green-500 text-white scale-110' : 'border-gray-300 bg-white'
                                             }`}>
                                             <Check size={16} strokeWidth={4} className={formData.findMyOff ? 'opacity-100' : 'opacity-0'} />
                                             <input
@@ -932,11 +937,11 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                         </div>
                                     </label>
 
-                                    <label className={`flex items-start gap-5 p-5 rounded-3xl border cursor-pointer transition-all duration-300 ${formData.backupTaken
+                                    <label className={`flex items-start gap-5 p-5 rounded-lg border cursor-pointer transition-all duration-300 ${formData.backupTaken
                                         ? 'bg-blue-50/50 border-blue-200 shadow-md'
                                         : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                         }`}>
-                                        <div className={`mt-0.5 w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${formData.backupTaken ? 'bg-blue-500 border-blue-500 text-white scale-110' : 'border-gray-300 bg-white'
+                                        <div className={`mt-0.5 w-7 h-7 rounded-md border-2 flex items-center justify-center transition-all ${formData.backupTaken ? 'bg-blue-500 border-blue-500 text-white scale-110' : 'border-gray-300 bg-white'
                                             }`}>
                                             <Check size={16} strokeWidth={4} className={formData.backupTaken ? 'opacity-100' : 'opacity-0'} />
                                             <input
@@ -954,11 +959,11 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                 </div>
 
                                 <div className="border-t border-gray-100 pt-8 mt-10">
-                                    <div className="bg-orange-50/50 border border-orange-200 rounded-3xl p-6 text-center">
+                                    <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-6 text-center">
                                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                                             <FileText size={28} className="text-orange-500" />
                                         </div>
-                                        <h4 className="font-black text-gray-900 text-lg mb-2">Dijital Sözleşme ve İmza</h4>
+                                        <h4 className="font-semibold text-gray-900 text-lg mb-2">Dijital Sözleşme ve İmza</h4>
                                         <p className="text-sm text-gray-500 font-medium max-w-md mx-auto">Müşteriye hüküm ve koşullar ile fiyat onayı imzalatmak için formu tamamlayarak <strong className="text-orange-600">Tam Ekran Kiosk Ekranına</strong> geçiş yapılacaktır.</p>
                                     </div>
                                 </div>
@@ -969,9 +974,9 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                 {/* Right Column - Customer Info & Summary */}
                 <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-gray-200/50 border border-white/60 sticky top-32">
-                        <h3 className="font-black text-gray-900 mb-8 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500">
+                    <div className="gsx-card p-6 sticky top-32">
+                        <h3 className="font-semibold text-gray-900 mb-8 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-500">
                                 <User size={20} strokeWidth={2.5} />
                             </div>
                             Müşteri Bilgileri
@@ -979,24 +984,24 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                         <div className="space-y-5">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ad Soyad</label>
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Ad Soyad</label>
                                 <input
                                     type="text"
                                     placeholder="Ad Soyad"
-                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-gray-900"
+                                    className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-gray-900"
                                     value={formData.customerName}
                                     onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">TC Kimlik</label>
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">TC Kimlik</label>
                                 <div className="relative">
                                     <input
                                         type="text"
                                         maxLength="11"
                                         placeholder="11 Haneli"
-                                        className={`w-full pl-5 pr-10 py-4 rounded-2xl border outline-none focus:ring-4 transition-all font-mono font-bold text-sm ${isTCValid === true
+                                        className={`w-full pl-5 pr-10 py-4 rounded-md border outline-none focus:ring-4 transition-all font-mono font-bold text-sm ${isTCValid === true
                                             ? 'bg-green-50 border-green-500 text-green-900 focus:border-green-600 focus:ring-green-500/20'
                                             : isTCValid === false
                                                 ? 'bg-red-50 border-red-500 text-red-900 focus:border-red-600 focus:ring-red-500/20'
@@ -1013,7 +1018,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     {isTCValid === false && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 animate-in fade-in zoom-in group">
                                             <AlertCircle size={18} strokeWidth={3} />
-                                            <div className="absolute top-full right-0 mt-2 w-48 bg-red-600 text-white text-[10px] p-2 rounded-xl hidden group-hover:block z-50 shadow-xl">
+                                            <div className="absolute top-full right-0 mt-2 w-48 bg-red-600 text-white text-[10px] p-2 rounded-md hidden group-hover:block z-50 shadow-xl">
                                                 Geçersiz TC Kimlik Numarası
                                             </div>
                                         </div>
@@ -1021,44 +1026,44 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefon</label>
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Telefon</label>
                                 <input
                                     type="tel"
                                     placeholder="0 (5XX)..."
-                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-gray-900 text-sm"
+                                    className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-gray-900 text-sm"
                                     value={formData.customerPhone}
                                     onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">E-Posta</label>
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">E-Posta</label>
                                 <input
                                     type="email"
                                     placeholder="ornek@email.com"
-                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-gray-900 text-sm"
+                                    className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-gray-900 text-sm"
                                     value={formData.customerEmail}
                                     onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Adres</label>
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Adres</label>
                                 <textarea
                                     rows="3"
                                     placeholder="Tam adresi giriniz..."
-                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-gray-900 text-sm resize-none"
+                                    className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-gray-900 text-sm resize-none"
                                     value={formData.customerAddress}
                                     onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
                                 ></textarea>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Müşteri Tipi (Memnuniyet Analizi)</label>
-                                <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-200">
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Müşteri Tipi (Memnuniyet Analizi)</label>
+                                <div className="flex bg-gray-50 p-1.5 rounded-md border border-gray-200">
                                     <button
                                         onClick={() => setFormData({ ...formData, customerType: 'positive' })}
-                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${formData.customerType === 'positive'
+                                        className={`flex-1 py-2.5 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-2 ${formData.customerType === 'positive'
                                             ? 'bg-white text-green-600 shadow-sm border border-gray-100'
                                             : 'text-gray-400 hover:text-gray-600'
                                             }`}
@@ -1070,7 +1075,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     </button>
                                     <button
                                         onClick={() => setFormData({ ...formData, customerType: 'negative' })}
-                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${formData.customerType === 'negative'
+                                        className={`flex-1 py-2.5 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-2 ${formData.customerType === 'negative'
                                             ? 'bg-white text-red-600 shadow-sm border border-gray-100'
                                             : 'text-gray-400 hover:text-gray-600'
                                             }`}
@@ -1091,7 +1096,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                             {step > 1 && (
                                 <button
                                     onClick={() => setStep(step - 1)}
-                                    className="px-5 py-4 rounded-2xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-bold transition-all"
+                                    className="px-5 py-4 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 font-bold transition-all"
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
@@ -1100,7 +1105,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                             {step < 2 ? (
                                 <button
                                     onClick={() => setStep(step + 1)}
-                                    className="flex-1 bg-gray-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+                                    className="flex-1 bg-gray-900 text-white px-6 py-4 rounded-md font-bold hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     Sonraki Adım <ChevronRight size={18} />
                                 </button>
@@ -1108,7 +1113,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                 <button
                                     onClick={handlePrepareSubmission}
                                     disabled={!formData.findMyOff || uploading}
-                                    className={`flex-1 px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] ${
+                                    className={`flex-1 px-6 py-4 rounded-md font-bold transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] ${
                                         (!formData.findMyOff || uploading) 
                                         ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                                         : 'bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-blue-200'
@@ -1137,37 +1142,37 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                     {/* Left Pane: T&C and Summary */}
                     <div className="md:w-[45%] bg-gray-50 flex flex-col p-8 overflow-y-auto">
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Kabul Formu<br/><span className="text-blue-600">ve Sözleşme</span></h2>
+                            <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Kabul Formu<br/><span className="text-blue-600">ve Sözleşme</span></h2>
                             <button onClick={() => setShowKioskModal(false)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-400 shadow-sm border border-gray-100 hover:bg-gray-100 transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
                         
-                        <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm mb-6 flex flex-col gap-4">
-                            <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest border-b border-gray-100 pb-3">Servis Detayları</h3>
+                        <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm mb-6 flex flex-col gap-4">
+                            <h3 className="text-xs font-semibold uppercase text-gray-400 tracking-widest border-b border-gray-100 pb-3">Servis Detayları</h3>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-gray-500">Müşteri Adı:</span>
-                                <span className="text-sm font-black text-gray-900">{formData.customerName}</span>
+                                <span className="text-sm font-semibold text-gray-900">{formData.customerName}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-gray-500">Cihaz Modeli:</span>
-                                <span className="text-sm font-black text-gray-900">{formData.deviceModel}</span>
+                                <span className="text-sm font-semibold text-gray-900">{formData.deviceModel}</span>
                             </div>
                             {formData.estimatedCost && formData.warrantyStatus === 'out-of-warranty' && (
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-bold text-gray-500">Onaylanan Ön Tutar:</span>
-                                    <span className="text-lg font-black text-orange-600">{Number(formData.estimatedCost).toLocaleString('tr-TR')} ₺</span>
+                                    <span className="text-lg font-semibold text-orange-600">{Number(formData.estimatedCost).toLocaleString('tr-TR')} ₺</span>
                                 </div>
                             )}
                         </div>
 
-                        <div className="text-xs font-medium text-gray-500 space-y-4 leading-relaxed pr-4 text-justify h-full overflow-y-auto custom-scrollbar bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
-                            <h3 className="text-base font-black text-gray-900 mb-2">Hüküm ve Koşullar</h3>
+                        <div className="text-xs font-medium text-gray-500 space-y-4 leading-relaxed pr-4 text-justify h-full overflow-y-auto custom-scrollbar bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                            <h3 className="text-base font-semibold text-gray-900 mb-2">Hüküm ve Koşullar</h3>
                             <p><strong>1. VERİ GÜVENLİĞİ:</strong> Cihaz içindeki verilerin yedeklenmesi tamamen müşterinin sorumluluğundadır. Servis işlemi sırasında oluşabilecek veri kayıplarından Troy Teknik Servis sorumlu tutulamaz.</p>
                             <p><strong>2. AKSESUARLAR:</strong> Cihaz üzerindeki cam, kaplama veya sticker gibi aksesuarlar onarım süreci gereği sökülmek zorundadır ve iadesi yapılmaz.</p>
                             <p><strong>3. RİSK BEYANI:</strong> Açılmayan, sıvı temaslı veya darbeli cihazların arıza tespiti sırasında tamamen kapanma riski müşteriye aittir.</p>
                             <p><strong>4. TESLİM:</strong> Form ile bırakılan cihazlar, yalnızca imza sahibi veya yetkili yasal temsilcisine ıslak imza karşılığında teslim edilir.</p>
-                            <div className="mt-8 p-4 bg-orange-50 text-orange-800 rounded-2xl italic font-bold">
+                            <div className="mt-8 p-4 bg-orange-50 text-orange-800 rounded-md italic font-bold">
                                 * Cihazımı sağlam, belirtilen şartlarla uyumlu şekilde Troy Teknik Servise onarım için teslim etmeyi özgür irademle kabul ediyorum.
                             </div>
                         </div>
@@ -1178,15 +1183,15 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                         <div className="flex-1 flex flex-col items-center justify-center relative">
                             <div className="flex justify-between w-full mb-6 items-end">
                                 <div>
-                                    <h3 className="text-2xl font-black text-gray-900">Müşteri Dijital İmzası</h3>
+                                    <h3 className="text-2xl font-semibold text-gray-900">Müşteri Dijital İmzası</h3>
                                     <p className="text-sm text-gray-400 font-bold mt-1">Lütfen aşağıdaki alana parmağınızla veya kalemle imza atınız.</p>
                                 </div>
-                                <button onClick={clearSignature} className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl text-sm font-bold transition-colors flex items-center gap-2">
+                                <button onClick={clearSignature} className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors flex items-center gap-2">
                                     <Eraser size={18} /> Temizle
                                 </button>
                             </div>
                             
-                            <div className="w-full h-full max-h-[500px] border-[3px] border-blue-100 bg-blue-50/10 rounded-[40px] overflow-hidden relative shadow-inner">
+                            <div className="w-full h-full max-h-[500px] border-[3px] border-blue-100 bg-blue-50/10 rounded-lg overflow-hidden relative shadow-inner">
                                 <SignatureCanvas
                                     ref={sigCanvas}
                                     penColor="black"
@@ -1201,13 +1206,13 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                             
                             <button
                                 onClick={handleConfirmKiosk}
-                                className="w-full mt-8 py-6 rounded-3xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xl shadow-2xl flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
+                                className="w-full mt-8 py-6 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xl shadow-2xl flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
                             >
                                 <CheckCircle size={28} /> İMZAYI ONAYLA VE KAYDI TAMAMLA
                             </button>
                         </div>
                         <div className="absolute bottom-6 mx-auto text-center w-full right-0 left-0">
-                            <span className="text-[10px] font-black uppercase text-gray-300 tracking-[0.2em]">{companyProfile?.name || "TROY"} SECURE DIGISIGN</span>
+                            <span className="text-[10px] font-semibold uppercase text-gray-300 tracking-[0.2em]">{companyProfile?.name || "TROY"} SECURE DIGISIGN</span>
                         </div>
                     </div>
                 </div>

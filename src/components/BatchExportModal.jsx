@@ -94,11 +94,11 @@ const BatchExportModal = ({ onClose }) => {
             <div className="modal-content w-full max-w-lg">
                 <div className="p-8 border-b border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                        <div className="w-12 h-12 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-lg">
                             <Download size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Toplu Form İndir</h3>
+                            <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Toplu Form İndir</h3>
                             <p className="text-xs text-gray-500 font-medium">Servis çıkış formlarını PDF olarak dışa aktar.</p>
                         </div>
                     </div>
@@ -109,10 +109,10 @@ const BatchExportModal = ({ onClose }) => {
 
                 <div className="p-8 space-y-6">
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 pl-1">Servis Kayıt Numaraları</label>
+                        <label className="block text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-3 pl-1">Servis Kayıt Numaraları</label>
                         <textarea
                             placeholder="Örn: 1001, 1005, 1010 (Virgül veya boşlukla ayırın)"
-                            className="w-full p-5 bg-gray-50 border-2 border-gray-100 rounded-3xl min-h-[150px] outline-none focus:bg-white focus:border-gray-900 transition-all font-mono text-sm leading-relaxed"
+                            className="w-full p-5 bg-gray-50 border-2 border-gray-100 rounded-lg min-h-[150px] outline-none focus:bg-white focus:border-gray-900 transition-all font-mono text-sm leading-relaxed"
                             value={repairIdsInput}
                             onChange={(e) => setRepairIdsInput(e.target.value)}
                             disabled={isExporting}
@@ -120,7 +120,7 @@ const BatchExportModal = ({ onClose }) => {
                     </div>
 
                     {isExporting && (
-                        <div className="space-y-3 p-6 bg-blue-50/50 rounded-3xl border border-blue-100 animate-pulse">
+                        <div className="space-y-3 p-6 bg-blue-50/50 rounded-lg border border-blue-100 animate-pulse">
                             <div className="flex justify-between items-center text-xs font-bold text-blue-700">
                                 <div className="flex items-center gap-2">
                                     <Loader2 size={16} className="animate-spin" />
@@ -138,8 +138,8 @@ const BatchExportModal = ({ onClose }) => {
                     )}
 
                     {errors.length > 0 && (
-                        <div className="p-6 bg-red-50 text-red-700 rounded-3xl border border-red-100 space-y-2">
-                            <div className="flex items-center gap-2 font-black text-[10px] uppercase tracking-widest">
+                        <div className="p-6 bg-red-50 text-red-700 rounded-lg border border-red-100 space-y-2">
+                            <div className="flex items-center gap-2 font-semibold text-[10px] text-xs uppercase tracking-wide">
                                 <AlertTriangle size={14} /> Uyarılar
                             </div>
                             <ul className="text-xs font-medium list-disc list-inside opacity-80">
@@ -152,7 +152,7 @@ const BatchExportModal = ({ onClose }) => {
                 <div className="p-8 bg-gray-50/50 border-t border-gray-100 flex gap-3">
                     <button 
                         onClick={onClose} 
-                        className="flex-1 py-4 text-gray-500 font-bold hover:bg-white rounded-2xl transition-all border border-transparent hover:border-gray-200"
+                        className="flex-1 py-4 text-gray-500 font-bold hover:bg-white rounded-md transition-all border border-transparent hover:border-gray-200"
                         disabled={isExporting}
                     >
                         Vazgeç
@@ -160,7 +160,7 @@ const BatchExportModal = ({ onClose }) => {
                     <button 
                         onClick={handleExport}
                         disabled={isExporting || !repairIdsInput.trim()}
-                        className="flex-[2] py-4 bg-gray-900 text-white font-bold rounded-2xl shadow-xl shadow-gray-200 hover:bg-black hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale"
+                        className="flex-[2] py-4 bg-gray-900 text-white font-bold rounded-md shadow-xl shadow-gray-200 hover:bg-black hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale"
                     >
                         {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
                         İndirmeyi Başlat
@@ -189,33 +189,33 @@ const DeliveryFormContainer = ({ repair }) => {
              {/* Sayfa Başlığı */}
              <div className="flex justify-between items-start border-b-4 border-black pb-6 mb-8">
                 <div className="flex gap-4">
-                    <div className="w-16 h-16 bg-black text-white flex items-center justify-center font-black text-3xl">T</div>
+                    <div className="w-16 h-16 bg-black text-white flex items-center justify-center font-semibold text-3xl">T</div>
                     <div>
-                        <h1 className="text-3xl font-black text-black uppercase">Troy Servis</h1>
+                        <h1 className="text-3xl font-semibold text-black uppercase">Troy Servis</h1>
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Cihaz Teslim ve Onarım Onay Formu</p>
                     </div>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-4xl font-mono font-black text-black">#{repair.id}-OUT</h2>
+                    <h2 className="text-4xl font-mono font-semibold text-black">#{repair.id}-OUT</h2>
                     <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Teslim Tarihi: {new Date().toLocaleDateString('tr-TR')}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 mb-8 text-left">
                 <div className="bg-gray-50 p-4 border border-gray-200">
-                    <h3 className="text-[10px] font-black uppercase text-gray-400 mb-2">Müşteri</h3>
+                    <h3 className="text-[10px] font-semibold uppercase text-gray-400 mb-2">Müşteri</h3>
                     <p className="font-bold">{repair.customer}</p>
                     <p className="text-sm">{repair.customerPhone}</p>
                 </div>
                 <div className="bg-gray-50 p-4 border border-gray-200">
-                    <h3 className="text-[10px] font-black uppercase text-gray-400 mb-2">Cihaz</h3>
+                    <h3 className="text-[10px] font-semibold uppercase text-gray-400 mb-2">Cihaz</h3>
                     <p className="font-bold">{repair.device}</p>
                     <p className="text-xs font-mono">{repair.serialNumber || repair.serial || '-'}</p>
                 </div>
             </div>
 
             <div className="border border-gray-200 p-6 mb-8 text-left">
-                <h3 className="text-xs font-black uppercase mb-4">Uygulanan Teknik İşlemler</h3>
+                <h3 className="text-xs font-semibold uppercase mb-4">Uygulanan Teknik İşlemler</h3>
                 <p className="text-sm italic text-gray-700 bg-gray-50 p-4 border border-gray-100">
                     {repair.diagnosisNotes || "Onarım işlemleri başarıyla tamamlanmıştır."}
                 </p>
@@ -223,11 +223,11 @@ const DeliveryFormContainer = ({ repair }) => {
 
             <div className="mt-auto grid grid-cols-2 gap-12 pt-8 border-t border-gray-300">
                 <div className="text-left">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-4">Teslim Eden</p>
+                    <p className="text-[9px] font-semibold text-gray-400 uppercase mb-4">Teslim Eden</p>
                     <p className="text-xs font-bold uppercase">Troy Teknik Servis</p>
                 </div>
                 <div className="text-left">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-2">Teslim Alan (Müşteri)</p>
+                    <p className="text-[9px] font-semibold text-gray-400 uppercase mb-2">Teslim Alan (Müşteri)</p>
                     <div className="h-16 flex items-center justify-between border-b border-gray-300">
                         <div className="h-full overflow-hidden flex-1">
                             {repair.deliverySignature ? (

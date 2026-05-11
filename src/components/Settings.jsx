@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Bell, Shield, Store, Globe, CreditCard, MapPin, Plus, Trash2, Building, Users, UserPlus, Mail, Lock, Paperclip, Check, Upload, X, ChevronRight, Package, AlertTriangle, Key, Clock, RefreshCw, MessageSquare } from 'lucide-react';
+import { Save, Bell, Shield, Store, Globe, CreditCard, MapPin, Plus, Trash2, Building, Users, UserPlus, Mail, Lock, Paperclip, Check, Upload, X, ChevronRight, Package, AlertTriangle, Key, Clock, RefreshCw } from 'lucide-react';
 import { appConfirm } from '../utils/alert';
 import { useAppContext } from '../context/AppContext';
 import Swal from 'sweetalert2';
@@ -238,7 +238,7 @@ const Settings = () => {
 
     const availablePermissions = [
         { id: 'view_all_stores', label: 'Tüm Mağazaları Gör' },
-        { id: 'manage_settings', label: 'Sistem Ayarları Yönetimi (Admin)' },
+        { id: 'manage_settings', label: 'Sistem Settingsı Yönetimi (Admin)' },
         { id: 'manage_users', label: 'Kullanıcı Yönetimi' },
         { id: 'manage_stock', label: 'Stok Yönetimi' },
         { id: 'view_dashboard', label: 'Dashboard Görüntüleme' },
@@ -246,8 +246,7 @@ const Settings = () => {
         { id: 'delete_repairs', label: 'Servis Kayıtlarını Sil' },
         { id: 'view_earnings', label: 'Ciro / Gelir Gör' },
         { id: 'create_repair', label: 'Yeni Servis Kaydı Aç' },
-        { id: 'view_own_repairs', label: 'Sadece Kendi Kayıtlarını Gör' },
-        { id: 'manage_marketing', label: 'Pazarlama & Otomasyon Yönetimi' }
+        { id: 'view_own_repairs', label: 'Sadece Kendi Kayıtlarını Gör' }
     ];
 
     const handleSaveRole = async () => {
@@ -288,14 +287,14 @@ const Settings = () => {
     };
 
     // --- User Form ---
-    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
+    const [newKullanıcı, setNewUser] = useState({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
     const [editingUserId, setEditingUserId] = useState(null);
     const [editUserData, setEditUserData] = useState(null);
 
     const handleAddUser = () => {
         if (!newUser.name || !newUser.email || !newUser.password) return;
         addUser({
-            ...newUser,
+            ...newKullanıcı,
             storeId: parseInt(newUser.storeId),
             avatar: newUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
         });
@@ -372,9 +371,9 @@ const Settings = () => {
             case 'general':
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
-                            <h4 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                        <div className="bg-white rounded-lg p-8 border border-gray-100 shadow-sm">
+                            <h4 className="text-xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
+                                <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
                                     <Building size={20} />
                                 </div>
                                 Kurumsal Kimlik Bilgileri
@@ -386,7 +385,7 @@ const Settings = () => {
                                         type="text"
                                         value={tempCompanyProfile.name}
                                         onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, name: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -395,7 +394,7 @@ const Settings = () => {
                                         type="text"
                                         value={tempCompanyProfile.title}
                                         onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, title: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
                                     />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
@@ -404,7 +403,7 @@ const Settings = () => {
                                         type="text"
                                         value={tempCompanyProfile.address}
                                         onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, address: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -413,7 +412,7 @@ const Settings = () => {
                                         type="text"
                                         value={tempCompanyProfile.phone}
                                         onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, phone: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -422,7 +421,7 @@ const Settings = () => {
                                         type="text"
                                         value={tempCompanyProfile.mersis}
                                         onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, mersis: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -431,7 +430,7 @@ const Settings = () => {
                                         type="text"
                                         value={tempCompanyProfile.dealerCode}
                                         onChange={(e) => setTempCompanyProfile({ ...tempCompanyProfile, dealerCode: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
                                     />
                                 </div>
                             </div>
@@ -439,7 +438,7 @@ const Settings = () => {
                             <div className="flex justify-end">
                                 <button
                                     onClick={handleSaveCompanyProfile}
-                                    className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all shadow-xl shadow-gray-200 hover:-translate-y-1 active:scale-95 flex items-center gap-3"
+                                    className="px-10 py-4 bg-gray-900 text-white font-semibold rounded-md hover:bg-black transition-all shadow-xl shadow-gray-200 hover:-translate-y-1 active:scale-95 flex items-center gap-3"
                                 >
                                     <Save size={20} />
                                     DEĞİŞİKLİKLERİ KAYDET
@@ -475,7 +474,7 @@ const Settings = () => {
                         repairId: repair.id,
                         storeId: repair.storeId,
                         customer: repair.customer,
-                        returnDate: part.returnDate || '-',
+                        returnTarih: part.returnDate || '-',
                         returnCode: part.returnCode || '-',
                         status: part.kbbStatus
                     }))
@@ -497,14 +496,14 @@ const Settings = () => {
                     <div className="space-y-8 animate-fade-in">
                         {Object.keys(groupedHistory).length > 0 ? (
                             Object.entries(groupedHistory).map(([shipTo, months]) => (
-                                <div key={shipTo} className="bg-white rounded-[32px] border border-gray-200 shadow-sm overflow-hidden">
+                                <div key={shipTo} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                                     <div className="bg-gray-900 px-8 py-5 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
+                                            <div className="w-10 h-10 bg-white/10 rounded-md flex items-center justify-center text-white">
                                                 <Store size={20} />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-black text-white">{shipTo}</h3>
+                                                <h3 className="text-lg font-semibold text-white">{shipTo}</h3>
                                                 <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Lokasyon Bazlı İadeler</p>
                                             </div>
                                         </div>
@@ -512,15 +511,15 @@ const Settings = () => {
 
                                     <div className="p-6 space-y-6">
                                         {Object.entries(months).map(([month, items]) => (
-                                            <div key={month} className="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50/30">
+                                            <div key={month} className="border border-gray-100 rounded-md overflow-hidden bg-gray-50/30">
                                                 <div className="px-6 py-3 bg-gray-100/80 border-b border-gray-100 flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                    <span className="font-black text-gray-700 text-sm uppercase tracking-wide">{month}</span>
+                                                    <span className="font-semibold text-gray-700 text-sm uppercase tracking-wide">{month}</span>
                                                     <span className="ml-auto bg-white px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-400 border border-gray-200">{items.length} Parça</span>
                                                 </div>
                                                 <div className="overflow-x-auto">
                                                     <table className="w-full text-left">
-                                                        <thead className="bg-white text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                                        <thead className="bg-white text-[10px] font-semibold text-xs uppercase tracking-wide text-gray-400 border-b border-gray-100">
                                                             <tr>
                                                                 <th className="px-6 py-3">Onarım No</th>
                                                                 <th className="px-6 py-3">Parça Adı</th>
@@ -551,7 +550,7 @@ const Settings = () => {
                                 </div>
                             ))
                         ) : (
-                            <div className="bg-white rounded-3xl p-12 text-center text-gray-400">
+                            <div className="bg-white rounded-lg p-12 text-center text-gray-400">
                                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Package size={32} className="opacity-50" />
                                 </div>
@@ -571,14 +570,14 @@ const Settings = () => {
 
                 return (
                     <div className="space-y-8 animate-fade-in">
-                        <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <div className="flex justify-between items-center bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                             <div>
-                                <h4 className="text-lg font-black text-gray-900 leading-none">Hakediş Kayıtları</h4>
+                                <h4 className="text-lg font-semibold text-gray-900 leading-none">Hakediş Kayıtları</h4>
                                 <p className="text-gray-500 text-xs mt-1 font-medium">Ship-To bazlı aylık hakediş verileri.</p>
                             </div>
                             <button
                                 onClick={() => setShowEarningsModal(true)}
-                                className="bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-black transition-all shadow-lg flex items-center gap-2"
+                                className="bg-gray-900 text-white px-6 py-2.5 rounded-md font-bold hover:bg-black transition-all shadow-lg flex items-center gap-2"
                             >
                                 <Plus size={18} /> Yeni Hakediş Ekle
                             </button>
@@ -591,19 +590,19 @@ const Settings = () => {
                                 const monthName = new Date(year, parseInt(m) - 1).toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
 
                                 return (
-                                    <div key={month} className="bg-white rounded-[32px] border border-gray-200 shadow-sm overflow-hidden">
+                                    <div key={month} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                                         <div className="bg-gray-50 px-8 py-4 border-b border-gray-100 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full bg-apple-blue"></div>
-                                                <span className="font-black text-gray-900 text-sm uppercase tracking-wide">{monthName}</span>
+                                                <span className="font-semibold text-gray-900 text-sm uppercase tracking-wide">{monthName}</span>
                                             </div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                            <div className="text-[10px] font-bold text-gray-400 text-xs uppercase tracking-wide">
                                                 Toplam: {items.reduce((sum, i) => sum + i.amount, 0).toLocaleString('tr-TR')} ₺
                                             </div>
                                         </div>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left text-sm">
-                                                <thead className="bg-white text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                                <thead className="bg-white text-[10px] font-semibold text-xs uppercase tracking-wide text-gray-400 border-b border-gray-100">
                                                     <tr>
                                                         <th className="px-8 py-4">Ship-To</th>
                                                         <th className="px-8 py-4">Mağaza</th>
@@ -617,7 +616,7 @@ const Settings = () => {
                                                             <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                                                                 <td className="px-8 py-4 font-mono font-bold text-blue-600">{item.shipTo || (store ? store.shipTo : '-')}</td>
                                                                 <td className="px-8 py-4 font-bold text-gray-700">{store ? store.name : 'Silinmiş Mağaza'}</td>
-                                                                <td className="px-8 py-4 text-right font-black text-gray-900">{item.amount.toLocaleString('tr-TR')} ₺</td>
+                                                                <td className="px-8 py-4 text-right font-semibold text-gray-900">{item.amount.toLocaleString('tr-TR')} ₺</td>
                                                             </tr>
                                                         );
                                                     })}
@@ -628,7 +627,7 @@ const Settings = () => {
                                 );
                             })
                         ) : (
-                            <div className="bg-white rounded-3xl p-12 text-center text-gray-400">
+                            <div className="bg-white rounded-lg p-12 text-center text-gray-400">
                                 <p>Henüz hakediş kaydı bulunmuyor.</p>
                             </div>
                         )}
@@ -636,14 +635,14 @@ const Settings = () => {
                         {/* Earnings Modal */}
                         {showEarningsModal && (
                             <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-                                <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl animate-scale-up border border-white/50">
-                                    <h3 className="text-xl font-black text-gray-900 mb-6">Yeni Hakediş Kaydı</h3>
+                                <div className="bg-white rounded-lg w-full max-w-md p-8 shadow-2xl animate-scale-up border border-white/50">
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-6">Yeni Hakediş Kaydı</h3>
 
                                     <div className="space-y-5">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest pl-1">Mağaza / Ship-To</label>
+                                            <label className="text-xs font-semibold uppercase text-gray-400 tracking-widest pl-1">Mağaza / Ship-To</label>
                                             <select
-                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-md text-sm font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                                                 value={newEarning.storeId}
                                                 onChange={e => setNewEarning({ ...newEarning, storeId: e.target.value })}
                                             >
@@ -655,21 +654,21 @@ const Settings = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest pl-1">Dönem (Ay)</label>
+                                            <label className="text-xs font-semibold uppercase text-gray-400 tracking-widest pl-1">Dönem (Ay)</label>
                                             <input
                                                 type="month"
-                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-md text-sm font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                                                 value={newEarning.month}
                                                 onChange={e => setNewEarning({ ...newEarning, month: e.target.value })}
                                             />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest pl-1">Hakediş Tutarı (₺)</label>
+                                            <label className="text-xs font-semibold uppercase text-gray-400 tracking-widest pl-1">Hakediş Tutarı (₺)</label>
                                             <input
                                                 type="number"
                                                 placeholder="0.00"
-                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-lg font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-md text-lg font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                                                 value={newEarning.amount}
                                                 onChange={e => setNewEarning({ ...newEarning, amount: e.target.value })}
                                             />
@@ -679,13 +678,13 @@ const Settings = () => {
                                     <div className="flex gap-3 mt-8">
                                         <button
                                             onClick={() => setShowEarningsModal(false)}
-                                            className="flex-1 py-3.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-all font-bold"
+                                            className="flex-1 py-3.5 rounded-md font-bold text-gray-600 hover:bg-gray-100 transition-all font-bold"
                                         >
                                             Vazgeç
                                         </button>
                                         <button
                                             onClick={handleAddEarning}
-                                            className="flex-1 py-3.5 rounded-xl font-bold text-white bg-gray-900 hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                            className="flex-1 py-3.5 rounded-md font-bold text-white bg-gray-900 hover:bg-black transition-all shadow-lg shadow-gray-200"
                                         >
                                             Kaydet
                                         </button>
@@ -698,7 +697,7 @@ const Settings = () => {
             case 'notifications':
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-3xl border border-blue-100/50">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100/50">
                             <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2 text-lg">
                                 <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                                     <Mail size={20} />
@@ -711,14 +710,14 @@ const Settings = () => {
                         </div>
 
                         {/* --- Notification Preferences Section --- */}
-                        <div className="glass p-8 rounded-3xl space-y-6">
+                        <div className="glass p-8 rounded-lg space-y-6">
                             <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
                                 <Bell size={20} className="text-gray-400" />
                                 Bildirim Davranışları ve İçerik Şablonları
                             </h5>
 
                             <div className="space-y-4">
-                                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 cursor-pointer hover:bg-gray-100 transition-all">
+                                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-md border border-gray-100 cursor-pointer hover:bg-gray-100 transition-all">
                                     <input 
                                         type="checkbox" 
                                         className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -735,7 +734,7 @@ const Settings = () => {
                             <div className="flex justify-end mt-4">
                                 <button
                                     onClick={handleSaveNotificationSettings}
-                                    className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                    className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-md hover:bg-black transition-all shadow-lg shadow-gray-200"
                                 >
                                     Tercihleri Kaydet
                                 </button>
@@ -743,7 +742,7 @@ const Settings = () => {
                         </div>
 
                         {/* --- Notification Templates Section --- */}
-                        <div className="glass p-8 rounded-3xl space-y-6">
+                        <div className="glass p-8 rounded-lg space-y-6">
                             <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
                                 <MessageSquare size={20} className="text-gray-400" />
                                 Bildirim Şablonlarını Düzenle
@@ -757,7 +756,7 @@ const Settings = () => {
                                     <button 
                                         key={platform}
                                         onClick={() => setActiveTemplatePlatform(platform)}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold capitalize ${activeTemplatePlatform === platform ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                        className={`px-4 py-2 rounded-md text-sm font-bold capitalize ${activeTemplatePlatform === platform ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                     >
                                         {platform}
                                     </button>
@@ -774,7 +773,7 @@ const Settings = () => {
                                     <button 
                                         key={type.id}
                                         onClick={() => setActiveTemplateType(type.id)}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold ${activeTemplateType === type.id ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                                        className={`px-4 py-2 rounded-md text-sm font-bold ${activeTemplateType === type.id ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
                                     >
                                         {type.label}
                                     </button>
@@ -787,7 +786,7 @@ const Settings = () => {
                                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">E-Posta Konusu</label>
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm"
+                                            className="w-full px-4 py-3 rounded-md border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm"
                                             value={tempNotificationTemplates?.email?.[activeTemplateType]?.subject || ''}
                                             onChange={e => setTempNotificationTemplates(prev => ({
                                                 ...prev,
@@ -807,7 +806,7 @@ const Settings = () => {
                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Mesaj İçeriği</label>
                                     <textarea
                                         rows={8}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm custom-scrollbar"
+                                        className="w-full px-4 py-3 rounded-md border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm custom-scrollbar"
                                         value={
                                             activeTemplatePlatform === 'email' 
                                                 ? tempNotificationTemplates?.email?.[activeTemplateType]?.body || ''
@@ -841,7 +840,7 @@ const Settings = () => {
                             <div className="flex justify-end mt-4">
                                 <button
                                     onClick={handleSaveNotificationTemplates}
-                                    className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                    className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-md hover:bg-black transition-all shadow-lg shadow-gray-200"
                                 >
                                     Şablonları Kaydet
                                 </button>
@@ -849,7 +848,7 @@ const Settings = () => {
                         </div>
 
                         {/* --- Attachment Section --- */}
-                        <div className="glass p-8 rounded-3xl space-y-6">
+                        <div className="glass p-8 rounded-lg space-y-6">
                             <div className="flex justify-between items-center">
                                 <h5 className="font-bold text-gray-900 flex items-center gap-2">
                                     <Paperclip size={20} className="text-gray-400" />
@@ -865,7 +864,7 @@ const Settings = () => {
                                 Buraya yüklediğiniz dosya (örn: Havale Bilgileri), sistemden gönderilen <strong className="text-gray-900">her e-postaya</strong> otomatik olarak eklenecektir.
                             </p>
 
-                            <div className="flex items-center gap-4 p-6 bg-gray-50/50 rounded-2xl border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all">
+                            <div className="flex items-center gap-4 p-6 bg-gray-50/50 rounded-md border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all">
                                 {!attachmentExists ? (
                                     <>
                                         <div className="flex-1">
@@ -879,7 +878,7 @@ const Settings = () => {
                                         <button
                                             onClick={handleUpload}
                                             disabled={!file}
-                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${file ? 'bg-apple-blue hover:bg-blue-600 text-white shadow-blue-200 hover:-translate-y-0.5' : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-bold transition-all shadow-lg ${file ? 'bg-apple-blue hover:bg-blue-600 text-white shadow-blue-200 hover:-translate-y-0.5' : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                                                 }`}
                                         >
                                             <Upload size={16} /> Yükle
@@ -888,7 +887,7 @@ const Settings = () => {
                                 ) : (
                                     <div className="flex justify-between items-center w-full">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-gray-100 shadow-md">
+                                            <div className="w-12 h-12 bg-white rounded-md flex items-center justify-center border border-gray-100 shadow-md">
                                                 <Paperclip size={24} className="text-apple-blue" />
                                             </div>
                                             <div>
@@ -898,7 +897,7 @@ const Settings = () => {
                                         </div>
                                         <button
                                             onClick={handleDeleteAttachment}
-                                            className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                                            className="p-3 text-red-500 hover:bg-red-50 rounded-md transition-colors border border-transparent hover:border-red-100"
                                             title="Dosyayı Kaldır"
                                         >
                                             <X size={20} />
@@ -913,7 +912,7 @@ const Settings = () => {
                             )}
                         </div>
 
-                        <div className="glass p-8 rounded-3xl space-y-6">
+                        <div className="glass p-8 rounded-lg space-y-6">
                             <h5 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
                                 <Globe size={20} className="text-gray-400" />
                                 Microsoft Exchange Bağlantısı
@@ -925,7 +924,7 @@ const Settings = () => {
                                     <input
                                         type="email"
                                         placeholder="ornek@kurum.com"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        className="w-full px-4 py-3 rounded-md border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
                                         value={tempEmailSettings.user}
                                         onChange={e => setTempEmailSettings({ ...tempEmailSettings, user: e.target.value })}
                                     />
@@ -935,14 +934,14 @@ const Settings = () => {
                                     <input
                                         type="password"
                                         placeholder="••••••••"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                                        className="w-full px-4 py-3 rounded-md border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
                                         value={tempEmailSettings.pass}
                                         onChange={e => setTempEmailSettings({ ...tempEmailSettings, pass: e.target.value })}
                                     />
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-8 rounded-3xl flex items-center justify-between shadow-xl shadow-gray-200 mt-6">
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-8 rounded-lg flex items-center justify-between shadow-xl shadow-gray-200 mt-6">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-3 h-3 rounded-full ${tempEmailSettings.pass ? 'bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-gray-500'}`}></div>
                                     <span className="text-sm font-bold text-gray-200">
@@ -951,9 +950,9 @@ const Settings = () => {
                                 </div>
                                 <button
                                     onClick={handleSaveEmailSettings}
-                                    className="px-8 py-3 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                                    className="px-8 py-3 bg-white text-gray-900 font-bold rounded-md hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                                 >
-                                    Ayarları Kaydet
+                                    Settingsı Kaydet
                                 </button>
                             </div>
                         </div>
@@ -962,9 +961,9 @@ const Settings = () => {
             case 'locations':
                 return (
                     <div className="space-y-8 animate-fade-in">
-                        <div className="glass p-8 rounded-3xl border border-white/60">
+                        <div className="glass p-8 rounded-lg border border-white/60">
                             <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2 text-lg">
-                                <div className="p-2 bg-gray-100 rounded-xl">
+                                <div className="p-2 bg-gray-100 rounded-md">
                                     <Plus size={20} className="text-gray-900" />
                                 </div>
                                 Yeni Ship-To / Lokasyon Ekle
@@ -973,20 +972,20 @@ const Settings = () => {
                                 <input
                                     type="text"
                                     placeholder="Nokta Adı"
-                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all"
                                     value={newPoint.name}
                                     onChange={e => setNewPoint({ ...newPoint, name: e.target.value })}
                                 />
                                 <input
                                     type="text"
                                     placeholder="Ship-To No"
-                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all"
                                     value={newPoint.shipTo}
                                     onChange={e => setNewPoint({ ...newPoint, shipTo: e.target.value })}
                                 />
                                 <div className="relative">
                                     <select
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none"
                                         value={newPoint.type}
                                         onChange={e => setNewPoint({ ...newPoint, type: e.target.value })}
                                     >
@@ -999,69 +998,69 @@ const Settings = () => {
                                 <input
                                     type="text"
                                     placeholder="Adres"
-                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all"
                                     value={newPoint.address}
                                     onChange={e => setNewPoint({ ...newPoint, address: e.target.value })}
                                 />
-                                <button onClick={handleAddPoint} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl lg:col-span-4">Ekle</button>
+                                <button onClick={handleAddPoint} className="bg-gray-900 text-white px-6 py-3 rounded-md font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl lg:col-span-4">Ekle</button>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {servicePoints.map(point => (
-                                <div key={point.id} className="group bg-white rounded-[32px] border border-gray-100 p-6 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-500 relative flex flex-col h-full overflow-hidden">
+                                <div key={point.id} className="group bg-white rounded-lg border border-gray-100 p-6 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-500 relative flex flex-col h-full overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-125"></div>
                                     
                                     {editingPointId === point.id ? (
                                         <div className="space-y-4 flex-1">
                                             <input
-                                                className="w-full px-4 py-2 text-sm font-black bg-gray-50 rounded-xl outline-none border focus:border-indigo-500 transition-all"
+                                                className="w-full px-4 py-2 text-sm font-semibold bg-gray-50 rounded-md outline-none border focus:border-indigo-500 transition-all"
                                                 value={editPointData.name}
                                                 onChange={e => setEditPointData({ ...editPointData, name: e.target.value })}
                                             />
                                             <input
-                                                className="w-full px-4 py-2 text-xs font-mono bg-gray-50 rounded-xl outline-none border"
+                                                className="w-full px-4 py-2 text-xs font-mono bg-gray-50 rounded-md outline-none border"
                                                 value={editPointData.shipTo}
                                                 onChange={e => setEditPointData({ ...editPointData, shipTo: e.target.value })}
                                                 placeholder="Ship-To No"
                                             />
                                             <textarea
-                                                className="w-full px-4 py-2 text-[11px] bg-gray-50 rounded-xl outline-none border resize-none h-20"
+                                                className="w-full px-4 py-2 text-[11px] bg-gray-50 rounded-md outline-none border resize-none h-20"
                                                 value={editPointData.address}
                                                 onChange={e => setEditPointData({ ...editPointData, address: e.target.value })}
                                                 placeholder="Adres"
                                             />
                                             <div className="flex gap-2 mt-auto">
-                                                <button onClick={handleUpdatePoint} className="flex-1 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black">KAYDET</button>
-                                                <button onClick={() => setEditingPointId(null)} className="flex-1 py-2 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-black">İPTAL</button>
+                                                <button onClick={handleUpdatePoint} className="flex-1 py-2 bg-gray-900 text-white rounded-md text-[10px] font-semibold">KAYDET</button>
+                                                <button onClick={() => setEditingPointId(null)} className="flex-1 py-2 bg-gray-100 text-gray-400 rounded-md text-[10px] font-semibold">İPTAL</button>
                                             </div>
                                         </div>
                                     ) : (
                                         <>
                                             <div className="flex justify-between items-start mb-6">
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${point.type === 'Merkez' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white border border-gray-100 text-indigo-600'}`}>
+                                                <div className={`w-12 h-12 rounded-md flex items-center justify-center shadow-lg ${point.type === 'Merkez' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white border border-gray-100 text-indigo-600'}`}>
                                                     {point.type === 'Merkez' ? <Building size={24} strokeWidth={2.5} /> : <MapPin size={24} strokeWidth={2.5} />}
                                                 </div>
                                                 <div className="flex gap-1">
-                                                    <button onClick={() => { setEditingPointId(point.id); setEditPointData(point); }} className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                                                    <button onClick={() => { setEditingPointId(point.id); setEditPointData(point); }} className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all">
                                                         <Save size={16} />
                                                     </button>
                                                     <button onClick={() => setConfirmModal({
                                                         isOpen: true,
                                                         title: 'Şube Silinecek',
-                                                        message: 'Bu lokasyonu sistemden kaldırmak istediğinize emin misiniz?',
+                                                        message: 'Bu lokasyonu sistemden leftrmak istediğinize emin misiniz?',
                                                         onConfirm: () => removeServicePoint(point.id)
-                                                    })} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                                    })} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all">
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>
                                             </div>
                                             
                                             <div className="mb-4 flex-1">
-                                                <h4 className="font-black text-gray-900 text-lg leading-tight mb-2">{point.name}</h4>
+                                                <h4 className="font-semibold text-gray-900 text-lg leading-tight mb-2">{point.name}</h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 uppercase tracking-tight">SHIP-TO: {point.shipTo || '---'}</span>
-                                                    <span className="text-[9px] font-black text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 uppercase tracking-tight">{point.type}</span>
+                                                    <span className="text-[9px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 uppercase tracking-tight">SHIP-TO: {point.shipTo || '---'}</span>
+                                                    <span className="text-[9px] font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 uppercase tracking-tight">{point.type}</span>
                                                 </div>
                                             </div>
                                             
@@ -1081,9 +1080,9 @@ const Settings = () => {
                 return (
                     <div className="space-y-8 animate-fade-in">
                         {/* Kullanıcı Ekleme Formu */}
-                        <div className="glass p-8 rounded-3xl border border-white/60">
+                        <div className="glass p-8 rounded-lg border border-white/60">
                             <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2 text-lg">
-                                <div className="p-2 bg-gray-100 rounded-xl">
+                                <div className="p-2 bg-gray-100 rounded-md">
                                     <UserPlus size={20} className="text-gray-900" />
                                 </div>
                                 Yeni Personel Ekle
@@ -1091,31 +1090,31 @@ const Settings = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
                                 <input
                                     type="text" placeholder="Ad Soyad"
-                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
-                                    value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
+                                    value={newUser.name} onChange={e => setNewUser({ ...newKullanıcı, name: e.target.value })}
                                 />
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="email" placeholder="E-Posta Adresi"
-                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
-                                        value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
+                                        value={newUser.email} onChange={e => setNewUser({ ...newKullanıcı, email: e.target.value })}
                                     />
                                 </div>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text" placeholder="Şifre"
-                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
-                                        value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all font-medium"
+                                        value={newUser.password} onChange={e => setNewUser({ ...newKullanıcı, password: e.target.value })}
                                     />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                 <div className="relative">
                                     <select
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
-                                        value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
+                                        value={newUser.role} onChange={e => setNewUser({ ...newKullanıcı, role: e.target.value })}
                                     >
                                         {roles.map(role => (
                                             <option key={role.name} value={role.name}>{role.displayName}</option>
@@ -1126,8 +1125,8 @@ const Settings = () => {
 
                                 <div className="relative">
                                     <select
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
-                                        value={newUser.storeId} onChange={e => setNewUser({ ...newUser, storeId: e.target.value })}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
+                                        value={newUser.storeId} onChange={e => setNewUser({ ...newKullanıcı, storeId: e.target.value })}
                                     >
                                         {servicePoints.map(sp => (
                                             <option key={sp.id} value={sp.id}>{sp.name}</option>
@@ -1136,7 +1135,7 @@ const Settings = () => {
                                     <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16} />
                                 </div>
 
-                                <button onClick={handleAddUser} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl">Hesap Oluştur</button>
+                                <button onClick={handleAddUser} className="bg-gray-900 text-white px-6 py-3 rounded-md font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl">Hesap Oluştur</button>
                             </div>
                         </div>
 
@@ -1148,11 +1147,11 @@ const Settings = () => {
                                 const isEditing = editingUserId === userId;
                                 
                                 return (
-                                    <div key={u.id} className={`group bg-white rounded-[24px] border border-gray-100 p-5 transition-all duration-300 relative flex flex-col md:flex-row items-center gap-6 ${isEditing ? 'ring-2 ring-indigo-500 bg-indigo-50/10 shadow-xl' : 'hover:shadow-lg hover:border-gray-200 shadow-sm'}`}>
+                                    <div key={u.id} className={`group bg-white rounded-lg border border-gray-100 p-5 transition-all duration-300 relative flex flex-col md:flex-row items-center gap-6 ${isEditing ? 'ring-2 ring-indigo-500 bg-indigo-50/10 shadow-xl' : 'hover:shadow-lg hover:border-gray-200 shadow-sm'}`}>
                                         
                                         {/* Sol: Avatar */}
                                         <div className="relative shrink-0">
-                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-700 text-white flex items-center justify-center text-xl font-black shadow-lg">
+                                            <div className="w-16 h-16 rounded-md bg-gradient-to-br from-gray-900 to-gray-700 text-white flex items-center justify-center text-xl font-semibold shadow-lg">
                                                 {u.avatar || u.name.substring(0, 1)}
                                             </div>
                                             <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white shadow-md flex items-center justify-center text-indigo-600 border border-indigo-50">
@@ -1164,27 +1163,27 @@ const Settings = () => {
                                             /* Düzenleme Modu (Yatay) */
                                             <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Ad Soyad</label>
-                                                    <input className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-sm" value={editUserData.name} onChange={e => setEditUserData({ ...editUserData, name: e.target.value })} />
+                                                    <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Ad Soyad</label>
+                                                    <input className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-sm" value={editUserData.name} onChange={e => setEditUserData({ ...editUserData, name: e.target.value })} />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">E-Posta & Şifre</label>
+                                                    <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">E-Posta & Şifre</label>
                                                     <div className="flex flex-col gap-1">
-                                                        <input className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-xs" value={editUserData.email} onChange={e => setEditUserData({ ...editUserData, email: e.target.value })} />
-                                                        <input className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-xs" value={editUserData.password} onChange={e => setEditUserData({ ...editUserData, password: e.target.value })} placeholder="Yeni şifre..." />
+                                                        <input className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-xs" value={editUserData.email} onChange={e => setEditUserData({ ...editUserData, email: e.target.value })} />
+                                                        <input className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 focus:border-indigo-500 outline-none transition-all font-bold text-xs" value={editUserData.password} onChange={e => setEditUserData({ ...editUserData, password: e.target.value })} placeholder="Yeni şifre..." />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Yetki & Mağaza</label>
+                                                    <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Yetki & Mağaza</label>
                                                     <div className="flex flex-col gap-1">
-                                                        <select className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 outline-none font-black text-[10px] uppercase" value={editUserData.role} onChange={e => setEditUserData({ ...editUserData, role: e.target.value })}>
+                                                        <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.role} onChange={e => setEditUserData({ ...editUserData, role: e.target.value })}>
                                                             <option value="SuperAdmin">SÜPER ADMIN</option>
                                                             <option value="StoreManager">MAĞAZA YÖNETİCİSİ</option>
                                                             <option value="Reception">BANKO / KARŞILAMA</option>
                                                             <option value="Technician">TEKNİSYEN</option>
                                                             <option value="Accountant">MUHASEBE</option>
                                                         </select>
-                                                        <select className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 outline-none font-black text-[10px] uppercase" value={editUserData.storeId} onChange={e => setEditUserData({ ...editUserData, storeId: Number(e.target.value) })}>
+                                                        <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.storeId} onChange={e => setEditUserData({ ...editUserData, storeId: Number(e.target.value) })}>
                                                             <option value="0">GENEL MERKEZ</option>
                                                             {servicePoints.map(sp => (
                                                                 <option key={sp.id} value={sp.id}>{sp.name.toUpperCase()}</option>
@@ -1193,8 +1192,8 @@ const Settings = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 pt-4 md:pt-0">
-                                                    <button onClick={handleUpdateUser} className="flex-1 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all shadow-lg">KAYDET</button>
-                                                    <button onClick={() => setEditingUserId(null)} className="px-4 py-3 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-black hover:bg-gray-200 transition-all">İPTAL</button>
+                                                    <button onClick={handleUpdateUser} className="flex-1 py-3 bg-gray-900 text-white rounded-md text-[10px] font-semibold hover:bg-black transition-all shadow-lg">KAYDET</button>
+                                                    <button onClick={() => setEditingUserId(null)} className="px-4 py-3 bg-gray-100 text-gray-400 rounded-md text-[10px] font-semibold hover:bg-gray-200 transition-all">İPTAL</button>
                                                 </div>
                                             </div>
                                         ) : (
@@ -1202,16 +1201,16 @@ const Settings = () => {
                                             <>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                                                        <h4 className="font-black text-gray-900 text-lg tracking-tight truncate">{u.name}</h4>
+                                                        <h4 className="font-semibold text-gray-900 text-lg tracking-tight truncate">{u.name}</h4>
                                                         <div className="flex items-center gap-2">
-                                                            <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
+                                                            <span className={`text-[9px] font-semibold px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
                                                                 (u.role === 'SuperAdmin' || u.role === 'Admin') ? 'bg-indigo-600 text-white border-indigo-600' : 
                                                                 (u.role === 'Technician' || u.role === 'Teknisyen') ? 'bg-emerald-500 text-white border-emerald-500' :
                                                                 'bg-amber-500 text-white border-amber-500'
                                                             }`}>
                                                                 {u.role}
                                                             </span>
-                                                            <span className="text-[9px] font-black bg-gray-50 text-gray-500 px-2.5 py-1 rounded-lg border border-gray-100 uppercase tracking-wider">
+                                                            <span className="text-[9px] font-semibold bg-gray-50 text-gray-500 px-2.5 py-1 rounded-lg border border-gray-100 uppercase tracking-wider">
                                                                 {store ? store.name : 'Genel Merkez'}
                                                             </span>
                                                         </div>
@@ -1226,7 +1225,7 @@ const Settings = () => {
                                                             setEditingUserId(userId); 
                                                             setEditUserData({ ...u }); 
                                                         }} 
-                                                        className="flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-indigo-100"
+                                                        className="flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all text-[10px] font-semibold text-xs uppercase tracking-wide border border-transparent hover:border-indigo-100"
                                                     >
                                                         <Save size={14} /> DÜZENLE
                                                     </button>
@@ -1239,7 +1238,7 @@ const Settings = () => {
                                                                     if (success) {
                                                                         Swal.fire({
                                                                             title: 'Silindi!',
-                                                                            text: 'Personel hesabı başarıyla kaldırıldı.',
+                                                                            text: 'Personel hesabı başarıyla leftrıldı.',
                                                                             icon: 'success',
                                                                             timer: 2000,
                                                                             showConfirmButton: false
@@ -1247,7 +1246,7 @@ const Settings = () => {
                                                                     }
                                                                 }
                                                             }} 
-                                                            className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+                                                            className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-all border border-transparent hover:border-red-100"
                                                             title="Bu Personeli Sil"
                                                         >
                                                             <Trash2 size={16} />
@@ -1265,10 +1264,10 @@ const Settings = () => {
             case 'security':
                 return (
                     <div className="space-y-8 animate-fade-in max-w-4xl">
-                        <div className="bg-gradient-to-br from-indigo-900 to-gray-900 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+                        <div className="bg-gradient-to-br from-indigo-900 to-gray-900 p-10 rounded-lg text-white shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl text-white"></div>
                             <div className="relative z-10">
-                                <h4 className="text-2xl font-black mb-2 flex items-center gap-3">
+                                <h4 className="text-2xl font-semibold mb-2 flex items-center gap-3">
                                     <Lock size={28} className="text-indigo-400" />
                                     Güvenlik ve Erişim Kontrolü
                                 </h4>
@@ -1277,27 +1276,27 @@ const Settings = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm">
-                                <h5 className="font-black text-gray-900 mb-6 flex items-center gap-2">
+                            <div className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm">
+                                <h5 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
                                     <Key size={20} className="text-orange-500" /> Şifre Değiştir
                                 </h5>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Mevcut Şifre</label>
-                                        <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-transparent focus:bg-white focus:border-orange-500 outline-none transition-all font-mono" />
+                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Mevcut Şifre</label>
+                                        <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 rounded-md border border-transparent focus:bg-white focus:border-orange-500 outline-none transition-all font-mono" />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Yeni Şifre</label>
-                                        <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-transparent focus:bg-white focus:border-orange-500 outline-none transition-all font-mono" />
+                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Yeni Şifre</label>
+                                        <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 rounded-md border border-transparent focus:bg-white focus:border-orange-500 outline-none transition-all font-mono" />
                                     </div>
-                                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-black text-xs shadow-lg shadow-orange-100 transition-all active:scale-95 mt-2">
+                                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-md font-semibold text-xs shadow-lg shadow-orange-100 transition-all active:scale-95 mt-2">
                                         ŞİFREYİ GÜNCELLE
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50/50 rounded-[32px] border border-gray-100 p-8">
-                                <h5 className="font-black text-gray-900 mb-6 flex items-center gap-2">
+                            <div className="bg-gray-50/50 rounded-lg border border-gray-100 p-8">
+                                <h5 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
                                     <Bell size={20} className="text-indigo-500" /> Oturum Bilgileri
                                 </h5>
                                 <div className="space-y-5">
@@ -1308,23 +1307,23 @@ const Settings = () => {
                                     ].map((stat, idx) => (
                                         <div key={idx} className="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-0">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                <div className="p-2 bg-white rounded-md shadow-sm">
                                                     <stat.icon size={16} className="text-gray-400" />
                                                 </div>
                                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{stat.label}</span>
                                             </div>
-                                            <span className="text-sm font-black text-gray-700">{stat.value}</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stat.value}</span>
                                         </div>
                                     ))}
-                                    <button className="w-full bg-white hover:bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs border border-red-100 transition-all active:scale-95 mt-4">
+                                    <button className="w-full bg-white hover:bg-red-50 text-red-500 py-3 rounded-md font-semibold text-xs border border-red-100 transition-all active:scale-95 mt-4">
                                         TÜM OTURUMLARI KAPAT
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="bg-red-50/30 rounded-[32px] border border-red-100 p-8 flex flex-col justify-between">
+                            <div className="bg-red-50/30 rounded-lg border border-red-100 p-8 flex flex-col justify-between">
                                 <div>
-                                    <h5 className="font-black text-red-900 mb-2 flex items-center gap-2">
+                                    <h5 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
                                         <RefreshCw size={20} className="text-red-600" /> Sunucu Yönetimi
                                     </h5>
                                     <p className="text-xs text-red-700/60 font-medium leading-relaxed mb-6">
@@ -1333,7 +1332,7 @@ const Settings = () => {
                                 </div>
                                 <button 
                                     onClick={handleReboot}
-                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-red-200 transition-all active:scale-95 flex items-center justify-center gap-3"
+                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-md font-semibold text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-red-200 transition-all active:scale-95 flex items-center justify-center gap-3"
                                 >
                                     <RefreshCw size={16} /> SUNUCUYU YENİDEN BAŞLAT
                                 </button>
@@ -1412,26 +1411,26 @@ const Settings = () => {
 
                 return (
                     <div className="space-y-8 animate-fade-in max-w-4xl">
-                        <div className="bg-gradient-to-br from-indigo-900 to-indigo-700 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+                        <div className="bg-gradient-to-br from-indigo-900 to-indigo-700 p-10 rounded-lg text-white shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
                             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div>
-                                    <h4 className="text-3xl font-black mb-2 flex items-center gap-4">
+                                    <h4 className="text-3xl font-semibold mb-2 flex items-center gap-4">
                                         <RefreshCw size={32} className={`text-indigo-300 ${isChecking ? 'animate-spin' : ''}`} />
                                         Bulut Güncelleme Merkezi
                                     </h4>
                                     <p className="text-indigo-100/70 font-medium">Sistem versiyonunuzu kontrol edin ve en son özellikleri anında yükleyin.</p>
                                 </div>
-                                <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/20 text-center">
-                                    <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Mevcut Sürüm</div>
-                                    <div className="text-2xl font-black">{currentVersion}</div>
+                                <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-lg border border-white/20 text-center">
+                                    <div className="text-[10px] font-semibold text-xs uppercase tracking-wide opacity-60 mb-1">Mevcut Sürüm</div>
+                                    <div className="text-2xl font-semibold">{currentVersion}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="md:col-span-2 bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm relative overflow-hidden">
-                                <h5 className="font-black text-gray-900 mb-8 flex items-center gap-3 text-lg">
+                            <div className="md:col-span-2 bg-white rounded-lg border border-gray-100 p-10 shadow-sm relative overflow-hidden">
+                                <h5 className="font-semibold text-gray-900 mb-8 flex items-center gap-3 text-lg">
                                     <Globe size={24} className="text-indigo-600" /> Güncelleme Kontrolü
                                 </h5>
 
@@ -1439,8 +1438,8 @@ const Settings = () => {
                                     {updateProgress > 0 ? (
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-end mb-2">
-                                                <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">GÜNCELLEME PAKETİ İNDİRİLİYOR</div>
-                                                <div className="text-xl font-black text-gray-900">{Math.round(updateProgress)}%</div>
+                                                <div className="text-[10px] font-semibold text-indigo-600 text-xs uppercase tracking-wide">GÜNCELLEME PAKETİ İNDİRİLİYOR</div>
+                                                <div className="text-xl font-semibold text-gray-900">{Math.round(updateProgress)}%</div>
                                             </div>
                                             <div className="h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-50 p-1">
                                                 <div 
@@ -1451,19 +1450,19 @@ const Settings = () => {
                                             <p className="text-xs text-gray-400 font-medium">Lütfen yükleme bitene kadar uygulamayı kapatmayın...</p>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-gray-100 rounded-[32px] bg-gray-50/50">
+                                        <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-gray-100 rounded-lg bg-gray-50/50">
                                             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl mb-6 text-indigo-600 animate-pulse">
                                                 <Shield size={32} />
                                             </div>
                                             <button 
                                                 onClick={checkUpdate}
                                                 disabled={isChecking}
-                                                className={`px-10 py-4 rounded-[24px] font-black text-sm tracking-widest flex items-center gap-3 transition-all ${isChecking ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white hover:bg-black shadow-2xl hover:-translate-y-1 active:scale-95'}`}
+                                                className={`px-10 py-4 rounded-lg font-semibold text-sm tracking-widest flex items-center gap-3 transition-all ${isChecking ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white hover:bg-black shadow-2xl hover:-translate-y-1 active:scale-95'}`}
                                             >
                                                 {isChecking ? 'KONTROL EDİLİYOR...' : 'GÜNCELLEMELERİ DENETLE'}
                                                 {!isChecking && <RefreshCw size={18} />}
                                             </button>
-                                            <div className="mt-6 flex items-center gap-2 text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                                            <div className="mt-6 flex items-center gap-2 text-gray-400 text-[10px] font-semibold text-xs uppercase tracking-wide">
                                                 <Clock size={12} />
                                                 Son Kontrol: {lastCheck}
                                             </div>
@@ -1472,8 +1471,8 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-[40px] border border-indigo-100 p-8">
-                                <h5 className="font-black text-indigo-900 mb-6 flex items-center gap-2 text-sm uppercase tracking-widest">
+                            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-lg border border-indigo-100 p-8">
+                                <h5 className="font-semibold text-indigo-900 mb-6 flex items-center gap-2 text-sm text-xs uppercase tracking-wide">
                                     <Bell size={18} /> Versiyon Notları
                                 </h5>
                                 <div className="space-y-5">
@@ -1482,9 +1481,9 @@ const Settings = () => {
                                         { v: 'v1.4.0', d: 'Parça takip sistemi ve KBB yönetimi entegre edildi.', t: 'Old' },
                                         { v: 'v1.3.8', d: 'Performans iyileştirmeleri ve hata giderimleri.', t: 'Old' }
                                     ].map((v, i) => (
-                                        <div key={i} className={`p-4 rounded-3xl border ${i === 0 ? 'bg-white border-indigo-200 shadow-lg shadow-indigo-500/5' : 'bg-transparent border-gray-100 opacity-60'}`}>
+                                        <div key={i} className={`p-4 rounded-lg border ${i === 0 ? 'bg-white border-indigo-200 shadow-lg shadow-indigo-500/5' : 'bg-transparent border-gray-100 opacity-60'}`}>
                                             <div className="flex justify-between items-center mb-1">
-                                                <span className="text-xs font-black text-indigo-600">{v.v}</span>
+                                                <span className="text-xs font-semibold text-indigo-600">{v.v}</span>
                                                 <span className="text-[10px] font-bold text-gray-400 italic">{v.t === 'Güncel' ? 'Aktif' : ''}</span>
                                             </div>
                                             <p className="text-[10px] text-gray-600 font-medium leading-relaxed">{v.d}</p>
@@ -1498,9 +1497,9 @@ const Settings = () => {
             case 'roles':
                 return (
                     <div className="space-y-8 animate-fade-in">
-                        <div className="flex justify-between items-center bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                        <div className="flex justify-between items-center bg-white p-8 rounded-lg border border-gray-100 shadow-sm">
                             <div>
-                                <h4 className="text-xl font-black text-gray-900 leading-none">Yetki Grupları (Roller)</h4>
+                                <h4 className="text-xl font-semibold text-gray-900 leading-none">Yetki Grupları (Roller)</h4>
                                 <p className="text-gray-500 text-sm mt-2 font-medium">Sistemdeki kullanıcıların yetki düzeylerini buradan yönetin.</p>
                             </div>
                             <button
@@ -1509,7 +1508,7 @@ const Settings = () => {
                                     setRoleForm({ name: '', displayName: '', permissions: [] });
                                     setShowRoleModal(true);
                                 }}
-                                className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl font-black text-xs hover:bg-black transition-all shadow-xl shadow-gray-200 hover:-translate-y-1 active:scale-95 flex items-center gap-2 uppercase tracking-widest"
+                                className="bg-gray-900 text-white px-8 py-3.5 rounded-md font-semibold text-xs hover:bg-black transition-all shadow-xl shadow-gray-200 hover:-translate-y-1 active:scale-95 flex items-center gap-2 text-xs uppercase tracking-wide"
                             >
                                 <Plus size={18} /> Yeni Rol Oluştur
                             </button>
@@ -1517,24 +1516,24 @@ const Settings = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {(roles || []).map((role) => (
-                                <div key={role._id} className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+                                <div key={role._id} className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
                                     {role.isSystem && (
-                                        <div className="absolute top-0 right-0 px-4 py-1.5 bg-gray-100 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-bl-2xl">
+                                        <div className="absolute top-0 right-0 px-4 py-1.5 bg-gray-100 text-gray-400 text-[9px] font-semibold text-xs uppercase tracking-wide rounded-bl-2xl">
                                             SİSTEM
                                         </div>
                                     )}
                                     <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center">
+                                        <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-md flex items-center justify-center">
                                             <Shield size={28} />
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black text-gray-900">{role.displayName}</h4>
+                                            <h4 className="text-lg font-semibold text-gray-900">{role.displayName}</h4>
                                             <p className="text-xs font-mono text-gray-400 font-bold">{role.name}</p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2 mb-8">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Aktif Yetkiler ({role.permissions?.length || 0})</p>
+                                        <p className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-3">Aktif Yetkiler ({role.permissions?.length || 0})</p>
                                         <div className="flex flex-wrap gap-1.5">
                                             {role.permissions?.slice(0, 4).map(p => (
                                                 <span key={p} className="bg-gray-50 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-lg border border-gray-100 uppercase">
@@ -1554,14 +1553,14 @@ const Settings = () => {
                                                 setRoleForm({ ...role });
                                                 setShowRoleModal(true);
                                             }}
-                                            className="flex-1 bg-gray-50 hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                                            className="flex-1 bg-gray-50 hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 py-3 rounded-md font-semibold text-[10px] text-xs uppercase tracking-wide transition-all"
                                         >
                                             DÜZENLE
                                         </button>
                                         {!role.isSystem && (
                                             <button
                                                 onClick={() => handleDeleteRole(role)}
-                                                className="w-12 h-12 flex items-center justify-center bg-gray-50 hover:bg-red-50 text-gray-300 hover:text-red-600 rounded-xl transition-all"
+                                                className="w-12 h-12 flex items-center justify-center bg-gray-50 hover:bg-red-50 text-gray-300 hover:text-red-600 rounded-md transition-all"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -1574,17 +1573,17 @@ const Settings = () => {
                         {/* Role Modal */}
                         {showRoleModal && (
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-                                <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 shadow-2xl animate-scale-up border border-white/20">
+                                <div className="bg-white rounded-lg w-full max-w-2xl p-10 shadow-2xl animate-scale-up border border-white/20">
                                     <div className="flex justify-between items-center mb-8">
-                                        <h3 className="text-2xl font-black text-gray-900">{editingRole ? 'Rolü Düzenle' : 'Yeni Rol Oluştur'}</h3>
-                                        <button onClick={() => setShowRoleModal(false)} className="w-12 h-12 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-2xl flex items-center justify-center transition-all">
+                                        <h3 className="text-2xl font-semibold text-gray-900">{editingRole ? 'Rolü Düzenle' : 'Yeni Rol Oluştur'}</h3>
+                                        <button onClick={() => setShowRoleModal(false)} className="w-12 h-12 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-md flex items-center justify-center transition-all">
                                             <X size={24} />
                                         </button>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-6 mb-8">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sistem Adı (ID)</label>
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Sistem Adı (ID)</label>
                                             <input
                                                 type="text"
                                                 disabled={!!editingRole}
@@ -1595,7 +1594,7 @@ const Settings = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Görünen Ad</label>
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Görünen Ad</label>
                                             <input
                                                 type="text"
                                                 value={roleForm.displayName}
@@ -1607,10 +1606,10 @@ const Settings = () => {
                                     </div>
 
                                     <div className="space-y-4 mb-10">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">İzinleri Seçin</label>
+                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">İzinleri Seçin</label>
                                         <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                             {availablePermissions.map(p => (
-                                                <label key={p.id} className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${roleForm.permissions.includes(p.id) ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-white hover:border-gray-200'}`}>
+                                                <label key={p.id} className={`flex items-center gap-3 p-4 rounded-md border transition-all cursor-pointer ${roleForm.permissions.includes(p.id) ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-white hover:border-gray-200'}`}>
                                                     <input
                                                         type="checkbox"
                                                         checked={roleForm.permissions.includes(p.id)}
@@ -1622,7 +1621,7 @@ const Settings = () => {
                                                         }}
                                                         className="w-5 h-5 rounded-lg text-rose-600 focus:ring-rose-500 border-gray-300"
                                                     />
-                                                    <span className="text-xs font-black uppercase tracking-tight">{p.label}</span>
+                                                    <span className="text-xs font-semibold uppercase tracking-tight">{p.label}</span>
                                                 </label>
                                             ))}
                                         </div>
@@ -1631,13 +1630,13 @@ const Settings = () => {
                                     <div className="flex gap-4">
                                         <button
                                             onClick={() => setShowRoleModal(false)}
-                                            className="flex-1 py-5 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-all"
+                                            className="flex-1 py-5 rounded-lg font-semibold text-[11px] uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-all"
                                         >
                                             VAZGEÇ
                                         </button>
                                         <button
                                             onClick={handleSaveRole}
-                                            className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-rose-200 transition-all active:scale-95"
+                                            className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-lg font-semibold text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-rose-200 transition-all active:scale-95"
                                         >
                                             {editingRole ? 'GÜNCELLEMELERİ KAYDET' : 'ROLÜ OLUŞTUR'}
                                         </button>
@@ -1655,9 +1654,9 @@ const Settings = () => {
             <div className="flex flex-col lg:flex-row gap-12">
                 {/* Sol Menü: Premium Sidebar */}
                 <div className="lg:w-80 shrink-0">
-                    <div className="sticky top-24 space-y-2 bg-white/40 backdrop-blur-xl p-4 rounded-[40px] border border-white shadow-sm ring-1 ring-black/5">
+                    <div className="sticky top-24 space-y-2 bg-white/40 backdrop-blur-xl p-4 rounded-lg border border-white shadow-sm ring-1 ring-black/5">
                         <div className="px-6 py-6 mb-4 border-b border-gray-100/50">
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Yönetim Paneli</h3>
+                            <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.2em]">Yönetim Paneli</h3>
                         </div>
                         {[
                             { id: 'general', label: 'Kurumsal Kimlik', icon: Building, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -1673,13 +1672,13 @@ const Settings = () => {
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-sm font-black transition-all group ${
+                                className={`w-full flex items-center gap-4 px-6 py-4 rounded-lg text-sm font-semibold transition-all group ${
                                     activeTab === item.id 
                                     ? 'bg-gray-900 text-white shadow-2xl shadow-gray-200 -translate-x-1' 
                                     : 'text-gray-500 hover:bg-white hover:text-gray-900'
                                 }`}
                             >
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                                <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-all ${
                                     activeTab === item.id ? 'bg-white/10 text-white' : `${item.bg} ${item.color} group-hover:scale-110 shadow-sm`
                                 }`}>
                                     <item.icon size={20} />
@@ -1695,17 +1694,17 @@ const Settings = () => {
                 <div className="flex-1">
                     <div className="mb-10 pl-4">
                         <div className="flex items-center gap-3 mb-2">
-                            <span className="bg-gray-900 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">SİSTEM</span>
+                            <span className="bg-gray-900 text-white px-2.5 py-1 rounded-lg text-[9px] font-semibold text-xs uppercase tracking-wide">SİSTEM</span>
                             <div className="h-px w-12 bg-gray-200"></div>
                         </div>
-                        <h2 className="text-4xl font-black text-gray-900 tracking-tight">
+                        <h2 className="text-4xl font-semibold text-gray-900 tracking-tight">
                             {activeTab === 'users' ? 'Personel & Rol Yönetimi' :
                              activeTab === 'locations' ? 'Mağaza & Lokasyon Ağı' :
                              activeTab === 'notifications' ? 'E-Posta & SMTP Yapısı' :
                              activeTab === 'stock' ? 'Envanter Veritabanı' :
                              activeTab === 'updates' ? 'Yazılım Güncelleme' :
                              activeTab === 'roles' ? 'Yetki ve Rol Yönetimi' :
-                             'Genel Sistem Ayarları'}
+                             'Genel Sistem Settingsı'}
                         </h2>
                         <p className="text-gray-500 mt-2 font-medium text-lg leading-relaxed max-w-2xl">
                             {activeTab === 'users' ? 'Sisteme erişimi olan kullanıcıları ve yetkilerini buradan yönetebilirsiniz.' :

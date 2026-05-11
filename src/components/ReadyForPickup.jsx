@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { CheckCircle, User, Package, Printer, X, PenTool, FileText, Calendar, MapPin, Eye, ArrowRight, ShieldCheck, Search } from 'lucide-react';
+import { CheckCircle, User, Package, Printer, X, PenTool, FileText, Calendar, MapPin, Eye, ArrowRight, ShieldCheck, Search, Download } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
 import RepairHistoryModal from './RepairHistoryModal';
 import DeliveryFormPrint from './DeliveryFormPrint';
+import { getSafeRepairImageUrl } from '../utils/productImages';
 
 const ReadyForPickup = () => {
-    const { repairs, updateRepair } = useAppContext();
+    const { repairs, updateRepair, API_URL } = useAppContext();
     const [selectedRepair, setSelectedRepair] = useState(null);
     const [selectedDetailRepair, setSelectedDetailRepair] = useState(null);
     const [showDeliveryModal, setShowDeliveryModal] = useState(false);
@@ -78,106 +79,94 @@ const ReadyForPickup = () => {
 
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 pb-32 animate-fade-in px-4 md:px-8">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <div className="p-2.5 bg-green-100 rounded-xl text-green-700">
-                            <Package size={24} />
-                        </div>
-                        Hazır Cihazlar (Teslimat Havuzu)
-                    </h2>
-                    <p className="text-gray-500 mt-2 font-medium max-w-2xl">Onarımı başarıyla tamamlanmış ve kalite kontrol testlerinden geçmiş cihazlar burada listelenir. Teslimat işlemini başlatmak için ilgili kaydı seçin.</p>
+        <div className="space-y-6 animate-fade-in">
+            {/* Header - Ana Sayfa Stili */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4 border-b border-gray-100 mb-6">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-emerald-50 rounded-md text-emerald-600 border border-emerald-100 shadow-sm">
+                        <CheckCircle size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Teslime Hazır</h2>
+                        <p className="text-gray-500 mt-1 font-medium">Onarımı tamamlanan ve teslim edilmeyi bekleyen cihazlar.</p>
+                    </div>
                 </div>
 
-                {/* Gelişmiş Arama Kutusu */}
-                <div className="relative group w-full md:w-96">
-                    <div className="absolute inset-0 bg-blue-100/30 blur-2xl group-within:bg-blue-200/40 transition-all rounded-full"></div>
-                    <div className="relative flex items-center">
-                        <Search className="absolute left-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <div className="flex items-center gap-3">
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Servis No veya Müşteri Ara..."
-                            className="w-full pl-14 pr-6 py-4 bg-white/80 backdrop-blur-md border border-gray-200 rounded-[28px] focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none font-bold text-gray-900 shadow-sm group-hover:shadow-md transition-all placeholder:text-gray-400"
+                            placeholder="Müşteri, Cihaz veya Seri No..."
+                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-bold focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        {searchTerm && (
-                            <button 
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-5 w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 transition-all"
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
                     </div>
+                    <button 
+                        className="h-10 px-4 bg-gray-900 text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-black transition-all flex items-center gap-2 shadow-md active:scale-95"
+                    >
+                        <Download size={16} /> DIŞA AKTAR
+                    </button>
                 </div>
             </div>
 
-            {/* List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {/* Liste Görünümü - Ana Sayfa Stili */}
+            <div className="flex flex-col gap-4">
                 {readyRepairs.length > 0 ? readyRepairs.map(repair => (
-                    <div key={repair.id} className="group bg-white rounded-[24px] hover:shadow-2xl hover:shadow-green-500/10 hover:-translate-y-1.5 transition-all duration-500 flex flex-col overflow-hidden border border-gray-100 relative">
-                        {/* Card Top - Icon/Image Area */}
-                        <div className="relative h-40 bg-gray-50 overflow-hidden">
-                            <div className="absolute top-4 left-4 z-20">
-                                <span className="bg-white/90 backdrop-blur-md text-gray-900 px-3 py-1.5 rounded-xl text-[10px] font-black font-mono shadow-sm border border-white/50">
-                                    #{repair.id}
-                                </span>
+                    <div key={repair.id} className="group bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:border-green-200 transition-all flex flex-col md:flex-row items-center gap-6">
+                        {/* Device Info */}
+                        <div className="flex items-center gap-4 flex-1 w-full">
+                            <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-gray-50 border border-gray-100">
+                                <img 
+                                    src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} 
+                                    alt={repair.device} 
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                />
                             </div>
-                            <div className="absolute top-4 right-4 z-20">
-                                <span className="bg-green-500 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg border border-white/20">
-                                    HAZIR
-                                </span>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">#{repair.id}</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">{repair.productGroup}</span>
+                                </div>
+                                <h3 className="font-bold text-gray-900 text-base truncate">{repair.device}</h3>
+                                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                    <User size={12} className="text-gray-400" /> {repair.customer}
+                                </p>
                             </div>
-                            <img 
-                                src={repair.image || (repair.device.toLowerCase().includes('iphone') ? 'https://images.unsplash.com/photo-1556656793-062ff9878273?q=80&w=800&auto=format&fit=crop' : 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop')} 
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                                alt="" 
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent"></div>
                         </div>
 
-                        {/* Card Body */}
-                        <div className="p-5 flex-1 flex flex-col">
-                            <div className="mb-4">
-                                <h3 className="font-black text-gray-900 text-base leading-tight mb-1 truncate">{repair.device}</h3>
-                                <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
-                                    <User size={12} className="text-gray-400" /> {repair.customer}
-                                </div>
-                            </div>
+                        {/* Status */}
+                        <div className="w-full md:w-40 flex shrink-0 justify-start md:justify-center">
+                            <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-50 text-green-600 border border-green-100 shadow-sm">
+                                HAZIR
+                            </span>
+                        </div>
 
-                            <div className="flex items-center gap-2 text-[9px] text-green-700 bg-green-50 p-2.5 rounded-xl border border-green-100 uppercase font-black mb-4">
-                                <ShieldCheck size={12} strokeWidth={3} />
-                                <span>Kalite Kontrol Tamam</span>
-                            </div>
-
-                            <div className="mt-auto grid grid-cols-1 gap-2">
-                                <button
-                                    onClick={() => handleOpenDelivery(repair)}
-                                    className="w-full bg-gray-900 hover:bg-black text-white py-2.5 rounded-xl font-black text-[10px] shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
-                                >
-                                    <CheckCircle size={14} /> TESLİM ET
-                                </button>
-                                <button
-                                    onClick={() => setSelectedDetailRepair(repair)}
-                                    className="w-full bg-white hover:bg-gray-50 text-gray-400 py-2.5 rounded-xl font-black text-[10px] border border-gray-100 transition-all flex items-center justify-center gap-2 active:scale-95"
-                                >
-                                    <Eye size={14} /> DETAYLAR
-                                </button>
-                            </div>
+                        {/* Eylemler */}
+                        <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-end mt-2 md:mt-0">
+                            <button
+                                onClick={() => setSelectedDetailRepair(repair)}
+                                className="w-10 h-10 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-500 rounded-md flex items-center justify-center border border-gray-200 transition-all shadow-sm"
+                                title="Detay"
+                            >
+                                <Eye size={18} />
+                            </button>
+                            <button
+                                onClick={() => handleOpenDelivery(repair)}
+                                className="h-10 px-4 rounded-md text-[11px] font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 text-white bg-gray-900 hover:bg-black"
+                            >
+                                TESLİM ET <ArrowRight size={14} />
+                            </button>
                         </div>
                     </div>
                 )) : (
-                    <div className="col-span-full glass p-20 flex flex-col items-center justify-center text-gray-400 gap-6 rounded-[48px] border border-dashed border-gray-300/60">
-                        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center">
-                            <Package size={48} className="text-gray-300" />
+                    <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-lg border border-dashed border-gray-200">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                            <Package size={32} className="text-gray-300" />
                         </div>
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold text-gray-900 mb-1">Teslim Edilecek Cihaz Yok</h3>
-                            <p className="font-medium text-gray-500">Şu anda tamamlanmış ve teslimat bekleyen bir kayıt bulunmuyor.</p>
-                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">Teslim Edilecek Cihaz Yok</h3>
+                        <p className="text-sm text-gray-500">Şu anda teslimat bekleyen bir kayıt bulunmuyor.</p>
                     </div>
                 )}
             </div>
@@ -193,24 +182,24 @@ const ReadyForPickup = () => {
             {/* Delivery Modal (Signature Required) */}
             {showDeliveryModal && (
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-[40px] w-full max-w-xl shadow-2xl p-10 animate-scale-in border border-white/40">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-lg w-full max-w-xl shadow-2xl p-10 animate-scale-in border border-white/40">
                         <div className="flex justify-between items-start mb-8">
                             <div>
                                 <h3 className="text-3xl font-bold text-gray-900 tracking-tight">Cihaz Teslim Onayı</h3>
                                 <p className="text-gray-500 mt-2 font-medium">Güvenlik prosedürü gereği müşteri imzası zorunludur.</p>
                             </div>
-                            <button onClick={() => setShowDeliveryModal(false)} className="p-3 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-colors">
+                            <button onClick={() => setShowDeliveryModal(false)} className="p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
                                 <X size={24} className="text-gray-500" />
                             </button>
                         </div>
 
                         <div className="space-y-8">
-                            <div className="bg-gray-50 p-6 rounded-3xl flex items-center gap-5 border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100">
+                            <div className="bg-gray-50 p-6 rounded-lg flex items-center gap-5 border border-gray-100">
+                                <div className="w-14 h-14 bg-white rounded-md flex items-center justify-center shadow-sm border border-gray-100">
                                     <MyPhoneIcon className="text-gray-900" size={28} />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-0.5">{selectedRepair.id}</p>
+                                    <p className="text-xs text-gray-400 font-bold text-xs uppercase tracking-wide mb-0.5">{selectedRepair.id}</p>
                                     <p className="font-bold text-gray-900 text-lg">{selectedRepair.device}</p>
                                 </div>
                             </div>
@@ -229,10 +218,10 @@ const ReadyForPickup = () => {
                                         height={220}
                                         onMouseDown={startSignature}
                                         onMouseMove={drawSignature}
-                                        className="bg-white border-2 border-dashed border-gray-300 rounded-3xl cursor-crosshair w-full shadow-inner group-hover:border-blue-400 transition-colors"
+                                        className="bg-white border-2 border-dashed border-gray-300 rounded-lg cursor-crosshair w-full shadow-inner group-hover:border-blue-400 transition-colors"
                                     />
                                     <div className="absolute bottom-4 left-0 w-full text-center pointer-events-none opacity-40">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">İmza Alanı</p>
+                                        <p className="text-[10px] text-gray-400 font-bold text-xs uppercase tracking-wide">İmza Alanı</p>
                                     </div>
                                 </div>
                                 <p className="text-xs text-gray-400 font-medium text-center">İşlem onayı için lütfen yukarıdaki alana imza atın.</p>
@@ -240,7 +229,7 @@ const ReadyForPickup = () => {
 
                             <button
                                 onClick={handleDeliveryConfirm}
-                                className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-gray-300 hover:bg-black hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                className="w-full bg-gray-900 text-white py-4 rounded-md font-bold text-lg shadow-xl shadow-gray-300 hover:bg-black hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                             >
                                 <CheckCircle size={24} />
                                 Teslimatı Tamamla

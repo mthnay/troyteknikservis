@@ -36,3 +36,35 @@ export const getProductImage = (group = '', model = '') => {
     // Varsayılan: Teknoloji/Servis Temalı Şık Bir Görsel
     return 'https://images.unsplash.com/photo-1491933382434-500287f9b54b?q=80&w=800&auto=format&fit=crop';
 };
+
+export const getSafeRepairImageUrl = (imagePath, group, model, apiUrl) => {
+    const fallback = getProductImage(group, model);
+    
+    if (!imagePath || typeof imagePath !== 'string') return fallback;
+    
+    // Check for known dead/example domains
+    const isDeadLink = imagePath.includes('officialapple.store') || 
+                       imagePath.includes('example.com') ||
+                       imagePath.includes('broken-link');
+
+    if (isDeadLink) return fallback;
+
+    // Full URLs or Data URIs
+    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
+        return imagePath;
+    }
+
+    // Relative paths from backend
+    // Normalize path by removing leading slash
+    const cleanPath = imagePath.replace(/^\//, '');
+    
+    // Construct base URL
+    const baseUrl = (apiUrl || 'http://localhost:5001/api').replace('/api', '');
+    
+    // If it's just a filename, prepend /uploads/
+    if (!cleanPath.startsWith('uploads/')) {
+        return `${baseUrl}/uploads/${cleanPath}`;
+    }
+    
+    return `${baseUrl}/${cleanPath}`;
+};

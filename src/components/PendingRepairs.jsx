@@ -5,13 +5,12 @@ import RepairDiagnosisModal from './RepairDiagnosisModal';
 import RepairHistoryModal from './RepairHistoryModal';
 import { useAppContext } from '../context/AppContext';
 import { appConfirm } from '../utils/alert';
-import { getProductImage } from '../utils/productImages';
+import { getProductImage, getSafeRepairImageUrl } from '../utils/productImages';
 
 const PendingRepairs = ({ setActiveTab }) => {
-    const { repairs, updateRepair, currentUser } = useAppContext();
+    const { repairs, updateRepair, currentUser, searchQuery, setSearchQuery, API_URL } = useAppContext();
     const [selectedRepair, setSelectedRepair] = useState(null);
     const [selectedHistoryRepair, setSelectedHistoryRepair] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'board'
 
     // Status Columns for Board View
@@ -50,9 +49,9 @@ const PendingRepairs = ({ setActiveTab }) => {
     // Filter Logic
     // Unified Filter Logic
     const filteredRepairs = repairs.filter(r =>
-    (r.device.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchTerm.toLowerCase()))
+    (r.device.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.id.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     // List View specific filter (only 'Beklemede') logic is kept for List Mode if desired,
@@ -148,13 +147,13 @@ const PendingRepairs = ({ setActiveTab }) => {
 
     return (
         <>
-            <div className="max-w-[1600px] mx-auto space-y-6 pb-32 animate-fade-in px-4 md:px-8">
+            <div className="space-y-6 animate-fade-in">
 
                 {/* Header & Stats */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4 border-b border-gray-100">
                     <div>
-                        <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-                            <div className="p-3 bg-orange-50 rounded-2xl text-orange-600 border border-orange-100">
+                        <h2 className="text-3xl font-semibold text-gray-900 flex items-center gap-3">
+                            <div className="p-3 bg-orange-50 rounded-md text-orange-600 border border-orange-100">
                                 <Clock size={28} />
                             </div>
                             İşlem Bekleyenler & İş Akışı
@@ -166,7 +165,7 @@ const PendingRepairs = ({ setActiveTab }) => {
 
                     {/* View Toggle & Search Bar */}
                     <div className="flex items-center gap-4 w-full md:w-auto">
-                        <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex bg-white p-1 rounded-md border border-gray-200 shadow-sm">
                             <button
                                 onClick={() => setViewMode('list')}
                                 className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
@@ -187,9 +186,9 @@ const PendingRepairs = ({ setActiveTab }) => {
                             <input
                                 type="text"
                                 placeholder="Cihaz, Müşteri, ID..."
-                                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-gray-200 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-bold text-gray-700 shadow-sm text-sm"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 rounded-md bg-white border border-gray-200 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-bold text-gray-700 shadow-sm text-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         </div>
@@ -198,9 +197,9 @@ const PendingRepairs = ({ setActiveTab }) => {
 
                 {/* Gelen Transferler Paneli */}
                 {incomingTransfers.length > 0 && (
-                    <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-3xl p-6 shadow-sm mb-6">
+                    <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-lg p-6 shadow-sm mb-6">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-indigo-100 p-2 rounded-xl text-indigo-600">
+                            <div className="bg-indigo-100 p-2 rounded-md text-indigo-600">
                                 <Truck size={24} />
                             </div>
                             <div>
@@ -210,14 +209,14 @@ const PendingRepairs = ({ setActiveTab }) => {
                         </div>
                         <div className="flex flex-col gap-3">
                             {incomingTransfers.map(repair => (
-                                <div key={repair.id} className="bg-white rounded-2xl p-4 border border-indigo-50 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-transform hover:scale-[1.01]">
+                                <div key={repair.id} className="bg-white rounded-md p-4 border border-indigo-50 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-transform hover:scale-[1.01]">
                                     <div className="flex items-center gap-4 flex-1">
-                                        <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden shrink-0">
-                                            <img src={repair.image || getProductImage(repair.productGroup, repair.device)} className="w-full h-full object-cover" />
+                                        <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden shrink-0">
+                                            <img src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} className="w-full h-full object-cover" />
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                                                {repair.device} <span className="text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">#{repair.id}</span>
+                                                {repair.device} <span className="text-[10px] font-semibold text-xs uppercase tracking-wide bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">#{repair.id}</span>
                                             </h4>
                                             <p className="text-xs text-indigo-600 font-medium flex items-center gap-1 mt-0.5">
                                                 <User size={12} /> {repair.customer} • Şikayet: {repair.issue || repair.issueDescription || "Belirtilmedi"}
@@ -227,7 +226,7 @@ const PendingRepairs = ({ setActiveTab }) => {
                                     <div className="flex gap-2 w-full md:w-auto">
                                         <button 
                                             onClick={() => handleAcceptTransfer(repair)}
-                                            className="flex-1 md:flex-none px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm shadow-indigo-200"
+                                            className="flex-1 md:flex-none gsx-button-primary flex items-center justify-center gap-2"
                                         >
                                             <Check size={16} /> Teslim Al
                                         </button>
@@ -245,11 +244,11 @@ const PendingRepairs = ({ setActiveTab }) => {
                             pendingRepairsList.map((repair) => (
                                 <div
                                     key={repair.id}
-                                    className={`group bg-white rounded-3xl p-4 border ${isSlaBreached(repair) ? 'border-red-300 shadow-red-100' : 'border-gray-100'} shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-6 cursor-pointer relative overflow-hidden`}
+                                    className={`group bg-white rounded-lg p-4 border ${isSlaBreached(repair) ? 'border-red-300 shadow-red-100' : 'border-gray-100'} shadow-sm hover:shadow-sm hover:border-orange-200 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-6 cursor-pointer relative overflow-hidden`}
                                     onClick={() => setSelectedRepair(repair)}
                                 >
                                     {isSlaBreached(repair) && (
-                                        <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm z-10 flex items-center gap-1">
+                                        <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-semibold text-xs uppercase tracking-wide px-3 py-1 rounded-bl-xl shadow-sm z-10 flex items-center gap-1">
                                             <span className="relative flex h-2 w-2 mr-1">
                                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                               <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
@@ -259,10 +258,10 @@ const PendingRepairs = ({ setActiveTab }) => {
                                     )}
                                     {/* Image & ID */}
                                     <div className="relative flex-shrink-0">
-                                        <div className="w-20 h-20 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-100">
-                                            <img src={repair.image || getProductImage(repair.productGroup, repair.device)} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                        <div className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden shadow-inner border border-gray-100">
+                                            <img src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                         </div>
-                                        <span className="absolute -top-3 -left-3 bg-white text-gray-900 text-[10px] font-black px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
+                                        <span className="absolute -top-3 -left-3 bg-white text-gray-900 text-[10px] font-semibold px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
                                             #{repair.id}
                                         </span>
                                     </div>
@@ -286,7 +285,7 @@ const PendingRepairs = ({ setActiveTab }) => {
                                         </div>
 
                                         {/* Issue - Col Span 5 */}
-                                        <div className="md:col-span-5 bg-orange-50/50 p-3 rounded-xl border border-orange-100/50">
+                                        <div className="md:col-span-5 bg-orange-50/50 p-3 rounded-md border border-orange-100/50">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <AlertCircle size={12} className="text-orange-500" />
                                                 <span className="text-[10px] font-bold text-orange-700 uppercase tracking-wide">Şikayet</span>
@@ -309,13 +308,13 @@ const PendingRepairs = ({ setActiveTab }) => {
                                     <div className="flex flex-row md:flex-col items-center gap-2 w-full md:w-auto mt-4 md:mt-0 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setSelectedRepair(repair); }}
-                                            className="flex-1 md:flex-initial w-full md:w-40 bg-gray-900 text-white px-4 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2 group/btn"
+                                            className="flex-1 md:flex-initial w-full md:w-40 gsx-button-primary flex items-center justify-center gap-2 group/btn"
                                         >
                                             Teşhis Yap <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setSelectedHistoryRepair(repair); }}
-                                            className="flex-1 md:flex-initial w-full md:w-40 bg-white border border-gray-200 text-gray-600 px-4 py-3 rounded-xl text-sm font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                                            className="flex-1 md:flex-initial w-full md:w-40 bg-white border border-[#d2d2d7] text-gray-700 px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#f5f5f7] transition-all flex items-center justify-center gap-2"
                                         >
                                             <Eye size={16} /> Detay
                                         </button>
@@ -324,13 +323,13 @@ const PendingRepairs = ({ setActiveTab }) => {
                                 </div>
                             ))
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[32px] border border-dashed border-gray-200">
+                            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-lg border border-dashed border-gray-200">
                                 <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                     <Clock size={40} className="text-gray-300" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900">Kayıt Bulunamadı</h3>
                                 <p className="text-gray-500 max-w-sm mx-auto mt-2">
-                                    {searchTerm ? `"${searchTerm}" aramasına uygun cihaz bulunamadı.` : 'Şu anda işlem bekleyen cihaz bulunmuyor.'}
+                                    {searchQuery ? `"${searchQuery}" aramasına uygun cihaz bulunamadı.` : 'Şu anda işlem bekleyen cihaz bulunmuyor.'}
                                 </p>
                             </div>
                         )}
@@ -341,12 +340,12 @@ const PendingRepairs = ({ setActiveTab }) => {
                         {BOARD_COLUMNS.map(column => (
                             <div
                                 key={column.id}
-                                className="min-w-[320px] w-80 bg-gray-50/50 rounded-3xl p-4 flex flex-col h-full border border-gray-200/60"
+                                className="min-w-[320px] w-80 bg-gray-50/50 rounded-lg p-4 flex flex-col h-full border border-gray-200/60"
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, column.id)}
                             >
                                 <div className="flex items-center justify-between mb-4 px-2">
-                                    <h3 className="font-black text-gray-700 uppercase tracking-tight text-sm flex items-center gap-2">
+                                    <h3 className="font-semibold text-gray-700 uppercase tracking-tight text-sm flex items-center gap-2">
                                         <div className={`w-3 h-3 rounded-full ${column.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
                                         {column.label}
                                     </h3>
@@ -362,22 +361,22 @@ const PendingRepairs = ({ setActiveTab }) => {
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, repair.id)}
                                             onClick={() => setSelectedRepair(repair)}
-                                            className={`bg-white p-4 rounded-2xl border ${isSlaBreached(repair) ? 'border-red-300 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-gray-100'} shadow-sm hover:shadow-md hover:scale-[1.02] cursor-grab active:cursor-grabbing transition-all group relative`}
+                                            className={`bg-white p-4 rounded-md border ${isSlaBreached(repair) ? 'border-red-300 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-gray-100'} shadow-sm hover:shadow-md hover:scale-[1.02] cursor-grab active:cursor-grabbing transition-all group relative`}
                                         >
                                             {isSlaBreached(repair) && (
-                                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md z-10 flex items-center gap-1 border-2 border-white">
+                                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-semibold text-xs uppercase tracking-wide px-2 py-0.5 rounded-full shadow-md z-10 flex items-center gap-1 border-2 border-white">
                                                     SLA İhlali
                                                 </div>
                                             )}
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className="text-[10px] font-black bg-gray-50 text-gray-500 px-2 py-1 rounded-lg">#{repair.id}</span>
+                                                <span className="text-[10px] font-semibold bg-gray-50 text-gray-500 px-2 py-1 rounded-lg">#{repair.id}</span>
                                                 <button className="text-gray-300 hover:text-gray-600 transition-colors">
                                                     <MoreHorizontal size={16} />
                                                 </button>
                                             </div>
 
                                             <div className="flex gap-3 mb-3">
-                                                <img src={repair.image || getProductImage(repair.productGroup, repair.device)} className="w-12 h-12 rounded-xl object-cover bg-gray-100" />
+                                                <img src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} className="w-12 h-12 rounded-md object-cover bg-gray-100" />
                                                 <div>
                                                     <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{repair.device}</h4>
                                                     <span className="text-xs text-gray-500 font-medium">{repair.customer}</span>
@@ -398,7 +397,7 @@ const PendingRepairs = ({ setActiveTab }) => {
                                         </div>
                                     ))}
                                     {getRepairsForColumn(column.id).length === 0 && (
-                                        <div className="h-32 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center text-gray-300 text-xs font-bold uppercase tracking-widest bg-gray-50/30">
+                                        <div className="h-32 border-2 border-dashed border-gray-200 rounded-md flex items-center justify-center text-gray-300 text-xs font-bold text-xs uppercase tracking-wide bg-gray-50/30">
                                             Boş
                                         </div>
                                     )}

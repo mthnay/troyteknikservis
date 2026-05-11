@@ -21,36 +21,18 @@ export const sendAutomatedEmail = async (repair, statusType) => {
 
         const auth = emailConfigSetting.value;
 
-        // 1.5 Bildirim Ayarlarını Kontrol Et (Otomasyonlar Aktif mi?)
-        const notifSettings = await SystemSetting.findOne({ key: 'notificationSettings' });
-        if (notifSettings && notifSettings.value && notifSettings.value.automations) {
-            const automations = notifSettings.value.automations;
-            
-            // Eğer durum "Hazır" ise ve hazır bildirim otomasyonu kapalıysa gönderimi durdur
-            const readyStatuses = ['Cihaz Hazır', 'İade Hazır', 'Hazır'];
-            if (readyStatuses.includes(statusType) && automations.ready_notification === false) {
-                console.log(`[EmailService] "${statusType}" bildirimi otomasyon ayarlarında kapalı olduğu için iptal edildi.`);
-                return;
-            }
-        }
-
-        // 2. SMTP Transporter Yapılandır (Microsoft Exchange / Office 365 Uyumlu)
+        // 2. SMTP Transporter Yapılandır (Microsoft Exchange Zorunlu)
         const transporter = nodemailer.createTransport({
-            host: auth.host || 'smtp.office365.com',
-            port: auth.port || 587,
-            secure: auth.port == 465, 
-            requireTLS: auth.port == 587 || !auth.port,
+            host: 'smtp.office365.com',
+            port: 587,
+            secure: false, // 587 portu için STARTTLS kullanılır
+            requireTLS: true,
             auth: {
                 user: auth.user,
                 pass: auth.pass,
             },
-            tls: { 
-                ciphers: 'SSLv3', 
-                rejectUnauthorized: false 
-            },
-            connectionTimeout: 15000,
-            greetingTimeout: 15000,
-            socketTimeout: 30000,
+            tls: { ciphers: 'SSLv3', rejectUnauthorized: false },
+            connectionTimeout: 10000,
         });
 
         // 3. Şablon ve İçerik Belirle
@@ -74,17 +56,14 @@ export const sendAutomatedEmail = async (repair, statusType) => {
                 break;
             
             case 'Cihaz Hazır':
-            case 'İade Hazır':
             case 'Hazır':
-                subject = `Cihazınız Hazır: #${repair.id} - ${repair.device}`;
-                templateTitle = 'Cihazınız Teslime Hazır!';
+                subject = `Onarım Tamamlandı: #${repair.id} - ${repair.device}`;
+                templateTitle = 'Cihazınız Hazır!';
                 accentColor = '#28a745'; // Green
                 templateContent = `
-                    Sayın <strong>${repair.customer}</strong>,<br><br>
-                    <strong>${repair.device}</strong> cihazınızın servis işlemleri tamamlanmış ve teslimata hazır hale getirilmiştir. 
+                    İyi haber! <strong>${repair.device}</strong> cihazınızın onarım süreci başarıyla tamamlanmıştır. 
                     Cihazınızı mağazamızdan dilediğiniz zaman teslim alabilirsiniz.<br><br>
                     <strong>Servis Kaydı:</strong> #${repair.id}<br>
-                    <strong>Durum:</strong> ${repair.status}<br>
                     <strong>Çalışma Saatleri:</strong> 09:00 - 18:00
                 `;
                 break;

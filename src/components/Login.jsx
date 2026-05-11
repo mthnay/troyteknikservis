@@ -50,8 +50,8 @@ const Login = ({ onTrackingClick }) => {
                     confirmButtonText: 'Tamam',
                     confirmButtonColor: '#111827',
                     customClass: {
-                        popup: 'rounded-[32px]',
-                        confirmButton: 'rounded-xl px-8 py-3'
+                        popup: 'rounded-lg',
+                        confirmButton: 'rounded-md px-8 py-3'
                     }
                 });
                 setShowForgotPassword(false);
@@ -63,7 +63,7 @@ const Login = ({ onTrackingClick }) => {
                     confirmButtonText: 'Tekrar Dene',
                     confirmButtonColor: '#111827',
                     customClass: {
-                        popup: 'rounded-[32px]'
+                        popup: 'rounded-lg'
                     }
                 });
             }
@@ -87,30 +87,30 @@ const Login = ({ onTrackingClick }) => {
 
             {/* --- Compact Container --- */}
             <div className="relative w-full max-w-[380px] z-20">
-                <div className="bg-white/50 backdrop-blur-[30px] p-8 md:p-10 rounded-[40px] border border-white/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.02] animate-fade-in-up duration-700">
+                <div className="bg-white/50 backdrop-blur-[30px] p-8 md:p-10 rounded-lg border border-white/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.02] animate-fade-in-up duration-700">
                     
                     {/* Compact Header */}
                     <div className="text-center mb-8">
                         <div className="relative inline-block mb-6">
-                            <div className="relative w-16 h-16 bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-[24px] flex items-center justify-center text-white shadow-xl ring-1 ring-white/20">
+                            <div className="relative w-16 h-16 bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-lg flex items-center justify-center text-white shadow-xl ring-1 ring-white/20">
                                 <Store size={32} strokeWidth={2} />
                             </div>
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-1">TROY</h1>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] opacity-70">Authorized Service</span>
+                        <h1 className="text-3xl font-semibold text-gray-900 tracking-tight mb-1">OSS</h1>
+                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.2em] opacity-70">Servis Yazılımı</span>
                     </div>
 
                     {!showForgotPassword ? (
                         <form onSubmit={handleLogin} className="space-y-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
                             {/* Email Input */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black text-gray-400 ml-4 uppercase tracking-widest block opacity-80">Personel E-Posta</label>
+                                <label className="text-[11px] font-semibold text-gray-400 ml-4 text-xs uppercase tracking-wide block opacity-80">Personel E-Posta</label>
                                 <div className="relative group">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-gray-900 transition-all duration-300" size={20} />
                                     <input
                                         type="email"
-                                        placeholder="ad.soyad@troyapr.com"
-                                        className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/60 border border-transparent focus:bg-white focus:border-gray-100 shadow-sm outline-none transition-all duration-300 font-bold text-base placeholder:text-gray-200"
+                                        placeholder="ad.soyad@oss.com"
+                                        className="w-full pl-12 pr-5 py-4 rounded-md bg-white/60 border border-transparent focus:bg-white focus:border-gray-100 shadow-sm outline-none transition-all duration-300 font-bold text-base placeholder:text-gray-200"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -120,13 +120,13 @@ const Login = ({ onTrackingClick }) => {
 
                             {/* Password Input */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black text-gray-400 ml-4 uppercase tracking-widest block opacity-80">Güvenlik Anahtarı</label>
+                                <label className="text-[11px] font-semibold text-gray-400 ml-4 text-xs uppercase tracking-wide block opacity-80">Güvenlik Anahtarı</label>
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-gray-900 transition-all duration-300" size={20} />
                                     <input
                                         type="password"
                                         placeholder="••••••••"
-                                        className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/60 border border-transparent focus:bg-white focus:border-gray-100 shadow-sm outline-none transition-all duration-300 font-mono text-base tracking-[0.3em] placeholder:text-gray-200 placeholder:tracking-normal"
+                                        className="w-full pl-12 pr-5 py-4 rounded-md bg-white/60 border border-transparent focus:bg-white focus:border-gray-100 shadow-sm outline-none transition-all duration-300 font-mono text-base tracking-[0.3em] placeholder:text-gray-200 placeholder:tracking-normal"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -135,7 +135,7 @@ const Login = ({ onTrackingClick }) => {
                             </div>
 
                             {error && (
-                                <div className="text-center text-[11px] text-red-500 font-black bg-red-50/40 backdrop-blur-md py-3.5 rounded-2xl flex items-center justify-center gap-2 border border-red-100/50 animate-shake">
+                                <div className="text-center text-[11px] text-red-500 font-semibold bg-red-50/40 backdrop-blur-md py-3.5 rounded-md flex items-center justify-center gap-2 border border-red-100/50 animate-shake">
                                     <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
                                     {error}
                                 </div>
@@ -144,7 +144,7 @@ const Login = ({ onTrackingClick }) => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-gray-900 text-white font-black py-4.5 rounded-2xl shadow-lg shadow-gray-100 hover:bg-black hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-400 flex items-center justify-center gap-3 group disabled:opacity-50 mt-2"
+                                className="w-full bg-gray-900 text-white font-semibold py-4.5 rounded-md shadow-lg shadow-gray-100 hover:bg-black hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-400 flex items-center justify-center gap-3 group disabled:opacity-50 mt-2"
                             >
                                 {isLoading ? (
                                     <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -160,7 +160,7 @@ const Login = ({ onTrackingClick }) => {
                                 <button 
                                     type="button"
                                     onClick={() => setShowForgotPassword(true)}
-                                    className="text-[11px] text-gray-400 hover:text-gray-900 font-black transition-all duration-300 uppercase tracking-widest"
+                                    className="text-[11px] text-gray-400 hover:text-gray-900 font-semibold transition-all duration-300 text-xs uppercase tracking-wide"
                                 >
                                     Şifremi Unuttum?
                                 </button>
@@ -169,13 +169,13 @@ const Login = ({ onTrackingClick }) => {
                     ) : (
                         <form onSubmit={handleForgotPassword} className="space-y-4 animate-in slide-in-from-right-2 duration-500">
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black text-gray-400 ml-4 uppercase tracking-widest block opacity-80">Kurtarma E-Postası</label>
+                                <label className="text-[11px] font-semibold text-gray-400 ml-4 text-xs uppercase tracking-wide block opacity-80">Kurtarma E-Postası</label>
                                 <div className="relative group">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 focus-within:text-gray-900" size={20} />
                                     <input
                                         type="email"
                                         placeholder="eposta adresinizi yazın..."
-                                        className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/60 border border-transparent focus:bg-white shadow-sm outline-none transition-all font-bold text-base"
+                                        className="w-full pl-12 pr-5 py-4 rounded-md bg-white/60 border border-transparent focus:bg-white shadow-sm outline-none transition-all font-bold text-base"
                                         value={resetEmail}
                                         onChange={(e) => setResetEmail(e.target.value)}
                                         required
@@ -186,7 +186,7 @@ const Login = ({ onTrackingClick }) => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-indigo-600 text-white font-black py-4.5 rounded-2xl shadow-lg shadow-indigo-50 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-400 flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="w-full bg-indigo-600 text-white font-semibold py-4.5 rounded-md shadow-lg shadow-indigo-50 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-400 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 {isLoading ? (
                                     <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -197,7 +197,7 @@ const Login = ({ onTrackingClick }) => {
                                 <button 
                                     type="button"
                                     onClick={() => setShowForgotPassword(false)}
-                                    className="text-[11px] text-gray-400 hover:text-gray-900 font-black transition-all duration-300 uppercase tracking-widest"
+                                    className="text-[11px] text-gray-400 hover:text-gray-900 font-semibold transition-all duration-300 text-xs uppercase tracking-wide"
                                 >
                                     ← GERİ DÖN
                                 </button>
@@ -207,11 +207,11 @@ const Login = ({ onTrackingClick }) => {
 
                     {/* Footer Branding */}
                     <div className="mt-6 pt-6 border-t border-black/[0.03] text-center">
-                        <p className="text-[11px] text-gray-300 font-black uppercase tracking-[0.2em] mb-4 font-mono">© 2026 TROY APPLE ASP</p>
+                        <p className="text-[11px] text-gray-300 font-semibold uppercase tracking-[0.1em] mb-4 font-mono">OSS Operating Software Solution - 2026 Tüm Hakları Saklıdır</p>
                         
                         <button 
                             onClick={onTrackingClick}
-                            className="w-full py-4 bg-blue-50 text-blue-600 rounded-2xl font-black text-[11px] tracking-widest uppercase hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100 flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-blue-50 text-blue-600 rounded-md font-semibold text-[11px] tracking-widest uppercase hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100 flex items-center justify-center gap-2"
                         >
                             <MyPhoneIcon size={14} /> Cihaz Durumu Sorgula
                         </button>

@@ -258,8 +258,8 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                 {/* Header */}
                 <div className="bg-gray-50/50 px-8 py-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0 backdrop-blur-lg">
                     <div>
-                        <h3 className="text-xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                            <div className="w-10 h-10 bg-apple-blue rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3 tracking-tight">
+                            <div className="w-10 h-10 bg-apple-blue rounded-md flex items-center justify-center shadow-lg shadow-blue-200">
                                 <Wrench size={20} className="text-white" />
                             </div>
                             Teknik İnceleme & Tanı
@@ -279,7 +279,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                         <div className="space-y-8 animate-in slide-in-from-right-8 fade-in duration-300">
                             {/* 1. Onarım Türü Seçimi (En Üstte) */}
                             <div>
-                                <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
+                                <label className="flex items-center gap-2 text-xs font-semibold text-gray-400 text-xs uppercase tracking-wide mb-3">
                                     <Activity size={12} className="text-apple-blue" />
                                     Onarım Türü Seçin <span className="text-red-500">*</span>
                                 </label>
@@ -288,7 +288,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                         <button
                                             key={type.id}
                                             onClick={() => setFormData({ ...formData, repairType: type.id })}
-                                            className={`p-4 rounded-2xl border text-left transition-all duration-200 group relative overflow-hidden ${formData.repairType === type.id
+                                            className={`p-4 rounded-md border text-left transition-all duration-200 group relative overflow-hidden ${formData.repairType === type.id
                                                 ? 'border-apple-blue bg-blue-50/50 text-apple-blue shadow-md shadow-blue-100 ring-1 ring-blue-100s'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 text-gray-600'
                                                 }`}
@@ -304,13 +304,13 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
 
                             {/* Teklif Tutarı (Sadece Müşteri Onayı Bekleyen seçilirse) */}
                             {formData.repairType === 'approval' && (
-                                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 p-6 rounded-2xl border border-orange-200/60 animate-in zoom-in-95 duration-300 shadow-sm">
+                                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 p-6 rounded-md border border-orange-200/60 animate-in zoom-in-95 duration-300 shadow-sm">
                                     <label className="block text-sm font-bold text-orange-900 mb-2">Müşteriye Sunulacak Teklif Tutarı (TL) <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={20} strokeWidth={2.5} />
                                         <input
                                             type="number"
-                                            className="w-full pl-12 p-3.5 bg-white border border-orange-200 rounded-xl text-xl font-black text-orange-900 focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none transition-all shadow-inner"
+                                            className="w-full pl-12 p-3.5 bg-white border border-orange-200 rounded-md text-xl font-semibold text-orange-900 focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none transition-all shadow-inner"
                                             placeholder="0.00"
                                             value={quoteAmount}
                                             onChange={e => setQuoteAmount(e.target.value)}
@@ -322,9 +322,9 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
 
                             {/* 2. Tanı Testleri (Opsiyonel) */}
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Tanı Testleri ve Gözlemler <span className="font-medium opacity-50">(Opsiyonel)</span></label>
+                                <label className="block text-xs font-semibold text-gray-400 text-xs uppercase tracking-wide mb-3">Tanı Testleri ve Gözlemler <span className="font-medium opacity-50">(Opsiyonel)</span></label>
                                 <textarea
-                                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-gray-100 focus:border-gray-300 outline-none min-h-[100px] text-sm font-medium transition-all resize-none"
+                                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-md focus:ring-4 focus:ring-gray-100 focus:border-gray-300 outline-none min-h-[100px] text-sm font-medium transition-all resize-none"
                                     placeholder="Yapılan testler, gözlemler ve tanı sonuçları..."
                                     value={formData.tests}
                                     onChange={e => setFormData({ ...formData, tests: e.target.value })}
@@ -334,7 +334,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                             {/* 3. Parçalar Bölümü */}
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    <label className="flex items-center gap-2 text-xs font-semibold text-gray-400 text-xs uppercase tracking-wide">
                                         <Zap size={12} className="text-amber-500" />
                                         Envanterden Parça Seç ({formData.parts.length}/5)
                                     </label>
@@ -343,7 +343,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                 <div className="relative z-20">
                                     <input 
                                         type="text" 
-                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none"
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-md text-sm font-bold focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none"
                                         placeholder="Eklemek istediğiniz parçayı envanterde arayın (P/N veya İsim)..."
                                         value={partSearch}
                                         onChange={(e) => {
@@ -353,7 +353,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                         onFocus={() => setShowPartDropdown(true)}
                                     />
                                     {showPartDropdown && partSearch.length > 0 && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
                                             {filteredInventory.length > 0 ? (
                                                 filteredInventory.map(item => (
                                                     <div 
@@ -365,7 +365,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                                             <h5 className="font-bold text-gray-900 group-hover:text-blue-700">{item.name}</h5>
                                                             <p className="text-[10px] font-mono text-gray-500">{item.partNumber}</p>
                                                         </div>
-                                                        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${item.quantity > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        <span className={`text-[10px] font-semibold uppercase px-2 py-1 rounded-lg ${item.quantity > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                             Stok: {item.quantity}
                                                         </span>
                                                     </div>
@@ -380,7 +380,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                             <div className="p-2 border-t border-gray-100 bg-gray-50/50">
                                                 <button
                                                     onClick={addPartOrdered}
-                                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95"
+                                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-semibold text-xs uppercase tracking-wide transition-all shadow-md active:scale-95"
                                                 >
                                                     <Plus size={14} /> "{partSearch}" Stokta Yok, Depodan Sipariş Et
                                                 </button>
@@ -392,7 +392,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                 {formData.parts.length > 0 && (
                                     <div className="space-y-3 mt-4">
                                         {formData.parts.map((part, index) => (
-                                            <div key={index} className="bg-white p-5 rounded-2xl border border-gray-200 relative group animate-in slide-in-from-bottom-4 shadow-sm hover:shadow-md transition-shadow">
+                                            <div key={index} className="bg-white p-5 rounded-md border border-gray-200 relative group animate-in slide-in-from-bottom-4 shadow-sm hover:shadow-md transition-shadow">
                                                 <button
                                                     onClick={() => removePart(index)}
                                                     className="absolute top-[-10px] right-[-10px] w-8 h-8 flex items-center justify-center bg-white text-red-500 rounded-full shadow-lg border border-red-100 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 hover:scale-110 z-10"
@@ -406,17 +406,17 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                                         {part.isNewInventoryItem ? (
                                                             <div className="space-y-2 animate-in fade-in slide-in-from-left-2">
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter mb-1">Parça Tanımı</span>
+                                                                    <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-tighter mb-1">Parça Tanımı</span>
                                                                     <input 
                                                                         type="text"
-                                                                        className="w-full h-9 px-3 bg-indigo-50/50 border border-indigo-100 rounded-xl text-sm font-bold text-indigo-900 outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
+                                                                        className="w-full h-9 px-3 bg-indigo-50/50 border border-indigo-100 rounded-md text-sm font-bold text-indigo-900 outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
                                                                         value={part.description}
                                                                         onChange={(e) => updatePart(index, 'description', e.target.value)}
                                                                         placeholder="Parça Tanımı (Örn: iPhone 13 Ekran)"
                                                                     />
                                                                 </div>
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter mb-1">Parça No (P/N)</span>
+                                                                    <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-tighter mb-1">Parça No (P/N)</span>
                                                                     <input 
                                                                         type="text"
                                                                         className="w-full h-8 px-3 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-mono font-bold text-gray-600 outline-none uppercase focus:border-blue-400 transition-all"
@@ -428,12 +428,12 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                                             </div>
                                                         ) : (
                                                             <>
-                                                                <h4 className="font-black text-gray-900">{part.description}</h4>
+                                                                <h4 className="font-semibold text-gray-900">{part.description}</h4>
                                                                 <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-mono font-bold tracking-widest">{part.partNumber}</span>
                                                             </>
                                                         )}
                                                     </div>
-                                                    <label className="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors">
+                                                    <label className="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-200 transition-colors">
                                                         <input 
                                                             type="checkbox" 
                                                             className="hidden" 
@@ -443,24 +443,24 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                                         <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${part.needsOrder ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}>
                                                             {part.needsOrder && <Check size={10} strokeWidth={4} />}
                                                         </div>
-                                                        <span className={`text-[10px] font-black uppercase tracking-tight ${part.needsOrder ? 'text-indigo-700' : 'text-slate-500'}`}>Depodan Sipariş Et</span>
+                                                        <span className={`text-[10px] font-semibold uppercase tracking-tight ${part.needsOrder ? 'text-indigo-700' : 'text-slate-500'}`}>Depodan Sipariş Et</span>
                                                     </label>
                                                 </div>
                                                 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {/* KGB - Yeni Parça (Stoktan Seçilecek) */}
                                                     <div className="flex flex-col">
-                                                        <div className="text-[10px] uppercase font-black tracking-widest text-emerald-600 mb-2 flex items-center justify-between h-[15px]">
+                                                        <div className="text-[10px] uppercase font-semibold tracking-widest text-emerald-600 mb-2 flex items-center justify-between h-[15px]">
                                                             <span>YENİ PARÇA (KGB) SERİ NO</span>
                                                             <span className="opacity-50">{part.needsOrder ? 'Sipariş Bekleniyor' : 'Stoktan Seç'}</span>
                                                         </div>
                                                         {part.needsOrder ? (
-                                                            <div className="w-full h-[46px] px-4 flex items-center bg-gray-50 border border-dashed border-gray-300 rounded-xl text-xs font-bold text-gray-400 italic">
+                                                            <div className="w-full h-[46px] px-4 flex items-center bg-gray-50 border border-dashed border-gray-300 rounded-md text-xs font-bold text-gray-400 italic">
                                                                 Sipariş sonrası girilecek...
                                                             </div>
                                                         ) : (
                                                             <select
-                                                                className="w-full h-[46px] px-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-400 outline-none transition-all cursor-pointer appearance-none"
+                                                                className="w-full h-[46px] px-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-md text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-400 outline-none transition-all cursor-pointer appearance-none"
                                                                 value={part.kgbSerial}
                                                                 onChange={(e) => updatePart(index, 'kgbSerial', e.target.value)}
                                                             >
@@ -478,13 +478,13 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
 
                                                     {/* KBB - Arızalı Parça (Elle Girilecek) */}
                                                     <div className="flex flex-col">
-                                                        <div className="text-[10px] uppercase font-black tracking-widest text-orange-600 mb-2 flex items-center justify-between h-[15px]">
+                                                        <div className="text-[10px] uppercase font-semibold tracking-widest text-orange-600 mb-2 flex items-center justify-between h-[15px]">
                                                             <span>ESKİ/ARIZALI PARÇA (KBB) SERİ NO</span>
                                                             <span className="opacity-50">Üzerinden Oku</span>
                                                         </div>
                                                         <input
                                                             type="text"
-                                                            className="w-full h-[46px] px-3 bg-orange-50 border border-orange-200 text-orange-900 rounded-xl text-sm font-bold font-mono focus:ring-2 focus:ring-orange-400 outline-none uppercase transition-all"
+                                                            className="w-full h-[46px] px-3 bg-orange-50 border border-orange-200 text-orange-900 rounded-md text-sm font-bold font-mono focus:ring-2 focus:ring-orange-400 outline-none uppercase transition-all"
                                                             placeholder="Müşteri Cihazından Çıkan Seri No"
                                                             value={part.kbbSerial}
                                                             onChange={(e) => updatePart(index, 'kbbSerial', e.target.value)}
@@ -499,9 +499,9 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
 
                             {/* 4. Teknisyen Notu (Zorunlu) */}
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Teknisyen Notu <span className="text-red-500">*</span></label>
+                                <label className="block text-xs font-semibold text-gray-400 text-xs uppercase tracking-wide mb-3">Teknisyen Notu <span className="text-red-500">*</span></label>
                                 <textarea
-                                    className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-400 outline-none min-h-[120px] text-sm font-medium shadow-sm transition-all resize-none"
+                                    className="w-full p-4 bg-white border border-gray-200 rounded-md focus:ring-4 focus:ring-blue-50 focus:border-blue-400 outline-none min-h-[120px] text-sm font-medium shadow-sm transition-all resize-none"
                                     placeholder="Detaylı teknisyen notunu giriniz..."
                                     value={formData.notes}
                                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -514,7 +514,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                 <Save size={40} className="text-white" strokeWidth={2.5} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Onarımı Kaydet</h3>
+                                <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">Onarımı Kaydet</h3>
                                 <p className="text-gray-500 font-medium max-w-sm mx-auto">
                                     İşlemi tamamlamak için lütfen oluşturulan <strong>Onarım Numarasını</strong> girin.
                                 </p>
@@ -523,7 +523,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                             <div className="max-w-xs mx-auto pt-4 relative group">
                                 <input
                                     type="text"
-                                    className="w-full p-5 text-center text-2xl font-mono tracking-[0.2em] bg-white border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none uppercase font-bold text-gray-800 transition-all shadow-sm group-hover:shadow-md"
+                                    className="w-full p-5 text-center text-2xl font-mono tracking-[0.2em] bg-white border-2 border-gray-200 rounded-md focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none uppercase font-bold text-gray-800 transition-all shadow-sm group-hover:shadow-md"
                                     placeholder="R-123***"
                                     value={repairId}
                                     onChange={e => setRepairId(e.target.value)}
@@ -540,34 +540,34 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                         <>
                             <button
                                 onClick={() => setShowHelper(true)}
-                                className="mr-auto flex items-center gap-2 px-5 py-3 text-apple-blue hover:bg-blue-50 border-2 border-blue-100 hover:border-blue-200 rounded-xl text-xs font-bold transition-all shadow-sm"
+                                className="mr-auto flex items-center gap-2 px-5 py-3 text-apple-blue hover:bg-blue-50 border-2 border-blue-100 hover:border-blue-200 rounded-md text-xs font-bold transition-all shadow-sm"
                             >
                                 <Mail size={16} /> <span className="hidden sm:inline">Teklif & Bildirim (Helper)</span>
                             </button>
                             <button
                                 onClick={() => setShowReturnModal(true)}
-                                className="mr-2 flex items-center gap-2 px-5 py-3 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 rounded-xl text-xs font-bold transition-all"
+                                className="mr-2 flex items-center gap-2 px-5 py-3 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 rounded-md text-xs font-bold transition-all"
                             >
                                 <RotateCcw size={16} /> <span className="hidden sm:inline">İşlemsiz İade</span>
                             </button>
-                            <button onClick={onClose} className="px-6 py-3 text-gray-500 hover:bg-gray-100 rounded-xl text-sm font-bold transition-colors">
+                            <button onClick={onClose} className="px-6 py-3 text-gray-500 hover:bg-gray-100 rounded-md text-sm font-bold transition-colors">
                                 İptal
                             </button>
                             <button
                                 onClick={handleNext}
-                                className="pl-8 pr-6 py-3 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                className="pl-8 pr-6 py-3 bg-gray-900 hover:bg-black text-white rounded-md text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                             >
                                 Devam Et <ChevronRight size={18} />
                             </button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setStep(1)} className="px-6 py-3 text-gray-500 hover:bg-gray-100 rounded-xl text-sm font-bold transition-all flex items-center gap-2 group">
+                            <button onClick={() => setStep(1)} className="px-6 py-3 text-gray-500 hover:bg-gray-100 rounded-md text-sm font-bold transition-all flex items-center gap-2 group">
                                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Geri
                             </button>
                             <button
                                 onClick={handleFinalSave}
-                                className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-200 hover:shadow-green-300 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white rounded-md text-sm font-bold shadow-lg shadow-green-200 hover:shadow-green-300 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                             >
                                 <Save size={18} />
                                 Kaydı Tamamla
@@ -613,18 +613,18 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-8 animate-in fade-in">
                     <div className="bg-white p-8 rounded-[36px] w-full max-w-lg shadow-[0_30px_60px_rgba(0,0,0,0.4)] relative">
                         <div className="flex items-center gap-4 mb-2">
-                            <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500">
+                            <div className="w-12 h-12 bg-red-50 rounded-md flex items-center justify-center text-red-500">
                                 <RotateCcw size={24} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">İade Sebebi</h3>
+                                <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">İade Sebebi</h3>
                                 <p className="text-gray-500 text-sm font-medium">Cihazı neden işlemsiz iade ediyorsunuz?</p>
                             </div>
                         </div>
 
                         <div className="space-y-2 mb-8 mt-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                             {RETURN_REASONS.map(reason => (
-                                <label key={reason} className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${returnReason === reason ? 'bg-red-50 border-red-200 text-red-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
+                                <label key={reason} className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer transition-all ${returnReason === reason ? 'bg-red-50 border-red-200 text-red-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
                                     <input
                                         type="radio"
                                         name="returnReason"
@@ -636,7 +636,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                     <span className="text-sm font-bold">{reason}</span>
                                 </label>
                             ))}
-                            <label className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${returnReason === 'Diğer' ? 'bg-red-50 border-red-200 text-red-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
+                            <label className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer transition-all ${returnReason === 'Diğer' ? 'bg-red-50 border-red-200 text-red-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
                                 <input
                                     type="radio"
                                     name="returnReason"
@@ -655,7 +655,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                 <div className="animate-in slide-in-from-top-2">
                                     <textarea
                                         placeholder={returnReason === 'Diğer' ? "İade sebebini detaylıca yazınız..." : "Yapılan testleri ve gözlemleri detaylıca yazınız..."}
-                                        className={`w-full p-4 bg-gray-50 border ${returnReason === 'Diğer' ? 'border-red-200' : 'border-blue-200'} rounded-2xl mt-4 outline-none focus:bg-white transition-all font-medium text-sm resize-none shadow-inner`}
+                                        className={`w-full p-4 bg-gray-50 border ${returnReason === 'Diğer' ? 'border-red-200' : 'border-blue-200'} rounded-md mt-4 outline-none focus:bg-white transition-all font-medium text-sm resize-none shadow-inner`}
                                         rows="4"
                                         value={customReturnReason}
                                         onChange={(e) => setCustomReturnReason(e.target.value)}
@@ -668,13 +668,13 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                         <div className="flex gap-4">
                             <button
                                 onClick={() => setShowReturnModal(false)}
-                                className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-all"
+                                className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-md transition-all"
                             >
                                 Vazgeç
                             </button>
                             <button
                                 onClick={handleDirectReturn}
-                                className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 shadow-xl shadow-red-200 transition-all active:scale-95"
+                                className="flex-1 py-4 bg-red-600 text-white font-bold rounded-md hover:bg-red-700 shadow-xl shadow-red-200 transition-all active:scale-95"
                             >
                                 İade Kararını Kaydet
                             </button>

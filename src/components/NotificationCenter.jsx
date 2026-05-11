@@ -14,7 +14,7 @@ const NotificationCenter = () => {
             {/* Notification Bell */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative p-2.5 rounded-xl transition-all duration-300 ${
+                className={`relative p-2.5 rounded-md transition-all duration-300 ${
                     isOpen 
                     ? 'bg-gray-900 text-white shadow-lg' 
                     : 'bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-50 shadow-sm border border-gray-100'
@@ -22,7 +22,7 @@ const NotificationCenter = () => {
             >
                 <Bell size={20} />
                 {alerts.length > 0 && (
-                    <span className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full border-2 border-white shadow-md ${
+                    <span className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-[10px] font-semibold rounded-full border-2 border-white shadow-md ${
                         criticalCount > 0 ? 'bg-red-500 text-white animate-bounce' : 'bg-orange-500 text-white'
                     }`}>
                         {alerts.length}
@@ -34,12 +34,12 @@ const NotificationCenter = () => {
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-50 overflow-hidden animate-scale-up origin-top-right">
+                    <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-50 overflow-hidden animate-scale-up origin-top-right">
                         {/* Header */}
                         <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center text-gray-900">
                             <div>
-                                <h3 className="font-black text-lg">Bildirimler</h3>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Akıllı Otomasyon Merkezi</p>
+                                <h3 className="font-semibold text-lg">Bildirimler</h3>
+                                <p className="text-[10px] text-gray-400 font-bold text-xs uppercase tracking-wide">Akıllı Otomasyon Merkezi</p>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                 <X size={18} />
@@ -53,7 +53,7 @@ const NotificationCenter = () => {
                                     {alerts.map((alert, idx) => (
                                         <div key={idx} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
                                             <div className="flex gap-4">
-                                                <div className={`mt-1 p-2 rounded-xl shrink-0 ${
+                                                <div className={`mt-1 p-2 rounded-md shrink-0 ${
                                                     alert.type === 'critical' ? 'bg-red-50 text-red-500' :
                                                     alert.type === 'warning' ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'
                                                 }`}>
@@ -65,7 +65,7 @@ const NotificationCenter = () => {
                                                         <h4 className="font-bold text-gray-900 text-sm truncate">
                                                             {alert.repair.device}
                                                         </h4>
-                                                        <span className="text-[9px] font-black text-gray-400">#{alert.repair.id}</span>
+                                                        <span className="text-[9px] font-semibold text-gray-400">#{alert.repair.id}</span>
                                                     </div>
                                                     <p className="text-xs text-gray-500 font-medium leading-relaxed italic mb-2">
                                                         {alert.message}
@@ -74,7 +74,7 @@ const NotificationCenter = () => {
                                                         <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
                                                             <MyPhoneIcon size={10} /> {alert.repair.customer}
                                                         </span>
-                                                        <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100/50 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                        <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100/50 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                                             Detaya Git <ChevronRight size={10} className="inline ml-1" />
                                                         </span>
                                                     </div>
@@ -97,7 +97,7 @@ const NotificationCenter = () => {
                         {/* Footer */}
                         {alerts.length > 0 && (
                             <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
-                                <button className="text-xs font-black text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors">
+                                <button className="text-xs font-semibold text-blue-600 text-xs uppercase tracking-wide hover:text-blue-800 transition-colors">
                                     Tümünü Temizle
                                 </button>
                             </div>

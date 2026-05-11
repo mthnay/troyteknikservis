@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { CheckCircle, AlertCircle, XCircle, Info, X } from 'lucide-react';
 
-const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
+const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
     useEffect(() => {
         if (duration) {
             const timer = setTimeout(() => {
@@ -9,7 +9,7 @@ const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
             }, duration);
             return () => clearTimeout(timer);
         }
-    }, [duration, onClose, message]);
+    }, [duration, onClose]);
 
     const bgColors = {
         success: 'bg-green-50 border-green-200 text-green-800',
@@ -26,7 +26,7 @@ const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
     };
 
     return (
-        <div className={`fixed top-6 right-6 z-[200] flex items-start gap-4 p-4 rounded-2xl border shadow-xl animate-in slide-in-from-right-8 fade-in duration-300 max-w-sm w-full ${bgColors[type]}`}>
+        <div className={`fixed top-6 right-6 z-[200] flex items-start gap-4 p-4 rounded-md border shadow-xl animate-in slide-in-from-right-8 fade-in duration-300 max-w-sm w-full ${bgColors[type]}`}>
             <div className="shrink-0 mt-0.5">
                 {icons[type]}
             </div>

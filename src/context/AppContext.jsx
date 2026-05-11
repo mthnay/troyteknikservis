@@ -29,9 +29,9 @@ export const AppProvider = ({ children }) => {
     });
 
     const [emailSettings, setEmailSettings] = useState({
-        host: 'smtp.office365.com',
-        port: '587',
-        incomingHost: 'outlook.office365.com',
+        host: 'smail05.doruk.net.tr',
+        port: '465',
+        incomingHost: 'smail05.doruk.net.tr',
         incomingPort: '993',
         user: 'servis.mavibahce@troyapr.com',
         pass: '1A@Uv*5k8TOd'
@@ -48,13 +48,7 @@ export const AppProvider = ({ children }) => {
 
     const [notificationSettings, setNotificationSettings] = useState({
         requireDamageDescription: false,
-        includeDiagnosisInEmail: false,
-        automations: {
-            sla_tracking: true,
-            ready_notification: true,
-            satisfaction_survey: false,
-            quote_reminder: true
-        }
+        includeDiagnosisInEmail: false
     });
 
     const [notificationTemplates, setNotificationTemplates] = useState({
@@ -106,6 +100,7 @@ export const AppProvider = ({ children }) => {
     const [earnings, setEarnings] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // SLA Helper
     const checkSLA = (repair) => {
@@ -133,8 +128,6 @@ export const AppProvider = ({ children }) => {
 
     const computeAlerts = (repairsList) => {
         const newAlerts = [];
-        if (notificationSettings?.automations?.sla_tracking === false) return [];
-        
         repairsList.forEach(r => {
             const sla = checkSLA(r);
             if (sla) {
@@ -168,16 +161,12 @@ export const AppProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        let isCancelled = false;
         const fetchData = async () => {
             try {
                 const [usersRes, servicePointsRes] = await Promise.all([
                     fetch(`${API_URL}/users`),
                     fetch(`${API_URL}/service-points`)
                 ]);
-                
-                if (isCancelled) return;
-
                 if (usersRes.ok) {
                     const fetchedUsers = await usersRes.json();
                     setUsers(fetchedUsers);
@@ -187,9 +176,7 @@ export const AppProvider = ({ children }) => {
                     }
                 }
                 if (servicePointsRes.ok) setServicePoints(await servicePointsRes.json());
-                
-                if (!currentUser || isCancelled) return;
-
+                if (!currentUser) return;
                 let queryParams = '';
                 if (!hasPermission(currentUser, 'view_all_stores') && currentUser.storeId) {
                     queryParams = `?storeId=${currentUser.storeId}`;
@@ -206,9 +193,6 @@ export const AppProvider = ({ children }) => {
                     fetch(`${API_URL}/settings/notificationTemplates`),
                     fetch(`${API_URL}/roles`)
                 ]);
-
-                if (isCancelled) return;
-
                 if (repairsRes.ok) {
                     const data = await repairsRes.json();
                     // Verileri normalize et (serialNumber -> serial, deviceModel -> device)
@@ -247,13 +231,10 @@ export const AppProvider = ({ children }) => {
                 }
                 if (customersRes.ok) setCustomers(await customersRes.json());
             } catch (error) {
-                if (!isCancelled) {
-                    console.error("Error fetching data:", error);
-                }
+                console.error("Error fetching data:", error);
             }
         };
         fetchData();
-        return () => { isCancelled = true; };
     }, [currentUser]);
 
     useEffect(() => {
@@ -292,11 +273,9 @@ export const AppProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.clear();
-        sessionStorage.clear();
+        localStorage.clear(); // Tüm verileri temizle
         setCurrentUser(null);
-        // Force a clean redirect to root
-        window.location.replace('/');
+        window.location.href = '/'; // Sayfayı kökten yenile ve başa dön
     };
 
     const addUser = async (user) => {
@@ -781,13 +760,8 @@ export const AppProvider = ({ children }) => {
         window.open(`https://wa.me/${finalPhone}?text=${encodedMsg}`, '_blank');
     };
 
-    const showToast = React.useCallback((message, type = 'info') => {
-        setToast({ message, type, isVisible: true });
-    }, []);
-
-    const hideToast = React.useCallback(() => {
-        setToast(prev => ({ ...prev, isVisible: false }));
-    }, []);
+    const showToast = (message, type = 'info') => setToast({ message, type, isVisible: true });
+    const hideToast = () => setToast(prev => ({ ...prev, isVisible: false }));
 
     return (
         <AppContext.Provider value={{
@@ -796,6 +770,8 @@ export const AppProvider = ({ children }) => {
             users,
             currentUser,
             servicePoints,
+            searchQuery,
+            setSearchQuery,
             inventory: inventory.filter(i => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId)) : String(i.storeId) === String(currentUser?.storeId)),
             allInventory: inventory,
             technicians: (() => {

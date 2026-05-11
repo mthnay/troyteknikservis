@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Apple, CheckCircle, Clock, XCircle, ChevronRight, AlertTriangle } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import { appConfirm } from '../utils/alert';
+import { getSafeRepairImageUrl } from '../utils/productImages';
 
 const CustomerPortal = ({ trackId }) => {
     const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ const CustomerPortal = ({ trackId }) => {
     if (error) {
         return (
             <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center p-4">
-                <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-lg text-center">
+                <div className="bg-white rounded-lg p-8 max-w-md w-full shadow-lg text-center">
                     <XCircle size={64} className="text-red-500 mx-auto mb-4" />
                     <h2 className="text-2xl font-semibold mb-2">Bulunamadı</h2>
                     <p className="text-gray-600">{error}</p>
@@ -112,8 +113,12 @@ const CustomerPortal = ({ trackId }) => {
                 {/* Device Info Card */}
                 <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
                     <div className="flex items-start gap-6">
-                        <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center flex-shrink-0">
-                            <MyPhoneIcon size={32} className="text-gray-900" />
+                        <div className="w-16 h-16 bg-gray-50 rounded-md overflow-hidden flex items-center justify-center flex-shrink-0 border border-gray-100">
+                            <img 
+                                src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} 
+                                className="w-full h-full object-cover" 
+                                alt={repair.device} 
+                            />
                         </div>
                         <div className="flex-1">
                             <h1 className="text-2xl font-bold text-gray-900 mb-1">{device}</h1>
@@ -137,7 +142,7 @@ const CustomerPortal = ({ trackId }) => {
                             <h2 className="text-xl font-bold text-gray-900">Teklif Onayınız Bekleniyor</h2>
                         </div>
                         
-                        <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-gray-700 leading-relaxed border border-gray-100">
+                        <div className="bg-gray-50 rounded-md p-4 mb-6 text-sm text-gray-700 leading-relaxed border border-gray-100">
                             <p className="mb-3 font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center justify-between">
                                 <span>Teknisyen Notu:</span>
                                 {repair.quotationDetails?.date && <span className="text-xs text-gray-400 font-normal">{repair.quotationDetails.date}</span>}
@@ -146,7 +151,7 @@ const CustomerPortal = ({ trackId }) => {
                             
                             {repair.quotationDetails?.items && repair.quotationDetails.items.length > 0 && (
                                 <div className="mt-4 border-t border-gray-200 pt-4">
-                                    <h4 className="text-xs font-black uppercase text-gray-500 mb-3 tracking-widest">Teklif Detayı</h4>
+                                    <h4 className="text-xs font-semibold uppercase text-gray-500 mb-3 tracking-widest">Teklif Detayı</h4>
                                     <div className="space-y-2">
                                         {repair.quotationDetails.items.map((item, idx) => (
                                             <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
@@ -202,7 +207,7 @@ const CustomerPortal = ({ trackId }) => {
                                         {isLast ? <CheckCircle size={18} /> : <Clock size={18} />}
                                     </div>
                                     
-                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
+                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-md bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
                                         <div className="flex items-center justify-between mb-1">
                                             <h3 className="font-bold text-gray-900 text-sm">{item.status}</h3>
                                             <span className="text-xs font-medium text-gray-500">{item.date}</span>

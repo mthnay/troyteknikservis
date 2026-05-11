@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Archive as ArchiveIcon, Search, FileText, User, Calendar, Eye, Download, Filter, CheckCircle, ChevronDown, Store, CalendarDays, CalendarClock } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
-import { getProductImage } from '../utils/productImages';
+import { getProductImage, getSafeRepairImageUrl } from '../utils/productImages';
 import RepairHistoryModal from './RepairHistoryModal';
 import BatchExportModal from './BatchExportModal';
 import { hasPermission } from '../utils/permissions';
 
 const Archive = () => {
-    const { repairs, servicePoints, currentUser } = useAppContext();
+    const { repairs, servicePoints, currentUser, API_URL } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRepair, setSelectedRepair] = useState(null);
     const [showBatchExport, setShowBatchExport] = useState(false);
@@ -82,13 +82,13 @@ const Archive = () => {
             <td className="px-6 py-5">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0 shadow-sm">
-                        <img src={repair.image || getProductImage(repair.productGroup, repair.device)} className="w-full h-full object-cover" alt="" />
+                        <img src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex flex-col gap-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <span className="font-bold text-gray-900 text-sm truncate">{repair.customer}</span>
                             {repair.productGroup && (
-                                <span className="px-1.5 py-0.5 bg-gray-900 text-white text-[8px] font-black uppercase tracking-tight rounded shrink-0">
+                                <span className="px-1.5 py-0.5 bg-gray-900 text-white text-[8px] font-semibold uppercase tracking-tight rounded shrink-0">
                                     {repair.productGroup}
                                 </span>
                             )}
@@ -118,7 +118,7 @@ const Archive = () => {
             </td>
             <td className="px-8 py-5 text-right">
                 <button
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md text-xs font-bold hover:bg-gray-50 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm"
                     onClick={() => setSelectedRepair(repair)}
                 >
                     <Eye size={14} /> Detaylar
@@ -128,63 +128,80 @@ const Archive = () => {
     );
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 pb-32 animate-fade-in px-4 md:px-8">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-                <div>
-                    <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-                        <div className="p-2.5 bg-gray-100 rounded-xl text-gray-600">
-                            <ArchiveIcon size={24} />
-                        </div>
-                        Servis Arşivi
-                    </h2>
-                    <p className="text-gray-500 mt-2 font-medium">Teslim edilmiş ve süreci tamamlanmış geçmiş servis kayıtları.</p>
+        <div className="space-y-6 animate-fade-in">
+            {/* Header - Ana Sayfa Stili */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4 border-b border-gray-100 mb-6">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gray-100 rounded-md text-gray-600 border border-gray-200 shadow-sm">
+                        <ArchiveIcon size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Servis Arşivi</h2>
+                        <p className="text-gray-500 mt-1 font-medium">Teslim edilmiş ve süreci tamamlanmış geçmiş servis kayıtları.</p>
+                    </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                <div className="flex items-center gap-3">
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Servis No, Müşteri Adı veya Seri No ile Ara..."
-                            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm"
+                            placeholder="Müşteri, Cihaz veya Seri No..."
+                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-bold focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <button 
                         onClick={() => setShowBatchExport(true)}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        className="h-10 px-4 bg-gray-900 text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-black transition-all flex items-center gap-2 shadow-md active:scale-95"
                     >
-                        <Download size={18} />
-                        Dışa Aktar
+                        <Download size={16} /> DIŞA AKTAR
                     </button>
                 </div>
             </div>
 
             {/* List / Categorized View */}
             {searchTerm ? (
-                // Flat Table for Search Results
-                <div className="glass rounded-[32px] overflow-hidden min-h-[500px] shadow-xl shadow-gray-200/50 border border-white/60 animate-in fade-in slide-in-from-bottom-4">
+                <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-gray-50/50 text-[11px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100/50">
-                                    <th className="px-8 py-5">Takip No</th>
-                                    <th className="px-6 py-5">Müşteri & Cihaz</th>
-                                    <th className="px-6 py-5">Kabul Tarihi</th>
-                                    <th className="px-6 py-5">Teslim Tarihi</th>
-                                    <th className="px-6 py-5">İşlem Özeti</th>
-                                    <th className="px-8 py-5 text-right">Aksiyon</th>
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50/50 border-b border-gray-100">
+                                <tr className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                    <th className="px-6 py-4">Takip No</th>
+                                    <th className="px-6 py-4">Müşteri & Cihaz</th>
+                                    <th className="px-6 py-4 text-center">Kabul Tarihi</th>
+                                    <th className="px-6 py-4 text-center">Teslim Tarihi</th>
+                                    <th className="px-6 py-4 text-right">Aksiyon</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100/50 text-sm">
+                            <tbody className="divide-y divide-gray-50">
                                 {archivedRepairs.length > 0 ? (
-                                    archivedRepairs.map(renderRepairRow)
+                                    archivedRepairs.map(repair => (
+                                        <tr key={repair.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-6 py-4 font-mono font-bold text-gray-500 text-xs">#{repair.id}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden border border-gray-100">
+                                                        <img src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 text-sm">{repair.customer}</p>
+                                                        <p className="text-[10px] text-gray-400 font-bold uppercase">{repair.device}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-bold text-gray-500 text-center">{repair.date?.split(' ')[0]}</td>
+                                            <td className="px-6 py-4 text-xs font-bold text-green-600 text-center">{repair.history?.find(h => h.status === 'Teslim Edildi')?.date?.split(' ')[0] || repair.date?.split(' ')[0]}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button onClick={() => setSelectedRepair(repair)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-all">
+                                                    <Eye size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan="6" className="px-6 py-32 text-center text-gray-500 font-medium">Arama kriterinize uygun kayıt bulunamadı.</td>
-                                    </tr>
+                                    <tr><td colSpan="5" className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest text-xs">Kayıt bulunamadı</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -195,14 +212,14 @@ const Archive = () => {
                 <div className="space-y-6">
                     {Object.keys(grouped).length > 0 ? (
                         Object.entries(grouped).map(([storeName, years]) => (
-                            <details key={storeName} className="group glass rounded-[32px] border border-white/60 shadow-xl shadow-gray-200/50 overflow-hidden" open>
+                            <details key={storeName} className="group glass rounded-lg border border-white/60 shadow-xl shadow-gray-200/50 overflow-hidden" open>
                                 <summary className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-50 to-white cursor-pointer select-none border-b border-gray-100/50 hover:bg-gray-50/80 transition-colors">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow-md">
+                                        <div className="w-12 h-12 rounded-md bg-gray-900 flex items-center justify-center text-white shadow-md">
                                             <Store size={20} />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-black text-gray-900">{storeName}</h3>
+                                            <h3 className="text-xl font-semibold text-gray-900">{storeName}</h3>
                                             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">{Object.values(years).reduce((acc, months) => acc + Object.values(months).reduce((sum, weeks) => sum + Object.values(weeks).flat().length, 0), 0)} Kayıt</p>
                                         </div>
                                     </div>
@@ -212,11 +229,11 @@ const Archive = () => {
                                 <div className="p-6 space-y-6 bg-white/50">
                                     {Object.keys(years).length > 0 ? (
                                         Object.entries(years).sort((a,b) => b[0] - a[0]).map(([year, months]) => (
-                                            <details key={year} className="group/year bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" open>
+                                            <details key={year} className="group/year bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden" open>
                                                 <summary className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer select-none">
                                                     <div className="flex items-center gap-3">
                                                         <CalendarDays className="text-blue-500" size={20} />
-                                                        <h4 className="text-lg font-black text-gray-800">{year} Yılı</h4>
+                                                        <h4 className="text-lg font-semibold text-gray-800">{year} Yılı</h4>
                                                         <span className="bg-white px-2.5 py-0.5 rounded-lg text-xs font-bold text-gray-500 border border-gray-200">
                                                             {Object.values(months).reduce((acc, weeks) => acc + Object.values(weeks).flat().length, 0)} Kayıt
                                                         </span>
@@ -226,11 +243,11 @@ const Archive = () => {
 
                                                 <div className="p-4 space-y-4">
                                                     {Object.entries(months).map(([month, weeks]) => (
-                                                        <div key={month} className="border border-gray-100 rounded-xl overflow-hidden shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+                                                        <div key={month} className="border border-gray-100 rounded-md overflow-hidden shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
                                                             <div className="bg-blue-50/50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                                    <span className="font-black text-gray-900 uppercase tracking-widest text-sm">{month}</span>
+                                                                    <span className="font-semibold text-gray-900 text-xs uppercase tracking-wide text-sm">{month}</span>
                                                                 </div>
                                                                 <span className="text-xs font-bold text-blue-700 bg-white px-3 py-1 rounded-full border border-blue-100 shadow-sm">
                                                                     {Object.values(weeks).flat().length} Teslimat
@@ -249,7 +266,7 @@ const Archive = () => {
                                                                     <div className="overflow-x-auto bg-white border-t border-gray-50 pb-2">
                                                                         <table className="w-full text-left border-collapse">
                                                                             <thead>
-                                                                                <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                                                <tr className="text-[10px] font-semibold text-xs uppercase tracking-wide text-gray-400">
                                                                                     <th className="px-6 py-2">Takip No</th>
                                                                                     <th className="px-4 py-2">Müşteri</th>
                                                                                     <th className="px-4 py-2">Cihaz</th>
@@ -282,15 +299,15 @@ const Archive = () => {
                                             </details>
                                         ))
                                     ) : (
-                                        <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-                                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Henüz Arşiv Kaydı Yok</p>
+                                        <div className="p-8 text-center bg-gray-50 rounded-md border border-gray-100 border-dashed">
+                                            <p className="text-sm font-bold text-gray-400 text-xs uppercase tracking-wide">Henüz Arşiv Kaydı Yok</p>
                                         </div>
                                     )}
                                 </div>
                             </details>
                         ))
                     ) : (
-                        <div className="glass rounded-[32px] p-24 text-center">
+                        <div className="glass rounded-lg p-24 text-center">
                             <div className="flex flex-col items-center gap-4 opacity-40">
                                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
                                     <ArchiveIcon size={40} className="text-gray-400" />

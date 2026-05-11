@@ -112,52 +112,54 @@ const Reports = () => {
 
     return (
         <div className="space-y-8 pb-24 animate-fade-in">
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Smile className="text-apple-blue" />
-                        Müşteri Deneyim Raporları
-                    </h2>
-                    <p className="text-gray-500">Hizmet kalitesi, memnuniyet metrikleri ve geribildirimler</p>
+            {/* Header - Ana Sayfa Stili */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4 border-b border-gray-100 mb-6">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-purple-50 rounded-md text-purple-600 border border-purple-100 shadow-sm">
+                        <BarChart2 size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Performans Raporları</h2>
+                        <p className="text-gray-500 mt-1 font-medium">Hizmet kalitesi ve memnuniyet metriklerini analiz edin.</p>
+                    </div>
                 </div>
-                <div className="flex gap-3">
+
+                <div className="flex items-center gap-3">
                     <div className="relative">
                         <select
                             value={timeRange}
                             onChange={(e) => setTimeRange(e.target.value)}
-                            className="appearance-none flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors pr-10 cursor-pointer outline-none focus:ring-2 focus:ring-blue-100"
+                            className="appearance-none h-10 pl-4 pr-10 bg-white border border-gray-200 rounded-md text-[11px] font-bold uppercase tracking-wider text-gray-600 hover:bg-gray-50 transition-all outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm"
                         >
-                            <option value="weekly">Bu Hafta</option>
-                            <option value="monthly">Bu Ay</option>
-                            <option value="yearly">Bu Yıl</option>
+                            <option value="weekly">BU HAFTA</option>
+                            <option value="monthly">BU AY</option>
+                            <option value="yearly">BU YIL</option>
                         </select>
                         <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>
                     <button
                         onClick={() => alert('Müşteri geribildirimleri Excel formatında hazırlanıyor...')}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-black transition-colors shadow-lg shadow-gray-200"
+                        className="h-10 px-4 bg-gray-900 text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-black transition-all flex items-center gap-2 shadow-md active:scale-95"
                     >
-                        <Download size={16} />
-                        Geribildirimleri İndir
+                        <Download size={16} /> DIŞA AKTAR
                     </button>
                 </div>
             </div>
 
             {/* Satisfaction Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-purple-200">
+                <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-md p-6 text-white shadow-lg shadow-purple-200">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-white/20 rounded-xl">
+                        <div className="p-3 bg-white/20 rounded-md">
                             <Star size={24} className="text-white fill-current" />
                         </div>
                         <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">NPS Skoru</span>
-                            <span className="text-xl font-black">{npsScore}</span>
+                            <span className="text-[10px] font-bold text-xs uppercase tracking-wide text-white/60">NPS Skoru</span>
+                            <span className="text-xl font-semibold">{npsScore}</span>
                         </div>
                     </div>
                     <p className="text-purple-100 text-sm font-medium">Genel Memnuniyet Ortalaması</p>
-                    <h3 className="text-3xl font-black mt-1">{avgRating} / 5.0</h3>
+                    <h3 className="text-3xl font-semibold mt-1">{avgRating} / 5.0</h3>
                     <div className="mt-4 flex gap-1">
                         {[1, 2, 3, 4, 5].map(i => (
                             <Star key={i} size={14} className={i <= 4 ? "fill-white text-white" : "fill-white/20 text-white/20"} />
@@ -165,28 +167,28 @@ const Reports = () => {
                     </div>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm">
+                <div className="bg-white/60 backdrop-blur-md rounded-md p-6 border border-white/50 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-red-50 rounded-xl">
+                        <div className="p-3 bg-red-50 rounded-md">
                             <Heart size={24} className="text-red-500 fill-current" />
                         </div>
-                        <span className="px-2 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-tighter shadow-sm border border-red-100">Sadık Müşteri</span>
+                        <span className="px-2 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-semibold uppercase tracking-tighter shadow-sm border border-red-100">Sadık Müşteri</span>
                     </div>
                     <p className="text-gray-500 text-sm font-medium">Hizmet Sadakat Oranı</p>
-                    <h3 className="text-3xl font-black text-gray-900 mt-1">%{loyaltyRate}</h3>
+                    <h3 className="text-3xl font-semibold text-gray-900 mt-1">%{loyaltyRate}</h3>
                     <div className="w-full bg-gray-100 h-1.5 rounded-full mt-4 overflow-hidden">
                         <div className="bg-red-500 h-full w-[94%] rounded-full"></div>
                     </div>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm">
+                <div className="bg-white/60 backdrop-blur-md rounded-md p-6 border border-white/50 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-blue-50 rounded-xl">
+                        <div className="p-3 bg-blue-50 rounded-md">
                             <MessageSquare size={24} className="text-blue-500" />
                         </div>
                     </div>
                     <p className="text-gray-500 text-sm font-medium">Toplam Geribildirim</p>
-                    <h3 className="text-3xl font-black text-gray-900 mt-1">{completedRepairs} Adet</h3>
+                    <h3 className="text-3xl font-semibold text-gray-900 mt-1">{completedRepairs} Adet</h3>
                     <p className="text-[10px] text-green-600 font-bold mt-2 flex items-center gap-1">
                         <Smile size={12} /> Yanıtlanma oranı %100
                     </p>
@@ -194,10 +196,10 @@ const Reports = () => {
             </div>
 
             {/* SLA ve Karar Destek Paneli (YENİ EKLENEN) */}
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="bg-white rounded-lg p-8 border border-gray-100 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-red-50 to-transparent rounded-bl-full -z-0 opacity-50"></div>
                 <div className="flex items-center gap-3 mb-6 relative z-10">
-                    <div className="p-3 bg-red-100 rounded-2xl text-red-600">
+                    <div className="p-3 bg-red-100 rounded-md text-red-600">
                         <AlertTriangle size={24} />
                     </div>
                     <div>
@@ -207,25 +209,25 @@ const Reports = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
-                    <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col justify-between">
-                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Aktif Açık İşlemler</span>
-                        <div className="text-4xl font-black text-gray-800 mt-2">{slaStats.activeCount}</div>
+                    <div className="bg-gray-50 rounded-md p-5 border border-gray-100 flex flex-col justify-between">
+                        <span className="text-[10px] font-semibold uppercase text-gray-400 tracking-wider">Aktif Açık İşlemler</span>
+                        <div className="text-4xl font-semibold text-gray-800 mt-2">{slaStats.activeCount}</div>
                     </div>
-                    <div className="bg-red-50 rounded-2xl p-5 border border-red-100 flex flex-col justify-between shadow-sm shadow-red-100/50">
-                        <span className="text-[10px] font-black uppercase text-red-500 tracking-wider flex items-center gap-1">
+                    <div className="bg-red-50 rounded-md p-5 border border-red-100 flex flex-col justify-between shadow-sm shadow-red-100/50">
+                        <span className="text-[10px] font-semibold uppercase text-red-500 tracking-wider flex items-center gap-1">
                             <AlertTriangle size={12} /> SLA İhlali (&gt;3 Gün)
                         </span>
-                        <div className="text-4xl font-black text-red-600 mt-2">{slaStats.breachedSLA}</div>
+                        <div className="text-4xl font-semibold text-red-600 mt-2">{slaStats.breachedSLA}</div>
                     </div>
-                    <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100 flex flex-col justify-between">
-                        <span className="text-[10px] font-black uppercase text-orange-500 tracking-wider flex items-center gap-1">
+                    <div className="bg-orange-50 rounded-md p-5 border border-orange-100 flex flex-col justify-between">
+                        <span className="text-[10px] font-semibold uppercase text-orange-500 tracking-wider flex items-center gap-1">
                             <Clock size={12} /> Riskli Bölge (3. Gün)
                         </span>
-                        <div className="text-4xl font-black text-orange-600 mt-2">{slaStats.atRiskSLA}</div>
+                        <div className="text-4xl font-semibold text-orange-600 mt-2">{slaStats.atRiskSLA}</div>
                     </div>
-                    <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 flex flex-col justify-between">
-                        <span className="text-[10px] font-black uppercase text-blue-500 tracking-wider">Ortalama Süre</span>
-                        <div className="text-4xl font-black text-blue-600 mt-2">{slaStats.avgResolutionTime} <span className="text-lg text-blue-400 font-bold">Gün</span></div>
+                    <div className="bg-blue-50 rounded-md p-5 border border-blue-100 flex flex-col justify-between">
+                        <span className="text-[10px] font-semibold uppercase text-blue-500 tracking-wider">Ortalama Süre</span>
+                        <div className="text-4xl font-semibold text-blue-600 mt-2">{slaStats.avgResolutionTime} <span className="text-lg text-blue-400 font-bold">Gün</span></div>
                     </div>
                 </div>
             </div>
@@ -233,7 +235,7 @@ const Reports = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Satisfaction Trend */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-6">
+                <div className="bg-white/60 backdrop-blur-md rounded-md border border-white/50 shadow-sm p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-bold text-gray-900 uppercase text-xs tracking-widest text-gray-400">Günlük Hizmet Kalitesi Trendi</h3>
                         <div className="flex gap-2 text-[10px] font-bold uppercase">
@@ -248,9 +250,9 @@ const Reports = () => {
                 </div>
 
                 {/* Rating Distribution */}
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-6">
+                <div className="bg-white/60 backdrop-blur-md rounded-md border border-white/50 shadow-sm p-6">
                     <div className="flex justify-between items-center mb-6 text-xs">
-                        <h3 className="font-bold text-gray-900 uppercase tracking-widest text-gray-400">Yıldız Dağılım Analizi</h3>
+                        <h3 className="font-bold text-gray-900 text-xs uppercase tracking-wide text-gray-400">Yıldız Dağılım Analizi</h3>
                     </div>
                     <div className="space-y-4">
                         {ratingDistribution.map((item, idx) => (
@@ -262,7 +264,7 @@ const Reports = () => {
                                         style={{ width: `${item.value}%` }}
                                     ></div>
                                 </div>
-                                <span className="text-xs font-black text-gray-900 min-w-[30px] flex items-center gap-1">
+                                <span className="text-xs font-semibold text-gray-900 min-w-[30px] flex items-center gap-1">
                                     %{item.value} <Smile size={10} className="text-gray-300" />
                                 </span>
                             </div>
@@ -272,7 +274,7 @@ const Reports = () => {
             </div>
 
             {/* Technician Experience Table */}
-            <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm overflow-hidden">
+            <div className="bg-white/60 backdrop-blur-md rounded-md border border-white/50 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="font-bold text-gray-900 flex items-center gap-2 uppercase text-xs tracking-widest">
                         <Award size={18} className="text-yellow-500" />
@@ -307,7 +309,7 @@ const Reports = () => {
                             return (
                                 <tr key={tech.id} className="hover:bg-white/50 transition-colors group">
                                     <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-xl bg-gray-900 text-white flex items-center justify-center text-[10px] font-black">
+                                        <div className="w-8 h-8 rounded-md bg-gray-900 text-white flex items-center justify-center text-[10px] font-semibold">
                                             {tech.name ? tech.name.substring(0, 2).toUpperCase() : 'TR'}
                                         </div>
                                         {tech.name}
@@ -327,7 +329,7 @@ const Reports = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-black uppercase shadow-sm">Aktif</span>
+                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-semibold uppercase shadow-sm">Aktif</span>
                                     </td>
                                 </tr>
                             );

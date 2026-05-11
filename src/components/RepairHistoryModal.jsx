@@ -11,6 +11,7 @@ import { useAppContext } from '../context/AppContext';
 import { appPrompt, appAlert, appConfirm } from '../utils/alert';
 import CustomerNotificationModal from './CustomerNotificationModal';
 import { hasPermission } from '../utils/permissions';
+import { getSafeRepairImageUrl } from '../utils/productImages';
 
 const STATUS_STEPS = [
     { id: 'entry', label: 'Servis Kabul', keys: ['Kayıt Oluşturuldu', 'Beklemede'] },
@@ -31,7 +32,7 @@ const REPAIR_TYPE_LABELS = {
 };
 
 const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
-    const { updateRepair, updateRepairStatus, removeRepair, repairs, servicePoints, currentUser, showToast } = useAppContext();
+    const { updateRepair, updateRepairStatus, removeRepair, repairs, servicePoints, currentUser, showToast, API_URL } = useAppContext();
     const repair = repairs.find(r => r.id === initialRepair.id) || initialRepair;
     
     // UI States
@@ -60,9 +61,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
         serial: repair?.serial || repair?.serialNumber || '',
         issue: repair?.issue || '',
         tcNo: repair?.tcNo || '',
-        customerAddress: repair?.customerAddress || '',
-        warrantyStatus: repair?.warrantyStatus || 'Garanti Dışı',
-        quoteAmount: repair?.quoteAmount || ''
+        customerAddress: repair?.customerAddress || ''
     });
 
     const [customerForm, setCustomerForm] = useState({
@@ -84,9 +83,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                 serial: repair.serial || repair.serialNumber,
                 issue: repair.issue,
                 tcNo: repair.tcNo || '',
-                customerAddress: repair.customerAddress || '',
-                warrantyStatus: repair.warrantyStatus || 'Garanti Dışı',
-                quoteAmount: repair.quoteAmount || ''
+                customerAddress: repair.customerAddress || ''
             });
             setCustomerForm({
                 customer: repair.customer || '',
@@ -330,24 +327,24 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content w-full max-w-[90vw] lg:max-w-[1300px] flex flex-col max-h-[85vh] rounded-[32px] overflow-hidden">
+            <div className="modal-content w-full max-w-[90vw] lg:max-w-[1300px] flex flex-col max-h-[85vh] rounded-lg overflow-hidden">
                 {/* Header & Progress Bar */}
                 <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30">
                     <div className="p-6 flex justify-between items-center">
                         <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-gray-100">
+                            <div className="w-14 h-14 bg-gray-50 rounded-md flex items-center justify-center text-3xl shadow-sm border border-gray-100">
                                 {repair.device.includes('iPhone') ? '📱' : '💻'}
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-black uppercase text-apple-blue px-2 py-1 bg-blue-50 rounded border border-blue-100/50">#{repair.id}</span>
+                                    <span className="text-[10px] font-semibold uppercase text-apple-blue px-2 py-1 bg-blue-50 rounded border border-blue-100/50">#{repair.id}</span>
                                     {repair.productGroup && (
-                                        <span className="text-[9px] font-black uppercase text-white bg-gray-900 px-2 py-1 rounded shadow-sm">{repair.productGroup}</span>
+                                        <span className="text-[9px] font-semibold uppercase text-white bg-gray-900 px-2 py-1 rounded shadow-sm">{repair.productGroup}</span>
                                     )}
                                     {isEditing ? (
-                                        <input value={editForm.device} onChange={e => setEditForm({...editForm, device: e.target.value})} className="text-xl font-black text-gray-900 border-b-2 border-apple-blue outline-none bg-transparent"/>
+                                        <input value={editForm.device} onChange={e => setEditForm({...editForm, device: e.target.value})} className="text-xl font-semibold text-gray-900 border-b-2 border-apple-blue outline-none bg-transparent"/>
                                     ) : (
-                                        <h3 className="text-xl font-black text-gray-900">{repair.device}</h3>
+                                        <h3 className="text-xl font-semibold text-gray-900">{repair.device}</h3>
                                     )}
                                 </div>
                                 <p className="text-xs text-gray-500 font-medium flex items-center gap-2 mt-1">
@@ -358,11 +355,11 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
 
                         <div className="flex items-center gap-2">
                             {isEditing ? (
-                                <button onClick={handleSave} className="h-10 px-5 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center gap-2 font-bold shadow transition-all"><Save size={16} /> Kaydet</button>
+                                <button onClick={handleSave} className="h-10 px-5 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center gap-2 font-bold shadow transition-all"><Save size={16} /> Kaydet</button>
                             ) : (
-                                <button onClick={() => setIsEditing(true)} className="h-10 w-10 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl flex items-center justify-center border border-gray-200 shadow-sm transition-all"><Pencil size={18} /></button>
+                                <button onClick={() => setIsEditing(true)} className="h-10 w-10 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-md flex items-center justify-center border border-gray-200 shadow-sm transition-all"><Pencil size={18} /></button>
                             )}
-                            <button onClick={onClose} className="h-10 w-10 bg-white hover:bg-gray-50 text-gray-400 hover:text-red-500 rounded-xl flex items-center justify-center border border-gray-200 shadow-sm transition-all"><X size={20} /></button>
+                            <button onClick={onClose} className="h-10 w-10 bg-white hover:bg-gray-50 text-gray-400 hover:text-red-500 rounded-md flex items-center justify-center border border-gray-200 shadow-sm transition-all"><X size={20} /></button>
                         </div>
                     </div>
 
@@ -401,27 +398,27 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                             {/* ÜST BİLGİ KARTLARI */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Müşteri */}
-                                <div onClick={() => setShowCustomerModal(true)} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-md cursor-pointer relative group">
-                                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-apple-blue bg-blue-50 p-2 rounded-xl">
+                                <div onClick={() => setShowCustomerModal(true)} className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-md cursor-pointer relative group">
+                                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-apple-blue bg-blue-50 p-2 rounded-md">
                                         <Eye size={16} />
                                     </div>
                                     <div className="flex items-center gap-3 text-gray-400 mb-2">
                                         <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center"><User size={16} /></div> 
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Müşteri Bilgisi</span>
+                                        <span className="text-[10px] font-semibold text-xs uppercase tracking-wide">Müşteri Bilgisi</span>
                                     </div>
                                     {isEditing ? (
                                         <div className="space-y-3">
-                                            <input value={editForm.customer} onChange={e => setEditForm({...editForm, customer: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-xl text-sm font-bold bg-blue-50/30 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="Müşteri Adı"/>
+                                            <input value={editForm.customer} onChange={e => setEditForm({...editForm, customer: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-md text-sm font-bold bg-blue-50/30 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="Müşteri Adı"/>
                                             <div className="grid grid-cols-2 gap-2">
-                                                <input value={editForm.customerPhone} onChange={e => setEditForm({...editForm, customerPhone: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-xl text-sm bg-blue-50/30 font-mono outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="Telefon"/>
-                                                <input value={editForm.customerEmail} onChange={e => setEditForm({...editForm, customerEmail: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-xl text-sm bg-blue-50/30 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="E-Posta"/>
+                                                <input value={editForm.customerPhone} onChange={e => setEditForm({...editForm, customerPhone: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-md text-sm bg-blue-50/30 font-mono outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="Telefon"/>
+                                                <input value={editForm.customerEmail} onChange={e => setEditForm({...editForm, customerEmail: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-md text-sm bg-blue-50/30 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="E-Posta"/>
                                             </div>
-                                            <input value={editForm.tcNo} onChange={e => setEditForm({...editForm, tcNo: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-xl text-sm bg-blue-50/30 font-mono outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="TC / VKN"/>
-                                            <textarea value={editForm.customerAddress} onChange={e => setEditForm({...editForm, customerAddress: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-xl text-sm bg-blue-50/30 font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 resize-none" rows="2" placeholder="Adres"></textarea>
+                                            <input value={editForm.tcNo} onChange={e => setEditForm({...editForm, tcNo: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-md text-sm bg-blue-50/30 font-mono outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" placeholder="TC / VKN"/>
+                                            <textarea value={editForm.customerAddress} onChange={e => setEditForm({...editForm, customerAddress: e.target.value})} className="w-full px-4 py-3 border border-blue-200 rounded-md text-sm bg-blue-50/30 font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 resize-none" rows="2" placeholder="Adres"></textarea>
                                         </div>
                                     ) : (
                                         <div>
-                                            <p className="font-black text-gray-900 text-xl tracking-tight">{repair.customer}</p>
+                                            <p className="font-semibold text-gray-900 text-xl tracking-tight">{repair.customer}</p>
                                             <p className="text-sm text-gray-500 mt-2 font-medium">{repair.customerPhone}</p>
                                             
                                             <div className="mt-3 space-y-1">
@@ -437,56 +434,56 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                 </div>
 
                                 {/* Cihaz & Garanti */}
-                                <div onClick={() => setShowDeviceModal(true)} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-md cursor-pointer relative group">
-                                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-apple-blue bg-blue-50 p-2 rounded-xl">
+                                <div onClick={() => setShowDeviceModal(true)} className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-md cursor-pointer relative group">
+                                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-apple-blue bg-blue-50 p-2 rounded-md">
                                         <Pencil size={16} />
                                     </div>
                                     <div className="flex items-center gap-3 text-apple-blue mb-2">
                                         <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center"><Fingerprint size={16} /></div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Cihaz & Durum</span>
+                                        <span className="text-[10px] font-semibold text-xs uppercase tracking-wide">Cihaz & Durum</span>
                                     </div>
                                     <div>
-                                        <div className="inline-flex px-3 py-1.5 bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-mono font-bold">
+                                        <div className="inline-flex px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md border border-gray-200 text-xs font-mono font-bold">
                                             S/N: <span className="text-gray-900 ml-1 uppercase">{repair.serial || repair.serialNumber || 'Girilmedi'}</span>
                                         </div>
-                                        <p className="text-xs text-apple-blue font-black uppercase mt-4 flex items-center gap-1.5 p-2 bg-blue-50 border border-blue-100 rounded-xl inline-flex shadow-sm">
+                                        <p className="text-xs text-apple-blue font-semibold uppercase mt-4 flex items-center gap-1.5 p-2 bg-blue-50 border border-blue-100 rounded-md inline-flex shadow-sm">
                                             <Shield size={14}/> {repair.warrantyStatus || 'Garanti Durumu'}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* FMI & Yedek */}
-                                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col justify-center gap-4 transition-transform hover:-translate-y-1 hover:shadow-md">
-                                    <div className={`flex items-center gap-4 p-3 rounded-2xl border ${repair.findMyOff ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${repair.findMyOff ? 'bg-green-500 text-white shadow-md' : 'bg-red-500 text-white shadow-md'}`}>
+                                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center gap-4 transition-transform hover:-translate-y-1 hover:shadow-md">
+                                    <div className={`flex items-center gap-4 p-3 rounded-md border ${repair.findMyOff ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                                        <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${repair.findMyOff ? 'bg-green-500 text-white shadow-md' : 'bg-red-500 text-white shadow-md'}`}>
                                             {repair.findMyOff ? <CheckCircle size={20}/> : <AlertCircle size={20}/>}
                                         </div>
                                         <div>
                                             <span className="text-[9px] font-bold uppercase opacity-80 block mb-0.5">Cihazımı Bul (FMI)</span>
-                                            <span className="text-sm font-black">{repair.findMyOff ? 'KAPALI' : 'AÇIK'}</span>
+                                            <span className="text-sm font-semibold">{repair.findMyOff ? 'KAPALI' : 'AÇIK'}</span>
                                         </div>
                                     </div>
-                                    <div className={`flex items-center gap-4 p-3 rounded-2xl border ${repair.backupTaken ? 'bg-blue-50 border-blue-100 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${repair.backupTaken ? 'bg-apple-blue text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+                                    <div className={`flex items-center gap-4 p-3 rounded-md border ${repair.backupTaken ? 'bg-blue-50 border-blue-100 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                                        <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${repair.backupTaken ? 'bg-apple-blue text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
                                             <Save size={20}/>
                                         </div>
                                         <div>
                                             <span className="text-[9px] font-bold uppercase opacity-80 block mb-0.5">Veri Yedeği</span>
-                                            <span className="text-sm font-black">{repair.backupTaken ? 'ALINDI' : 'YOK'}</span>
+                                            <span className="text-sm font-semibold">{repair.backupTaken ? 'ALINDI' : 'YOK'}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* ŞİKAYET VE DURUM ANALİZİ */}
-                            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+                            <div className="bg-white p-8 rounded-lg border border-gray-100 shadow-sm">
+                                <h4 className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide flex items-center gap-2 mb-4">
                                     <AlertCircle size={16} className="text-orange-500"/> Müşteri Şikayeti & Fiziksel Durum
                                 </h4>
                                 {isEditing ? (
-                                    <textarea value={editForm.issue} onChange={e => setEditForm({...editForm, issue: e.target.value})} rows={3} className="w-full p-5 border border-blue-200 rounded-2xl text-sm bg-blue-50/30 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"/>
+                                    <textarea value={editForm.issue} onChange={e => setEditForm({...editForm, issue: e.target.value})} rows={3} className="w-full p-5 border border-blue-200 rounded-md text-sm bg-blue-50/30 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"/>
                                 ) : (
-                                    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <div className="p-6 bg-gray-50 rounded-md border border-gray-100">
                                         <p className="text-base text-gray-800 font-medium italic leading-relaxed pl-4 border-l-4 border-apple-blue/50">
                                             "{repair.issue || repair.issueDescription || 'Belirtilmedi'}"
                                         </p>
@@ -495,7 +492,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                 {repair.visualCondition && repair.visualCondition.length > 0 && (
                                     <div className="mt-6 flex flex-wrap gap-2 pt-6 border-t border-gray-50">
                                         {repair.visualCondition.map((v, i) => (
-                                            <span key={i} className="text-xs px-4 py-2 bg-red-50 text-red-600 rounded-xl border border-red-100 font-bold shadow-sm flex items-center gap-1.5">
+                                            <span key={i} className="text-xs px-4 py-2 bg-red-50 text-red-600 rounded-md border border-red-100 font-bold shadow-sm flex items-center gap-1.5">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> {v}
                                             </span>
                                         ))}
@@ -507,24 +504,24 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Evraklar ve Raporlar */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Raporlar & Belgeler</h4>
-                                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col gap-4">
-                                        <button onClick={() => setShowAcceptancePrint(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-apple-blue hover:bg-blue-50 transition-all group shadow-sm">
+                                    <h4 className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-2">Raporlar & Belgeler</h4>
+                                    <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex flex-col gap-4">
+                                        <button onClick={() => setShowAcceptancePrint(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-md border border-gray-100 hover:border-apple-blue hover:bg-blue-50 transition-all group shadow-sm">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-white text-apple-blue rounded-[14px] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 group-hover:border-blue-200"><Printer size={20} /></div>
                                                 <div className="text-left">
-                                                    <span className="text-sm font-black text-gray-900 block">Kabul Formu (PDF)</span>
+                                                    <span className="text-sm font-semibold text-gray-900 block">Kabul Formu (PDF)</span>
                                                     <span className="text-[10px] text-gray-500 font-bold">Müşteri sözleşmesi ve ıslak imza</span>
                                                 </div>
                                             </div>
                                             <ChevronRight size={20} className="text-gray-300 group-hover:text-apple-blue transition-transform group-hover:translate-x-1" />
                                         </button>
                                         {(['Teslim Edildi', 'Cihaz Hazır', 'Tamamlandı', 'İade Hazır', 'İade Edildi'].includes(repair.status)) && (
-                                            <button onClick={() => setShowDeliveryPrint(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-green-500 hover:bg-green-50 transition-all group shadow-sm">
+                                            <button onClick={() => setShowDeliveryPrint(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-md border border-gray-100 hover:border-green-500 hover:bg-green-50 transition-all group shadow-sm">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 bg-white text-green-600 rounded-[14px] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 group-hover:border-green-200"><Printer size={20} /></div>
                                                     <div className="text-left">
-                                                        <span className="text-sm font-black text-gray-900 block">Teslim Formu (PDF)</span>
+                                                        <span className="text-sm font-semibold text-gray-900 block">Teslim Formu (PDF)</span>
                                                         <span className="text-[10px] text-gray-500 font-bold">Ödeme ve çıkış makbuzu</span>
                                                     </div>
                                                 </div>
@@ -534,49 +531,49 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     </div>
                                     
                                     {/* Fatura Bloğu */}
-                                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
-                                        <h4 className="flex items-center gap-2 text-sm font-black text-gray-900 mb-5"><Receipt size={18} className="text-gray-400"/> Vergi & Fatura</h4>
+                                    <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                                        <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-5"><Receipt size={18} className="text-gray-400"/> Vergi & Fatura</h4>
                                         <div className="flex gap-2">
-                                            <input type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="Fatura No girin..." className="flex-1 px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold font-mono focus:bg-white focus:border-blue-500 outline-none uppercase transition-all shadow-inner" />
-                                            <button onClick={handleSaveInvoice} disabled={invoiceNo === repair.invoiceNumber} className="bg-gray-900 text-white px-6 rounded-2xl font-black hover:bg-black disabled:opacity-40 transition-all shadow-xl active:scale-95"><Save size={16}/></button>
+                                            <input type="text" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="Fatura No girin..." className="flex-1 px-5 py-4 bg-gray-50 border border-gray-200 rounded-md text-sm font-bold font-mono focus:bg-white focus:border-blue-500 outline-none uppercase transition-all shadow-inner" />
+                                            <button onClick={handleSaveInvoice} disabled={invoiceNo === repair.invoiceNumber} className="bg-gray-900 text-white px-6 rounded-md font-semibold hover:bg-black disabled:opacity-40 transition-all shadow-xl active:scale-95"><Save size={16}/></button>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* VMI ve Medya */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Görsel VMI Kayıtları</h4>
-                                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col gap-8 h-full">
+                                    <h4 className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-2">Görsel VMI Kayıtları</h4>
+                                    <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex flex-col gap-8 h-full">
                                         {/* Öncesi */}
                                         <div>
                                             <div className="flex justify-between items-center mb-4 border-b border-gray-50 pb-2">
-                                                <span className="text-xs font-black text-gray-900 flex items-center gap-2"><Camera size={14} className="text-indigo-500"/> Kabul (Öncesi)</span>
-                                                <span className="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-3 py-1 rounded-lg font-black shadow-sm">{repair.beforeImages?.length || repair.mediaFiles?.filter(f=>!f.isDefault).length || 0} Adet</span>
+                                                <span className="text-xs font-semibold text-gray-900 flex items-center gap-2"><Camera size={14} className="text-indigo-500"/> Kabul (Öncesi)</span>
+                                                <span className="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-3 py-1 rounded-lg font-semibold shadow-sm">{repair.beforeImages?.length || repair.mediaFiles?.filter(f=>!f.isDefault).length || 0} Adet</span>
                                             </div>
                                             <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-3">
                                                 {(repair.beforeImages || repair.mediaFiles?.filter(f=>!f.isDefault) || []).map((img, i) => (
                                                     <div key={i} className="relative group shrink-0 ring-offset-2 hover:ring-2 ring-indigo-500/30 rounded-[20px] transition-all cursor-zoom-in">
-                                                        <img src={img.url || img} onClick={()=>setSelectedPhoto({url: img.url||img, user: 'Servis Kabul', date: repair.date})} className="w-24 h-24 rounded-[20px] object-cover border border-gray-200 shadow-sm" />
+                                                        <img src={getSafeRepairImageUrl(img.url || img, repair.productGroup, repair.device, API_URL)} onClick={()=>setSelectedPhoto({url: getSafeRepairImageUrl(img.url||img, repair.productGroup, repair.device, API_URL), user: 'Servis Kabul', date: repair.date})} className="w-24 h-24 rounded-[20px] object-cover border border-gray-200 shadow-sm" />
                                                     </div>
                                                 ))}
-                                                {(!repair.beforeImages?.length && (!repair.mediaFiles || repair.mediaFiles.filter(f=>!f.isDefault).length===0)) && <div className="text-xs text-gray-400 p-8 border-2 border-dashed border-gray-100 rounded-[24px] w-full text-center bg-gray-50 font-medium">Görsel yüklenmemiş</div>}
+                                                {(!repair.beforeImages?.length && (!repair.mediaFiles || repair.mediaFiles.filter(f=>!f.isDefault).length===0)) && <div className="text-xs text-gray-400 p-8 border-2 border-dashed border-gray-100 rounded-lg w-full text-center bg-gray-50 font-medium">Görsel yüklenmemiş</div>}
                                             </div>
                                         </div>
                                         
                                         {/* Sonrası */}
                                         <div>
                                             <div className="flex justify-between items-center mb-4 border-b border-gray-50 pb-2">
-                                                <span className="text-xs font-black text-gray-900 flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Teslim (Sonrası)</span>
-                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1 rounded-lg font-black shadow-sm">{repair.afterImages?.length || 0} Adet</span>
+                                                <span className="text-xs font-semibold text-gray-900 flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Teslim (Sonrası)</span>
+                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1 rounded-lg font-semibold shadow-sm">{repair.afterImages?.length || 0} Adet</span>
                                             </div>
                                             <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-3">
                                                 {repair.afterImages?.map((url, i) => (
                                                     <div key={i} className="relative group shrink-0 ring-offset-2 hover:ring-2 ring-emerald-500/30 rounded-[20px] transition-all cursor-zoom-in">
-                                                        <img src={url} onClick={()=>setSelectedPhoto({url, user: 'Teknisyen', date: ''})} className="w-24 h-24 rounded-[20px] object-cover border border-gray-200 shadow-sm" />
+                                                        <img src={getSafeRepairImageUrl(url, repair.productGroup, repair.device, API_URL)} onClick={()=>setSelectedPhoto({url: getSafeRepairImageUrl(url, repair.productGroup, repair.device, API_URL), user: 'Teknisyen', date: ''})} className="w-24 h-24 rounded-[20px] object-cover border border-gray-200 shadow-sm" />
                                                         <button onClick={() => handlePhotoDelete(url, 'after')} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 shadow-xl border-2 border-white transition-all scale-75 group-hover:scale-100"><Trash2 size={12}/></button>
                                                     </div>
                                                 ))}
-                                                {(!repair.afterImages?.length) && <div className="text-xs text-emerald-600/60 p-8 border-2 border-dashed border-emerald-100 rounded-[24px] w-full text-center bg-emerald-50/50 font-bold">Onarım sonucu eklenmemiş</div>}
+                                                {(!repair.afterImages?.length) && <div className="text-xs text-emerald-600/60 p-8 border-2 border-dashed border-emerald-100 rounded-lg w-full text-center bg-emerald-50/50 font-bold">Onarım sonucu eklenmemiş</div>}
                                             </div>
                                         </div>
                                     </div>
@@ -585,15 +582,15 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                             
                             {/* ADMIN DANGER ZONE */}
                             {hasPermission(currentUser, 'manage_settings') && (
-                                <div className="mt-8 bg-red-50/80 rounded-[32px] p-8 border border-red-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                                <div className="mt-8 bg-red-50/80 rounded-lg p-8 border border-red-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                                     <div className="flex items-center gap-5">
-                                        <div className="w-14 h-14 bg-white text-red-600 rounded-2xl flex items-center justify-center font-black shadow-sm border border-red-100"><AlertCircle size={28} /></div>
+                                        <div className="w-14 h-14 bg-white text-red-600 rounded-md flex items-center justify-center font-semibold shadow-sm border border-red-100"><AlertCircle size={28} /></div>
                                         <div>
-                                            <h5 className="text-lg font-black text-red-900 tracking-tight">Kritik Yönetici İşlemi</h5>
+                                            <h5 className="text-lg font-semibold text-red-900 tracking-tight">Kritik Yönetici İşlemi</h5>
                                             <p className="text-sm text-red-700 font-medium">Kayıt veritabanından kalıcı olarak silinecektir. Bu işlem geri alınamaz.</p>
                                         </div>
                                     </div>
-                                    <button onClick={handleDeleteRepair} className="w-full md:w-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl text-sm font-black transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-red-500/30 active:scale-95">
+                                    <button onClick={handleDeleteRepair} className="w-full md:w-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-red-500/30 active:scale-95">
                                         <Trash2 size={18} /> Sistemi Temizle ve Sil
                                     </button>
                                 </div>
@@ -602,10 +599,10 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                         </div>
 
                         {/* ---------------- SAĞ / TİMELİNE (4 KOLON) ---------------- */}
-                        <div className="lg:col-span-4 flex flex-col h-[60vh] lg:h-[calc(85vh-200px)] bg-white rounded-[40px] border border-gray-100 shadow-2xl overflow-hidden sticky top-0">
+                        <div className="lg:col-span-4 flex flex-col h-[60vh] lg:h-[calc(85vh-200px)] bg-white rounded-lg border border-gray-100 shadow-2xl overflow-hidden sticky top-0">
                             <div className="px-8 py-8 bg-gray-900 flex items-center justify-between shrink-0 z-10 shadow-md">
-                                <h4 className="text-sm font-black tracking-widest text-white flex items-center gap-3"><Clock size={18} className="text-blue-400" /> SERVİS AKIŞI</h4>
-                                <button onClick={handleAddProcess} className="w-10 h-10 flex items-center justify-center bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors shadow-sm border border-white/10">
+                                <h4 className="text-sm font-semibold tracking-widest text-white flex items-center gap-3"><Clock size={18} className="text-blue-400" /> SERVİS AKIŞI</h4>
+                                <button onClick={handleAddProcess} className="w-10 h-10 flex items-center justify-center bg-white/10 text-white rounded-md hover:bg-white/20 transition-colors shadow-sm border border-white/10">
                                     <PlusCircle size={20} />
                                 </button>
                             </div>
@@ -619,14 +616,14 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                                 <div className={`absolute -left-[30px] top-1 w-8 h-8 rounded-full flex items-center justify-center text-white border-4 border-white shadow-md z-10 transition-transform group-hover:scale-125 duration-300 ${getStatusColor(entry.status).split(' ')[0]}`}>
                                                     {getStatusIcon(entry.status)}
                                                 </div>
-                                                <div className={`bg-white p-6 rounded-[24px] transition-all hover:-translate-y-1 hover:shadow-xl ${
+                                                <div className={`bg-white p-6 rounded-lg transition-all hover:-translate-y-1 hover:shadow-xl ${
                                                     entry.streamType === 'note' ? 'border-2 border-yellow-200 shadow-sm bg-yellow-50/20' 
                                                     : entry.streamType === 'report' ? 'border-2 border-purple-200 shadow-sm bg-purple-50/20' 
                                                     : 'border border-gray-100 shadow-sm'
                                                 }`}>
                                                     <div className="flex justify-between items-start mb-4">
                                                         <div className="pr-2">
-                                                            <h5 className="text-base font-black text-gray-900 tracking-tight leading-tight">{entry.status}</h5>
+                                                            <h5 className="text-base font-semibold text-gray-900 tracking-tight leading-tight">{entry.status}</h5>
                                                             <span className="text-[10px] font-bold text-gray-400 capitalize mt-1 block">Yapan: <span className="text-gray-600">{entry.user || 'Sistem Aksiyonu'}</span></span>
                                                         </div>
                                                         <span className="text-[9px] bg-gray-100 text-gray-500 font-bold px-2.5 py-1 rounded-lg mt-0.5 shrink-0 shadow-inner">
@@ -654,7 +651,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                         onChange={(e)=>setNewNote(e.target.value)} 
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
                                         placeholder="Ekibe bir not bırakın..." 
-                                        className="w-full pl-15 pr-16 py-5 bg-gray-50 border border-gray-200 rounded-[24px] text-sm font-bold focus:outline-none focus:bg-white focus:border-apple-blue focus:ring-4 ring-blue-500/10 transition-all shadow-inner"
+                                        className="w-full pl-15 pr-16 py-5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:bg-white focus:border-apple-blue focus:ring-4 ring-blue-500/10 transition-all shadow-inner"
                                         style={{ paddingLeft: '3.5rem' }}
                                     />
                                     <button onClick={handleAddNote} disabled={!newNote.trim()} className="absolute right-3 p-3 bg-gray-900 text-white rounded-[16px] disabled:opacity-30 hover:bg-apple-blue transition-colors shadow-lg active:scale-95"><Send size={18}/></button>
@@ -669,20 +666,20 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                 <div className="bg-white px-6 py-4 flex flex-wrap justify-between items-center shrink-0 shadow-[0_-5px_20px_rgba(0,0,0,0.03)] border-t border-gray-200/50 z-30">
                     <div className="flex gap-2">
                          {repair.status === 'Beklemede' && (
-                             <button onClick={() => setShowTransferModal(true)} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-100 flex items-center gap-2 transition-all">
+                             <button onClick={() => setShowTransferModal(true)} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold rounded-md hover:bg-indigo-100 flex items-center gap-2 transition-all">
                                  <Truck size={14} /> Şubeye Yolla
                              </button>
                          )}
-                         <button onClick={() => setShowNotificationModal(true)} className="px-4 py-2 bg-amber-50 border border-amber-100 text-amber-600 text-xs font-bold rounded-xl hover:bg-amber-100 flex items-center gap-2 transition-all shadow-sm">
+                         <button onClick={() => setShowNotificationModal(true)} className="px-4 py-2 bg-amber-50 border border-amber-100 text-amber-600 text-xs font-bold rounded-md hover:bg-amber-100 flex items-center gap-2 transition-all shadow-sm">
                              <Bell size={14} /> Teklif & Bildirim
                          </button>
                     </div>
                     
                     <div className="flex flex-wrap gap-2">
-                        <button onClick={handleWhatsApp} className="px-4 py-2 bg-[#25D366] text-white text-xs font-bold rounded-xl hover:bg-[#128C7E] flex items-center gap-2 shadow-sm shadow-[#25D366]/20 transition-all">
+                        <button onClick={handleWhatsApp} className="px-4 py-2 bg-[#25D366] text-white text-xs font-bold rounded-md hover:bg-[#128C7E] flex items-center gap-2 shadow-sm shadow-[#25D366]/20 transition-all">
                             <MessageCircle size={14} /> Müşteriye Yaz
                         </button>
-                        <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-black flex items-center gap-2 shadow-sm transition-all ml-2">
+                        <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white text-xs font-bold rounded-md hover:bg-black flex items-center gap-2 shadow-sm transition-all ml-2">
                             Kapat <ArrowRight size={14} />
                         </button>
                     </div>
@@ -693,18 +690,18 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
              {/* Transfer Modal Ekranı  */}
              {showTransferModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-scale-up">
+                    <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-2xl animate-scale-up">
                         <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center"><Truck size={24} /></div>
+                            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center"><Truck size={24} /></div>
                             <div>
-                                <h3 className="text-lg font-black text-gray-900">Servis Transferi</h3>
+                                <h3 className="text-lg font-semibold text-gray-900">Servis Transferi</h3>
                                 <p className="text-xs text-gray-500 font-medium mt-0.5">Kaydı hedefe yönlendirin.</p>
                             </div>
                         </div>
 
                         <div className="space-y-4 mb-8">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Hedef Şube</label>
-                            <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold text-gray-700 transition-all" value={targetStoreId} onChange={(e) => setTargetStoreId(e.target.value)}>
+                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Hedef Şube</label>
+                            <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold text-gray-700 transition-all" value={targetStoreId} onChange={(e) => setTargetStoreId(e.target.value)}>
                                 <option value="">Mağaza Seçiniz...</option>
                                 {servicePoints.filter(sp => String(sp.id) !== String(repair.storeId)).map(sp => (
                                     <option key={sp.id} value={sp.id}>{sp.name}</option>
@@ -713,8 +710,8 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                         </div>
 
                         <div className="flex gap-2">
-                            <button onClick={() => setShowTransferModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200">İptal</button>
-                            <button onClick={handleTransfer} disabled={!targetStoreId} className="flex-1 py-3 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50">Onayla ve Transfer Et</button>
+                            <button onClick={() => setShowTransferModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200">İptal</button>
+                            <button onClick={handleTransfer} disabled={!targetStoreId} className="flex-1 py-3 bg-indigo-600 text-white text-xs font-bold rounded-md hover:bg-indigo-700 disabled:opacity-50">Onayla ve Transfer Et</button>
                         </div>
                     </div>
                 </div>
@@ -727,7 +724,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                         <X size={32} />
                     </button>
                     <img src={selectedPhoto.url} className="max-w-full max-h-full object-contain shadow-2xl animate-scale-up" />
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20">
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-md border border-white/20">
                         <p className="text-white font-bold text-sm">{selectedPhoto.user} tarafından yüklendi</p>
                         <p className="text-white/60 text-xs font-mono">{selectedPhoto.date}</p>
                     </div>
@@ -737,15 +734,15 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
             {/* ---------------- MÜŞTERİ BİLGİSİ MODALI ---------------- */}
             {showCustomerModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-up border border-white/20">
+                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-up border border-white/20">
                         <div className="px-8 py-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white text-apple-blue rounded-[16px] flex items-center justify-center shadow-sm">
                                     <User size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-blue-900 tracking-tight">Müşteri Detay Profili</h3>
-                                    <p className="text-xs text-blue-700/70 font-bold uppercase tracking-widest mt-0.5">Kişisel Bilgiler ve İletişim Formu</p>
+                                    <h3 className="text-xl font-semibold text-blue-900 tracking-tight">Müşteri Detay Profili</h3>
+                                    <p className="text-xs text-blue-700/70 font-bold text-xs uppercase tracking-wide mt-0.5">Kişisel Bilgiler ve İletişim Formu</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowCustomerModal(false)} className="w-10 h-10 bg-white text-blue-400 hover:text-red-500 rounded-full flex items-center justify-center shadow-sm transition-all focus:outline-none">
@@ -755,7 +752,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                         
                         <div className="p-8 space-y-6">
                             {!isAdmin && (
-                                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-2xl border border-yellow-200 flex items-start gap-3 shadow-sm mb-2">
+                                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200 flex items-start gap-3 shadow-sm mb-2">
                                     <Info className="shrink-0 mt-0.5" size={18} />
                                     <p className="text-sm font-bold leading-relaxed">Müşteri detay formunu değiştirme yetkiniz bulunmamaktadır. Değişiklik yapmak için bir yönetici (Admin) ile iletişime geçiniz.</p>
                                 </div>
@@ -763,7 +760,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Ad Soyad</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Ad Soyad</label>
                                     <input 
                                         type="text" 
                                         value={customerForm.customer} 
@@ -773,7 +770,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Telefon Numarası</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Telefon Numarası</label>
                                     <input 
                                         type="text" 
                                         value={customerForm.customerPhone} 
@@ -783,7 +780,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">E-Posta Adresi</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">E-Posta Adresi</label>
                                     <input 
                                         type="email" 
                                         value={customerForm.customerEmail} 
@@ -794,7 +791,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">TC / Vergi No <span className="opacity-50">(Opsiyonel)</span></label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">TC / Vergi No <span className="opacity-50">(Opsiyonel)</span></label>
                                     <input 
                                         type="text" 
                                         value={customerForm.tcNo} 
@@ -805,7 +802,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Açık Adres Seçimi / Fatura Adresi</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Açık Adres Seçimi / Fatura Adresi</label>
                                     <textarea 
                                         rows={3} 
                                         value={customerForm.customerAddress} 
@@ -833,15 +830,15 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
             {/* ---------------- CİHAZ BİLGİSİ MODALI ---------------- */}
             {showDeviceModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-scale-up border border-white/20">
+                    <div className="bg-white rounded-lg w-full max-w-lg shadow-2xl overflow-hidden animate-scale-up border border-white/20">
                         <div className="px-8 py-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white text-gray-800 rounded-[16px] flex items-center justify-center shadow-sm">
                                     <Fingerprint size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-gray-900 tracking-tight">Cihaz Detayları</h3>
-                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">Donanım ve Seri No Düzenle</p>
+                                    <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Cihaz Detayları</h3>
+                                    <p className="text-xs text-gray-500 font-bold text-xs uppercase tracking-wide mt-0.5">Donanım ve Seri No Düzenle</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowDeviceModal(false)} className="w-10 h-10 bg-white text-gray-400 hover:text-red-500 rounded-full flex items-center justify-center shadow-sm transition-all focus:outline-none">
@@ -851,7 +848,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                         
                         <div className="p-8 space-y-6">
                             {!isAdmin && (
-                                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-2xl border border-yellow-200 flex items-start gap-3 shadow-sm mb-2">
+                                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200 flex items-start gap-3 shadow-sm mb-2">
                                     <Info className="shrink-0 mt-0.5" size={18} />
                                     <p className="text-sm font-bold leading-relaxed">Cihaz donanım bilgilerini/seri numarasını sadece Admin yetkisine sahip teknisyenler güncelleyebilir.</p>
                                 </div>
@@ -859,7 +856,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                             
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Cihaz Modeli</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Cihaz Modeli</label>
                                     <input 
                                         type="text" 
                                         value={editForm.device} 
@@ -869,7 +866,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Seri Numarası (S/N veya IMEI)</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Seri Numarası (S/N veya IMEI)</label>
                                     <input 
                                         type="text" 
                                         value={editForm.serial} 
@@ -880,46 +877,14 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Müşteri Şikayeti / Arıza Notu</label>
+                                    <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Müşteri Şikayeti / Arıza Notu</label>
                                     <textarea 
-                                        rows={2} 
+                                        rows={3} 
                                         value={editForm.issue} 
                                         onChange={e => setEditForm({...editForm, issue: e.target.value})} 
                                         disabled={!isAdmin}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-medium text-gray-900 focus:bg-white focus:border-apple-blue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none disabled:opacity-70 custom-scrollbar" 
                                     />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Garanti Durumu</label>
-                                        <select 
-                                            value={editForm.warrantyStatus} 
-                                            onChange={e => setEditForm({...editForm, warrantyStatus: e.target.value})} 
-                                            disabled={!isAdmin}
-                                            className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-bold text-gray-900 focus:bg-white focus:border-apple-blue outline-none transition-all disabled:opacity-70"
-                                        >
-                                            <option value="Garanti İçi">Garanti İçi</option>
-                                            <option value="Garanti Dışı">Garanti Dışı</option>
-                                            <option value="Sınırlı Garanti">Sınırlı Garanti</option>
-                                            <option value="AppleCare+">AppleCare+</option>
-                                            <option value="Tüketici Kanunu">Tüketici Kanunu</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1 block">Ücret / Teklif Tutarı (₺)</label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₺</div>
-                                            <input 
-                                                type="number" 
-                                                value={editForm.quoteAmount} 
-                                                onChange={e => setEditForm({...editForm, quoteAmount: e.target.value})} 
-                                                disabled={!isAdmin}
-                                                placeholder="0.00"
-                                                className="w-full pl-10 pr-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-bold text-gray-900 focus:bg-white focus:border-apple-blue outline-none transition-all disabled:opacity-70" 
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>

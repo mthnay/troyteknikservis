@@ -12,7 +12,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         { id: 'pending-repairs', icon: Clock, label: 'İşlem Bekleyenler' },
         { id: 'approval-pending', icon: MessageCircle, label: 'Müşteri Onayı' },
         { id: 'customers', icon: Users, label: 'Müşteriler (CRM)' },
-        ...(hasPermission(currentUser, 'manage_marketing') ? [{ id: 'marketing', icon: Megaphone, label: 'Pzr. & Otomasyon' }] : []),
+        { id: 'marketing', icon: Megaphone, label: 'Pzr. & Otomasyon' },
         { id: 'stock', icon: Package, label: 'Envanter ve Stok' },
         { id: 'in-store', icon: Wrench, label: 'Mağaza İçi Onarım' },
         { id: 'ready-pickup', icon: CheckCircle, label: 'Hazırlar' },
@@ -21,7 +21,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         { id: 'technicians', icon: Users, label: 'Teknisyenler' },
         { id: 'reports', icon: BarChart2, label: 'Raporlar' },
         // Only show Settings for Admin
-        ...(hasPermission(currentUser, 'manage_settings') ? [{ id: 'settings', icon: Settings, label: 'Ayarlar' }] : [])
+        ...(hasPermission(currentUser, 'manage_settings') ? [{ id: 'settings', icon: Settings, label: 'Settings' }] : [])
     ];
 
     return (
@@ -29,11 +29,11 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             {/* Header */}
             <div className="p-8 pb-6">
                 <div className="flex items-center gap-4 mb-2">
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-gray-300 ring-2 ring-white/50">
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-900 to-gray-800 rounded-md flex items-center justify-center text-white font-semibold text-2xl shadow-lg shadow-gray-300 ring-2 ring-white/50">
                         T
                     </div>
                     <div>
-                        <h1 className="font-extrabold text-gray-900 text-2xl tracking-tighter leading-none">Troy</h1>
+                        <h1 className="font-semibold text-gray-900 text-2xl tracking-tighter leading-none">Troy</h1>
                         <div className="flex flex-col gap-0.5 mt-1">
                             <p className="text-[10px] text-blue-600 font-bold tracking-widest uppercase bg-blue-50 px-2 py-0.5 rounded-md inline-block border border-blue-100 w-fit">Servis Portalı</p>
 
@@ -44,7 +44,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                                         ? 'Tüm Mağazalar'
                                         : (servicePoints.find(p => Number(p.id) === Number(selectedStoreId || currentUser?.storeId))?.name || 'Mağaza Seçilmedi')}
                                 </span>
-                                <span className="text-[9px] font-black text-blue-600">
+                                <span className="text-[9px] font-semibold text-blue-600">
                                     Ship-To: {servicePoints.find(p => Number(p.id) === Number(selectedStoreId || currentUser?.storeId))?.shipTo || '-'}
                                 </span>
                             </div>
@@ -58,12 +58,12 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                 {/* Admin Context Selector */}
                 {hasPermission(currentUser, 'view_all_stores') && (
                     <div className="mb-8 px-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 block px-1">Görünüm Değiştir</label>
+                        <label className="text-[10px] font-semibold text-xs uppercase tracking-wide text-gray-400 mb-3 block px-1">Görünüm Değiştir</label>
                         <div className="relative group">
                             <select
                                 value={selectedStoreId}
                                 onChange={(e) => setSelectedStoreId(Number(e.target.value))}
-                                className="w-full bg-white/60 backdrop-blur-md border border-gray-200/60 rounded-xl px-4 py-3.5 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer hover:bg-white hover:shadow-md hover:-translate-y-0.5"
+                                className="w-full bg-white/60 backdrop-blur-md border border-gray-200/60 rounded-md px-4 py-3.5 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer hover:bg-white hover:shadow-md hover:-translate-y-0.5"
                             >
                                 <option value={0}>Tüm Mağazalar</option>
                                 {servicePoints.map(point => (
@@ -79,7 +79,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                     </div>
                 )}
 
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block px-3 mt-4">Menü</label>
+                <label className="text-[10px] font-semibold text-xs uppercase tracking-wide text-gray-400 mb-2 block px-3 mt-4">Menü</label>
 
                 {menuItems.map((item) => {
                     const Icon = item.icon;
@@ -89,7 +89,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group relative overflow-hidden ${isActive
+                            className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-md transition-all duration-300 group relative overflow-hidden ${isActive
                                 ? 'bg-gradient-to-r from-gray-900 to-gray-800 text-white shadow-lg shadow-gray-200 scale-[1.02]'
                                 : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-md'
                                 }`}
@@ -99,7 +99,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
 
                             {/* Notification Badge for Pending Repairs */}
                             {item.id === 'pending-repairs' && alerts.length > 0 && (
-                                <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full shadow-lg ${
+                                <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] font-semibold rounded-full shadow-lg ${
                                     alerts.some(a => a.type === 'critical') 
                                     ? 'bg-red-500 text-white animate-pulse' 
                                     : 'bg-orange-500 text-white'
@@ -118,9 +118,9 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             </nav>
 
             {/* User Profile */}
-            <div className="p-4 mx-4 mb-4 mt-2 bg-white/40 backdrop-blur-md rounded-3xl border border-white/50 shadow-lg">
+            <div className="p-4 mx-4 mb-4 mt-2 bg-white/40 backdrop-blur-md rounded-lg border border-white/50 shadow-lg">
                 <div className="flex items-center gap-3 mb-4 p-1">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-white">
+                    <div className="w-10 h-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-white">
                         {currentUser?.avatar || 'TR'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -132,7 +132,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                 </div>
                 <button
                     onClick={logout}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 text-xs font-bold transition-all border border-gray-100 shadow-sm hover:shadow active:scale-95 group"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-md bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 text-xs font-bold transition-all border border-gray-100 shadow-sm hover:shadow active:scale-95 group"
                 >
                     <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" />
                     Güvenli Çıkış

@@ -25,8 +25,7 @@ const ROLE_PERMISSIONS = {
         'delete_repairs',
         'view_earnings',
         'view_kbb',
-        'view_technicians',
-        'manage_marketing'
+        'view_technicians'
     ],
     [ROLES.STORE_MANAGER]: [
         'view_dashboard', 
@@ -34,8 +33,7 @@ const ROLE_PERMISSIONS = {
         'edit_repairs',
         'view_earnings',
         'view_kbb',
-        'view_technicians',
-        'manage_marketing'
+        'view_technicians'
     ],
     [ROLES.ACCOUNTANT]: [
         'view_earnings',
@@ -59,23 +57,17 @@ export const hasPermission = (user, permission) => {
     
     // Map older 'Admin' and 'Teknisyen' roles for backward compatibility
     let userRole = user.role;
-    const lowerRole = userRole.toLowerCase();
-
-    // SuperAdmin always has all permissions
-    if (lowerRole === 'admin' || lowerRole === 'superadmin') return true;
-    
-    if (lowerRole === 'teknisyen') userRole = ROLES.TECHNICIAN;
+    if (userRole.toLowerCase() === 'admin') userRole = ROLES.SUPER_ADMIN;
+    if (userRole.toLowerCase() === 'teknisyen') userRole = ROLES.TECHNICIAN;
 
     // First check dynamic roles
-    const dynamicRole = dynamicRoles.find(r => r.name.toLowerCase() === lowerRole || r.displayName.toLowerCase() === lowerRole);
-    
-    // Special case: If it's a built-in role but found in dynamic, merge permissions
-    // or just ensure manage_marketing is there for StoreManager
+    const dynamicRole = dynamicRoles.find(r => r.name.toLowerCase() === userRole.toLowerCase() || r.displayName.toLowerCase() === userRole.toLowerCase());
     if (dynamicRole) {
-        if (dynamicRole.permissions && dynamicRole.permissions.includes(permission)) return true;
+        // If it's a dynamic role, check its permissions array
+        return dynamicRole.permissions && dynamicRole.permissions.includes(permission);
     }
 
-    // Fallback to static mapping
-    const permissions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS[Object.keys(ROLES).find(k => ROLES[k].toLowerCase() === lowerRole)];
+    // Fallback to static mapping if dynamic role not found
+    const permissions = ROLE_PERMISSIONS[userRole];
     return permissions ? permissions.includes(permission) : false;
 };

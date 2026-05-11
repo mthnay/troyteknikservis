@@ -108,7 +108,7 @@ const StockManagement = () => {
                             {showStoreDropdown && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setShowStoreDropdown(false)}></div>
-                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
                                         <button onClick={() => { setStoreFilter('all'); setShowStoreDropdown(false); }} className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-black/5 text-gray-700">Tüm Mağazalar</button>
                                         <div className="h-px bg-gray-200/50 my-1"></div>
                                         {servicePoints.map(s => (
@@ -135,7 +135,7 @@ const StockManagement = () => {
                     { label: 'Kritik Stok Uyarısı', value: lowStockItems, subtitle: 'Tedarik gerekenler', icon: AlertTriangle, color: lowStockItems > 0 ? 'text-red-500' : 'text-gray-900', bg: 'bg-white' },
                     { label: 'Envanter Değeri', value: new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(totalValue), subtitle: 'Genel tutar', icon: Tag, color: 'text-gray-900', bg: 'bg-gradient-to-br from-gray-50 to-white' }
                 ].map((stat, idx) => (
-                    <div key={idx} className={`${stat.bg} p-6 rounded-2xl border border-gray-200/60 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.06)]`}> 
+                    <div key={idx} className={`${stat.bg} p-6 rounded-md border border-gray-200/60 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.06)]`}> 
                         <div className="flex justify-between items-start mb-4">
                             <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
                                 <stat.icon size={18} className="text-gray-600" />
@@ -148,7 +148,7 @@ const StockManagement = () => {
             </div>
 
             {/* Main Board */}
-            <div className="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-md border border-gray-200/60 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
                 <div className="p-4 border-b border-gray-200/60 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/30">
                     <div className="flex gap-1 bg-gray-200/50 p-1 rounded-lg">
                         {categories.map(cat => (
@@ -286,10 +286,10 @@ const StockManagement = () => {
             {/* Part Detail Details Modal */}
             {selectedPartDetails && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[500px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-6 relative overflow-hidden ring-1 ring-black/5 animate-scale-up">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-md w-full max-w-[500px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-6 relative overflow-hidden ring-1 ring-black/5 animate-scale-up">
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center p-1.5">
+                                <div className="w-14 h-14 bg-white rounded-md shadow-sm border border-gray-100 flex items-center justify-center p-1.5">
                                     <img src={selectedPartDetails.image || getProductImage(selectedPartDetails.category, selectedPartDetails.name)} alt="" className="object-contain w-full h-full mix-blend-multiply" />
                                 </div>
                                 <div>
@@ -301,27 +301,27 @@ const StockManagement = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm flex items-center justify-between">
+                            <div className="bg-white rounded-md p-4 border border-gray-200/60 shadow-sm flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
                                         <Box className="text-blue-500" size={16} />
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-widest">Mevcut Stok</p>
+                                        <p className="text-[11px] font-medium text-gray-500 text-xs uppercase tracking-wide">Mevcut Stok</p>
                                         <p className="text-[15px] font-semibold text-gray-900">
                                             {inventory.filter(i => (i.partNumber === selectedPartDetails.partNumber || i.name === selectedPartDetails.name)).reduce((acc, i) => acc + i.quantity, 0)} Adet
                                         </p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[11px] font-medium text-gray-500 uppercase tracking-widest">Birim Fiyat</p>
+                                    <p className="text-[11px] font-medium text-gray-500 text-xs uppercase tracking-wide">Birim Fiyat</p>
                                     <p className="text-[15px] font-semibold text-gray-900">
                                         {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(selectedPartDetails.price || 0)}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm max-h-60 overflow-y-auto override-scrollbar">
+                            <div className="bg-white rounded-md border border-gray-200/60 shadow-sm max-h-60 overflow-y-auto override-scrollbar">
                                 <table className="w-full text-left text-[13px]">
                                     <thead className="bg-gray-50/50 border-b border-gray-100">
                                         <tr>
@@ -369,7 +369,7 @@ const StockManagement = () => {
             {/* Minimal Add Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
-                    <form onSubmit={handleAddPart} className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[480px] shadow-2xl p-6 relative overflow-hidden ring-1 ring-black/5 animate-scale-up">
+                    <form onSubmit={handleAddPart} className="bg-white/90 backdrop-blur-2xl rounded-md w-full max-w-[480px] shadow-2xl p-6 relative overflow-hidden ring-1 ring-black/5 animate-scale-up">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-[17px] font-semibold text-gray-900">Yeni Parça Ekle</h3>
                             <button type="button" onClick={() => setShowAddModal(false)} className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors text-gray-500"><X size={16} /></button>
@@ -483,7 +483,7 @@ const StockManagement = () => {
             {/* Transfer Modal */}
             {transferPart && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[440px] shadow-2xl p-6 ring-1 ring-black/5 animate-scale-up">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-md w-full max-w-[440px] shadow-2xl p-6 ring-1 ring-black/5 animate-scale-up">
                         <div className="flex justify-between items-center mb-5">
                             <h3 className="text-[17px] font-semibold text-gray-900">Transfer Et</h3>
                             <button onClick={() => { setTransferPart(null); setSelectedSerialsToTransfer([]); }} className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors text-gray-500"><X size={16} /></button>
@@ -495,7 +495,7 @@ const StockManagement = () => {
                                 <p className="text-[12px] text-gray-500 font-mono mt-0.5">{transferPart.partNumber || transferPart.id}</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{transferPart.warehouseType || 'KGB'}</span>
+                                <span className="text-[10px] font-bold text-xs uppercase tracking-wide text-gray-400">{transferPart.warehouseType || 'KGB'}</span>
                             </div>
                         </div>
 
@@ -505,7 +505,7 @@ const StockManagement = () => {
                                     <p className="text-[12px] font-medium text-gray-500">Transfer Edilecek Seriler</p>
                                     <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{selectedSerialsToTransfer.length} Seçildi</span>
                                 </div>
-                                <div className="max-h-36 overflow-y-auto override-scrollbar border border-gray-200/60 rounded-xl bg-white p-2 space-y-1 shadow-inner">
+                                <div className="max-h-36 overflow-y-auto override-scrollbar border border-gray-200/60 rounded-md bg-white p-2 space-y-1 shadow-inner">
                                     {(transferPart.warehouseType === 'KGB' ? transferPart.kgbSerials : transferPart.kbbSerials).map(serial => (
                                         <label key={serial} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-all select-none">
                                             <input 
@@ -523,7 +523,7 @@ const StockManagement = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="mb-5 bg-yellow-50 border border-yellow-100 p-3 rounded-xl flex gap-3 items-start">
+                            <div className="mb-5 bg-yellow-50 border border-yellow-100 p-3 rounded-md flex gap-3 items-start">
                                 <AlertCircle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
                                 <p className="text-[12px] text-yellow-800 font-medium leading-relaxed">Bu parçaya ait kayıtlı seri numarası bulunmuyor. Sadece envanter adres kaydı hedef mağazaya taşınacaktır.</p>
                             </div>
@@ -561,12 +561,12 @@ const StockManagement = () => {
                                         setTransferPart(null);
                                         setSelectedSerialsToTransfer([]);
                                     }}
-                                    className={`w-full text-left px-4 py-3 rounded-xl text-[13px] transition-all flex items-center justify-between group ${String(s.id) === String(transferPart.storeId) ? 'bg-blue-50 text-blue-600 opacity-60 cursor-default ring-1 ring-blue-100/50' : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm text-gray-700'}`}
+                                    className={`w-full text-left px-4 py-3 rounded-md text-[13px] transition-all flex items-center justify-between group ${String(s.id) === String(transferPart.storeId) ? 'bg-blue-50 text-blue-600 opacity-60 cursor-default ring-1 ring-blue-100/50' : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm text-gray-700'}`}
                                     disabled={String(s.id) === String(transferPart.storeId)}
                                 >
                                     <span className="font-semibold">{s.name}</span>
                                     {String(s.id) === String(transferPart.storeId) ? (
-                                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest bg-blue-100/50 px-2 py-0.5 rounded-full">Mevcut konum</span>
+                                        <span className="text-[10px] font-bold text-blue-500 text-xs uppercase tracking-wide bg-blue-100/50 px-2 py-0.5 rounded-full">Mevcut konum</span>
                                     ) : (
                                         <ArrowUpRight size={14} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
                                     )}
@@ -580,7 +580,7 @@ const StockManagement = () => {
             {/* Custom Delete Confirmation Modal */}
             {confirmDelete && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl w-full max-w-[360px] shadow-2xl p-6 ring-1 ring-black/5 text-center animate-scale-up">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-md w-full max-w-[360px] shadow-2xl p-6 ring-1 ring-black/5 text-center animate-scale-up">
                         <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
                             <Trash2 size={24} />
                         </div>
