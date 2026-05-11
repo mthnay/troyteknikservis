@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Bell, Shield, Store, Globe, CreditCard, MapPin, Plus, Trash2, Building, Users, UserPlus, Mail, Lock, Paperclip, Check, Upload, X, ChevronRight, Package, AlertTriangle, Key, Clock, RefreshCw } from 'lucide-react';
+import { Save, Bell, Shield, Store, Globe, CreditCard, MapPin, Plus, Trash2, Building, Users, UserPlus, Mail, Lock, Paperclip, Check, Upload, X, ChevronRight, Package, AlertTriangle, Key, Clock, RefreshCw, MessageSquare } from 'lucide-react';
 import { appConfirm } from '../utils/alert';
 import { useAppContext } from '../context/AppContext';
 import Swal from 'sweetalert2';
