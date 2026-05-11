@@ -7,6 +7,8 @@ export const appAlert = (message, type = 'info') => {
         icon: type === 'error' ? 'error' : type === 'success' ? 'success' : 'info',
         confirmButtonText: 'Tamam',
         confirmButtonColor: '#007aff',
+        timer: 3000,
+        timerProgressBar: true,
         customClass: {
             popup: 'rounded-[32px] shadow-2xl border border-gray-100 font-sans',
             title: 'font-black text-xl text-gray-900',
