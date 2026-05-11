@@ -64,19 +64,6 @@ const upload = multer({ storage: storage });
 
 const router = express.Router();
 
-// --- DEBUG ROUTE (Temporary) ---
-router.get('/debug/users', async (req, res) => {
-    try {
-        const users = await User.find({}).select('email name role');
-        res.json({
-            count: users.length,
-            users: users.map(u => ({ email: u.email, name: u.name, role: u.role }))
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // --- Seed Default Roles ---
 router.post('/system/seed-roles', async (req, res) => {
     try {

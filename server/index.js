@@ -136,6 +136,21 @@ app.delete('/api/delete-attachment', (req, res) => {
     }
 });
 
+// --- DEBUG ROUTE (Temporary) ---
+app.get('/api/debug/users', async (req, res) => {
+    try {
+        const User = mongoose.model('User');
+        const users = await User.find({}).select('email name role');
+        res.json({
+            count: users.length,
+            server_time: new Date().toISOString(),
+            users: users.map(u => ({ email: u.email, name: u.name, role: u.role }))
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // E-posta gönderme endpoint'i
 app.post('/api/send-email', async (req, res) => {
     const { to, subject, body, auth } = req.body;
