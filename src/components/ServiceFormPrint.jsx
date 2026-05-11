@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 
 const ServiceFormPrint = ({ formData, repairId, onClose }) => {
     const componentRef = useRef();
-    const { emailSettings, companyProfile } = useAppContext();
+    const { emailSettings, companyProfile, API_URL } = useAppContext();
     const [sendingEmail, setSendingEmail] = useState(false);
 
     // Güvenli yazdırma fonksiyonu
@@ -47,7 +47,7 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
             const pdfBase64 = await html2pdf().set(opt).from(htmlString).outputPdf('datauristring');
 
             // 2. Backend'e Gönder
-            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/send-email`, {
+            const res = await fetch(`${API_URL}/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 signal: controller.signal,

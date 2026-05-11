@@ -7,7 +7,7 @@ import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
 
 const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
-    const { emailSettings, notificationSettings, notificationTemplates, updateRepair, showToast, sendWhatsApp } = useAppContext();
+    const { emailSettings, notificationSettings, notificationTemplates, updateRepair, showToast, sendWhatsApp, API_URL } = useAppContext();
     const [activeChannel, setActiveChannel] = useState('whatsapp'); // WhatsApp'ı varsayılan yaptık
     const [selectedTemplate, setSelectedTemplate] = useState(repair.status === 'Müşteri Onayı Bekliyor' ? 'status_update' : (repair.quoteAmount && repair.quoteAmount !== '0.00' ? 'repair_requote' : 'status_update'));
     const [isSent, setIsSent] = useState(false);
@@ -26,7 +26,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
     const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/notifications?repairId=${repair.id}`);
+            const res = await fetch(`${API_URL}/notifications?repairId=${repair.id}`);
             if (res.ok) {
                 const data = await res.json();
                 setHistoryData(data);
@@ -40,7 +40,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
 
     const saveNotification = async (channel, message, subject) => {
         try {
-            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/notifications`, {
+            await fetch(`${API_URL}/notifications`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -94,7 +94,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
             const template = templates.email[selectedTemplate];
             let finalBody = getReplacedText(template.body);
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/send-email`, {
+            const response = await fetch(`${API_URL}/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

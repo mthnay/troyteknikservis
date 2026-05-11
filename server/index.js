@@ -37,6 +37,13 @@ mongoose.connect(MONGODB_URI)
     })
     .catch(err => {
         console.error('CRITICAL: MongoDB connection error:', err);
+        console.error('ERROR CODE:', err.code);
+        console.error('ERROR MESSAGE:', err.message);
+        
+        if (err.message.includes('ETIMEDOUT') || err.message.includes('ECONNREFUSED')) {
+            console.log('TIP: This might be an IP Whitelist issue. Ensure 0.0.0.0/0 is allowed in MongoDB Atlas Network Access.');
+        }
+        
         console.log('WARNING: System is starting without database connection. Some features may not work.');
     });
 
