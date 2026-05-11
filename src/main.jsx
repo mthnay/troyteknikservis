@@ -36,7 +36,7 @@ class ErrorBoundary extends React.Component {
             <p><strong>Hata:</strong> {this.state.error && this.state.error.toString()}</p>
           </div>
           <button
-            onClick={() => { localStorage.clear(); window.location.reload(); }}
+            onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.reload(); }}
             style={{ padding: "12px 24px", backgroundColor: "#0071e3", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}
           >
             Verileri Sıfırla ve Yeniden Başlat

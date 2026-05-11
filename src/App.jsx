@@ -22,10 +22,10 @@ import { hasPermission } from './utils/permissions';
 
 function App() {
   const { currentUser, selectedStoreId, setSelectedStoreId, servicePoints } = useAppContext();
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('oss_active_tab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('oss_active_tab') || 'dashboard');
 
   useEffect(() => {
-    localStorage.setItem('oss_active_tab', activeTab);
+    sessionStorage.setItem('oss_active_tab', activeTab);
   }, [activeTab]);
   const [serviceInitialData, setServiceInitialData] = useState(null);
   const [trackingMode, setTrackingMode] = useState(false);

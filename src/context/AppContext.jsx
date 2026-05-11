@@ -17,13 +17,13 @@ export const AppProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [currentUser, setCurrentUser] = useState(() => {
         try {
-            const saved = localStorage.getItem('currentUser');
+            const saved = sessionStorage.getItem('currentUser');
             if (saved && saved !== 'undefined' && saved !== 'null') {
                 return JSON.parse(saved);
             }
         } catch (e) {
             console.error("Local storage parse error:", e);
-            localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentUser');
         }
         return null;
     });
@@ -238,8 +238,8 @@ export const AppProvider = ({ children }) => {
     }, [currentUser]);
 
     useEffect(() => {
-        if (currentUser) localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        else localStorage.removeItem('currentUser');
+        if (currentUser) sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        else sessionStorage.removeItem('currentUser');
     }, [currentUser]);
 
     const saveSettings = async (key, value) => {
@@ -273,7 +273,7 @@ export const AppProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.clear(); // Tüm verileri temizle
+        sessionStorage.clear(); // Tüm verileri temizle
         setCurrentUser(null);
         window.location.href = '/'; // Sayfayı kökten yenile ve başa dön
     };
@@ -316,7 +316,7 @@ export const AppProvider = ({ children }) => {
                 const updatedId = String(updated._id || updated.id);
                 if (currentId === updatedId) {
                     setCurrentUser(prev => ({ ...prev, ...updated }));
-                    localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, ...updated }));
+                    sessionStorage.setItem('currentUser', JSON.stringify({ ...currentUser, ...updated }));
                 }
                 return true;
             } else {
