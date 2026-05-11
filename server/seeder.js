@@ -98,7 +98,7 @@ export const seedData = async () => {
                 password: bcrypt.hashSync(user.password, 10)
             }));
             await User.insertMany(hashedUsers);
-            console.log('[SEEDER] Users seeded with hashed passwords');
+            console.log('[SEEDER] Users seeded with hashed passwords:', initialUsers.map(u => u.email).join(', '));
         } else {
             console.log('[SEEDER] Database already contains users. Skipping user seeding.');
         }
