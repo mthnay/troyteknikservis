@@ -341,16 +341,28 @@ router.get('/users', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log(`[LOGIN] Attempt for email: ${email}`);
+        
         const user = await User.findOne({ email });
 
-        if (!user || !bcrypt.compareSync(password, user.password)) {
+        if (!user) {
+            console.warn(`[LOGIN] FAILED: User not found with email: ${email}`);
             return res.status(401).json({ message: 'E-posta veya şifre hatalı.' });
         }
 
+        const isMatch = bcrypt.compareSync(password, user.password);
+        if (!isMatch) {
+            console.warn(`[LOGIN] FAILED: Password mismatch for user: ${email}`);
+            return res.status(401).json({ message: 'E-posta veya şifre hatalı.' });
+        }
+
+        console.log(`[LOGIN] SUCCESS: User ${user.name} logged in.`);
+        
         // Şifreyi objeden çıkarıp geri kalanı dönüyoruz
         const { password: _, ...userWithoutPassword } = user._doc || user;
         res.json(userWithoutPassword);
     } catch (err) {
+        console.error(`[LOGIN] ERROR:`, err.message);
         res.status(500).json({ message: err.message });
     }
 });

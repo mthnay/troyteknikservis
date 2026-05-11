@@ -88,35 +88,42 @@ const initialSystemSettings = [
 
 export const seedData = async () => {
     try {
-        if (await Repair.countDocuments() === 0) {
-            await Repair.insertMany(initialRepairs);
-            console.log('Repairs seeded');
-        }
-        if (await User.countDocuments() === 0) {
+        const userCount = await User.countDocuments();
+        console.log(`[SEEDER] Current User count: ${userCount}`);
+
+        if (userCount === 0) {
+            console.log('[SEEDER] Database is empty. Seeding initial users...');
             const hashedUsers = initialUsers.map(user => ({
                 ...user,
                 password: bcrypt.hashSync(user.password, 10)
             }));
             await User.insertMany(hashedUsers);
-            console.log('Users seeded with hashed passwords');
+            console.log('[SEEDER] Users seeded with hashed passwords');
+        } else {
+            console.log('[SEEDER] Database already contains users. Skipping user seeding.');
+        }
+
+        if (await Repair.countDocuments() === 0) {
+            await Repair.insertMany(initialRepairs);
+            console.log('[SEEDER] Repairs seeded');
         }
         if (await Inventory.countDocuments() === 0) {
             await Inventory.insertMany(initialInventory);
-            console.log('Inventory seeded');
+            console.log('[SEEDER] Inventory seeded');
         }
         if (await Technician.countDocuments() === 0) {
             await Technician.insertMany(initialTechnicians);
-            console.log('Technicians seeded');
+            console.log('[SEEDER] Technicians seeded');
         }
         if (await ServicePoint.countDocuments() === 0) {
             await ServicePoint.insertMany(initialServicePoints);
-            console.log('ServicePoints seeded');
+            console.log('[SEEDER] ServicePoints seeded');
         }
         if (await SystemSetting.countDocuments() === 0) {
             await SystemSetting.insertMany(initialSystemSettings);
-            console.log('SystemSettings seeded');
+            console.log('[SEEDER] SystemSettings seeded');
         }
     } catch (error) {
-        console.error('Seeding error:', error);
+        console.error('[SEEDER] ERROR:', error);
     }
 };
