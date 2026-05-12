@@ -534,27 +534,58 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     </div>
                                 )}
 
-                                <div className="space-y-6">
-                                    <div className="group relative">
-                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Seri Numarası (S/N)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="Örn: C7H..."
-                                                className="w-full pl-12 pr-24 py-4 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono font-bold text-lg text-gray-900 uppercase"
-                                                value={formData.serialNumber}
-                                                onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value.toUpperCase() })}
-                                            />
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"><Fingerprint size={20} /></div>
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                                                <button onClick={() => { showToast('Kamera başlatılıyor...', 'info'); serialInputRef.current?.click(); }} className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"><Camera size={20} strokeWidth={2.5} /></button>
-                                                <button onClick={handleSerialSearch} disabled={searching} className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors">{searching ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Search size={20} strokeWidth={2.5} />}</button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    {/* Sol Sütun: Seri ve Model */}
+                                    <div className="space-y-6">
+                                        <div className="group relative">
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Seri Numarası (S/N)</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Örn: C7H..."
+                                                    className="w-full pl-12 pr-24 py-4 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono font-bold text-lg text-gray-900 uppercase"
+                                                    value={formData.serialNumber}
+                                                    onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value.toUpperCase() })}
+                                                />
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"><Fingerprint size={20} /></div>
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                                    <button onClick={() => { showToast('Kamera başlatılıyor...', 'info'); serialInputRef.current?.click(); }} className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"><Camera size={20} strokeWidth={2.5} /></button>
+                                                    <button onClick={handleSerialSearch} disabled={searching} className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors">{searching ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Search size={20} strokeWidth={2.5} />}</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="group relative" ref={suggestionsRef}>
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Cihaz Modeli</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Örn: iPhone 13..."
+                                                    className="w-full pl-12 pr-4 py-4 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900"
+                                                    value={formData.deviceModel}
+                                                    onChange={handleDeviceModelChange}
+                                                    onFocus={() => formData.deviceModel.length > 1 && setShowSuggestions(true)}
+                                                />
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"><Package size={20} /></div>
+                                                {showSuggestions && deviceSuggestions.length > 0 && (
+                                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-2xl border border-gray-100 max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 custom-scrollbar">
+                                                        <div className="p-2 sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-10"><span className="text-[10px] font-semibold uppercase text-gray-400 px-2">Önerilen Modeller ({deviceSuggestions.length})</span></div>
+                                                        <div className="p-1.5">
+                                                            {deviceSuggestions.map((suggestion, index) => (
+                                                                <button key={index} onClick={() => { setFormData(prev => ({ ...prev, deviceModel: suggestion, serviceType: /iPad|AirPods|Watch|Pencil|Mouse|Trackpad/.test(suggestion) ? 'exchange' : 'repair' })); setShowSuggestions(false); }} className="w-full text-left px-4 py-3 rounded-md hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3 group/item border border-transparent hover:border-blue-100">
+                                                                    <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover/item:bg-white flex items-center justify-center text-gray-500 transition-colors">{suggestion.includes('iPhone') ? <Phone size={16} /> : <Package size={16} />}</div>
+                                                                    <span className="font-bold text-sm text-gray-700 group-hover/item:text-blue-700">{suggestion}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* IMEI Alanları (İsteğe Bağlı) - ALT ALTA VE TAM GENİŞLİK */}
-                                    <div className="flex flex-col gap-5">
+                                    {/* Sağ Sütun: IMEI Alanları */}
+                                    <div className="space-y-6">
                                         <div className="group relative">
                                             <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">IMEI 1 (Opsiyonel)</label>
                                             <input
@@ -576,34 +607,6 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                 value={formData.imei2}
                                                 onChange={(e) => setFormData({ ...formData, imei2: e.target.value.replace(/\D/g, '') })}
                                             />
-                                        </div>
-                                    </div>
-
-                                    <div className="group relative" ref={suggestionsRef}>
-                                        <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Cihaz Modeli</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="Örn: iPhone 13..."
-                                                className="w-full pl-12 pr-4 py-4 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900"
-                                                value={formData.deviceModel}
-                                                onChange={handleDeviceModelChange}
-                                                onFocus={() => formData.deviceModel.length > 1 && setShowSuggestions(true)}
-                                            />
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"><Package size={20} /></div>
-                                            {showSuggestions && deviceSuggestions.length > 0 && (
-                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-2xl border border-gray-100 max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 custom-scrollbar">
-                                                    <div className="p-2 sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-10"><span className="text-[10px] font-semibold uppercase text-gray-400 px-2">Önerilen Modeller ({deviceSuggestions.length})</span></div>
-                                                    <div className="p-1.5">
-                                                        {deviceSuggestions.map((suggestion, index) => (
-                                                            <button key={index} onClick={() => { setFormData(prev => ({ ...prev, deviceModel: suggestion, serviceType: /iPad|AirPods|Watch|Pencil|Mouse|Trackpad/.test(suggestion) ? 'exchange' : 'repair' })); setShowSuggestions(false); }} className="w-full text-left px-4 py-3 rounded-md hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3 group/item border border-transparent hover:border-blue-100">
-                                                                <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover/item:bg-white flex items-center justify-center text-gray-500 transition-colors">{suggestion.includes('iPhone') ? <Phone size={16} /> : <Package size={16} />}</div>
-                                                                <span className="font-bold text-sm text-gray-700 group-hover/item:text-blue-700">{suggestion}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
