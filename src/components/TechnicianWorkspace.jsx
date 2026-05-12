@@ -167,9 +167,11 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
         }
 
         // Check local serials too (user may not have tabbed out yet)
+        // Only block if KGB serial is genuinely missing — needsOrder alone should NOT block
+        // if the user has already typed the serial in the input.
         const incompletePart = repair.parts?.find((p, idx) => {
-            const kgb = localSerials[`${idx}_kgb`] ?? p.kgbSerial;
-            return p.needsOrder || !kgb;
+            const kgb = (localSerials[`${idx}_kgb`] !== undefined ? localSerials[`${idx}_kgb`] : p.kgbSerial) || '';
+            return kgb.trim() === '';
         });
         if (incompletePart) {
             appAlert(`Lütfen ${incompletePart.description} için KGB seri nosunu giriniz.`, 'info');
