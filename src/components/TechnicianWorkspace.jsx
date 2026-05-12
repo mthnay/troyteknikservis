@@ -606,7 +606,7 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
                             </button>
                         </div>
 
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg, image/png" capture="environment" onChange={handleFileChange} />
 
                         <div className="grid grid-cols-2 gap-3">
                             {repair.afterImages?.map((url, idx) => (

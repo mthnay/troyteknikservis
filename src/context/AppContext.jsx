@@ -168,6 +168,12 @@ export const AppProvider = ({ children }) => {
 
     const uploadMedia = async (file) => {
         try {
+            // JPG/PNG Validation
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                throw new Error('Sadece JPG veya PNG formatında görseller yüklenebilir.');
+            }
+
             const formData = new FormData();
             formData.append('file', file);
             const res = await apiFetch(`${API_URL}/upload`, {

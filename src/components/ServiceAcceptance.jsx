@@ -656,7 +656,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                     <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3"><div className="p-3 bg-indigo-50 rounded-md text-indigo-600"><Camera size={24} strokeWidth={2.5} /></div>Cihaz Fotoğrafları</h3>
                                     <button onClick={handleAddPhoto} disabled={uploading} className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all">{uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}Fotoğraf Ekle</button>
                                 </div>
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 'before')} />
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg, image/png" capture="environment" onChange={(e) => handleFileChange(e, 'before')} />
                                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
                                     {formData.beforeImages?.map((url, index) => (
                                         <div key={index} className="relative aspect-square group rounded-[22px] overflow-hidden border border-gray-100 shadow-sm">

@@ -76,8 +76,8 @@ router.use((req, res, next) => {
         '/users/forgot-password'
     ];
     
-    // Allow public exact matches or paths starting with /public/
-    if (publicPaths.includes(req.path) || req.path.startsWith('/public/')) {
+    // Allow public exact matches or paths starting with /public/ or /media/
+    if (publicPaths.includes(req.path) || req.path.startsWith('/public/') || req.path.startsWith('/media/')) {
         return next();
     }
     
@@ -734,24 +734,31 @@ router.post('/settings', async (req, res) => {
     }
 });
 
-// --- Media (Images in DB / Disk) ---
-router.post('/upload', uploadDisk.single('file'), async (req, res) => {
-    console.log('[UPLOAD] New request received');
+// --- Media (Images in DB) ---
+router.post('/upload', upload.single('file'), async (req, res) => {
+    console.log('[UPLOAD] New request received (DB Mode)');
     if (!req.file) {
         console.error('[UPLOAD] No file found in request');
         return res.status(400).json({ message: 'Dosya yüklenemedi. (req.file eksik)' });
     }
     try {
-        console.log('[UPLOAD] File saved:', req.file.filename);
-        // Render vb. proxy arkasındaki ortamlar için protokol ve host bilgisini daha güvenli alalım
+        // Save to MongoDB for persistence on ephemeral systems like Render
+        const newMedia = new Media({
+            data: req.file.buffer,
+            contentType: req.file.mimetype,
+            name: req.file.originalname
+        });
+        await newMedia.save();
+
         const protocol = req.headers['x-forwarded-proto'] || req.protocol;
         const host = req.headers['x-forwarded-host'] || req.get('host');
-        const fullUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+        // Return a persistent URL pointing to the DB media route
+        const fullUrl = `${protocol}://${host}/api/media/${newMedia._id}`;
         
-        console.log('[UPLOAD] Returning URL:', fullUrl);
-        res.json({ success: true, url: fullUrl, id: req.file.filename });
+        console.log('[UPLOAD] Saved to DB. Returning URL:', fullUrl);
+        res.json({ success: true, url: fullUrl, id: newMedia._id });
     } catch (err) {
-        console.error('[UPLOAD] Error:', err.message);
+        console.error('[UPLOAD] DB Error:', err.message);
         res.status(500).json({ message: err.message });
     }
 });
