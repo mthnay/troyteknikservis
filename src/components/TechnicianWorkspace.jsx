@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Swal from 'sweetalert2';
 import {
     X, CheckCircle, Clock, AlertTriangle, Check,
@@ -19,6 +19,9 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
     const [returnReason, setReturnReason] = useState('');
     const [customReturnReason, setCustomReturnReason] = useState('');
     const [uploading, setUploading] = useState(false);
+
+    // Local state for KBB/KGB serial inputs to prevent focus loss on each keystroke
+    const [localSerials, setLocalSerials] = useState({});
     
     // Quotation States
     const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -61,7 +64,21 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
 
     useEffect(() => {
         const found = repairs.find(r => r.id === repairId || r._id === repairId);
-        if (found) setRepair(found);
+        if (found) {
+            setRepair(found);
+            // Initialize local serials from DB only when parts change externally
+            // (not when we update them ourselves)
+            setLocalSerials(prev => {
+                const next = { ...prev };
+                (found.parts || []).forEach((p, idx) => {
+                    const key = `${idx}`;
+                    // Only set if not currently being edited (i.e., key doesn't exist yet)
+                    if (next[`${key}_kbb`] === undefined) next[`${key}_kbb`] = p.kbbSerial || '';
+                    if (next[`${key}_kgb`] === undefined) next[`${key}_kgb`] = p.kgbSerial || '';
+                });
+                return next;
+            });
+        }
     }, [repairId, repairs]);
 
     useEffect(() => {
@@ -149,10 +166,26 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
             return;
         }
 
-        const incompletePart = repair.parts?.find(p => p.needsOrder || !p.kgbSerial);
+        // Check local serials too (user may not have tabbed out yet)
+        const incompletePart = repair.parts?.find((p, idx) => {
+            const kgb = localSerials[`${idx}_kgb`] ?? p.kgbSerial;
+            return p.needsOrder || !kgb;
+        });
         if (incompletePart) {
             appAlert(`Lütfen ${incompletePart.description} için KGB seri nosunu giriniz.`, 'info');
             return;
+        }
+
+        // Flush any pending local serial changes before completing
+        if (repair.parts && repair.parts.length > 0) {
+            const flushedParts = repair.parts.map((p, idx) => {
+                const kgb = localSerials[`${idx}_kgb`] ?? p.kgbSerial ?? '';
+                const kbb = localSerials[`${idx}_kbb`] ?? p.kbbSerial ?? '';
+                const newPart = { ...p, kgbSerial: kgb, kbbSerial: kbb };
+                if (kgb && kbb) newPart.status = 'Installed';
+                return newPart;
+            });
+            await updateRepair(repairId, { parts: flushedParts });
         }
 
         const duration = formatTime(timer);
@@ -456,15 +489,19 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
                                                         </div>
 
                                                         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-3">
-                                                            {/* KBB Input */}
+                                                            {/* KBB Input - uses localSerials to prevent focus loss on each keystroke */}
                                                             <div className="relative">
                                                                 <input 
                                                                     type="text"
                                                                     placeholder="KBB (Arızalı Seri)"
-                                                                    className={`w-full h-10 px-4 bg-white border ${part.kbbSerial ? 'border-green-200 bg-green-50/30' : 'border-gray-200'} rounded-md text-[10px] font-semibold font-mono focus:border-indigo-500 outline-none transition-all uppercase`}
-                                                                    value={part.kbbSerial || ''}
+                                                                    className={`w-full h-10 px-4 bg-white border ${(localSerials[`${idx}_kbb`] || part.kbbSerial) ? 'border-green-200 bg-green-50/30' : 'border-gray-200'} rounded-md text-[10px] font-semibold font-mono focus:border-indigo-500 outline-none transition-all uppercase`}
+                                                                    value={localSerials[`${idx}_kbb`] ?? (part.kbbSerial || '')}
                                                                     onChange={(e) => {
                                                                         const val = e.target.value.toUpperCase().replace(/\s/g, '');
+                                                                        setLocalSerials(prev => ({ ...prev, [`${idx}_kbb`]: val }));
+                                                                    }}
+                                                                    onBlur={() => {
+                                                                        const val = localSerials[`${idx}_kbb`] ?? (part.kbbSerial || '');
                                                                         const updatedParts = repair.parts.map(p => {
                                                                             if (p.inventoryId === part.inventoryId) {
                                                                                 const newPart = { ...p, kbbSerial: val };
@@ -476,22 +513,26 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
                                                                         updateRepair(repairId, { parts: updatedParts });
                                                                     }}
                                                                 />
-                                                                {part.kbbSerial && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                                                                {(localSerials[`${idx}_kbb`] || part.kbbSerial) && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
                                                             </div>
 
                                                             <div className="flex justify-center">
-                                                                <ArrowRight size={16} className={part.kgbSerial && part.kbbSerial ? 'text-green-500' : 'text-indigo-300'} />
+                                                                <ArrowRight size={16} className={(localSerials[`${idx}_kgb`] || part.kgbSerial) && (localSerials[`${idx}_kbb`] || part.kbbSerial) ? 'text-green-500' : 'text-indigo-300'} />
                                                             </div>
 
-                                                            {/* KGB Input */}
+                                                            {/* KGB Input - uses localSerials to prevent focus loss on each keystroke */}
                                                             <div className="relative">
                                                                 <input 
                                                                     type="text"
                                                                     placeholder="KGB (Yeni Seri)"
-                                                                    className={`w-full h-10 px-4 bg-white border ${part.kgbSerial ? 'border-green-200 bg-green-50/30' : 'border-gray-200'} rounded-md text-[10px] font-semibold font-mono focus:border-indigo-500 outline-none transition-all uppercase`}
-                                                                    value={part.kgbSerial || ''}
+                                                                    className={`w-full h-10 px-4 bg-white border ${(localSerials[`${idx}_kgb`] || part.kgbSerial) ? 'border-green-200 bg-green-50/30' : 'border-gray-200'} rounded-md text-[10px] font-semibold font-mono focus:border-indigo-500 outline-none transition-all uppercase`}
+                                                                    value={localSerials[`${idx}_kgb`] ?? (part.kgbSerial || '')}
                                                                     onChange={(e) => {
                                                                         const val = e.target.value.toUpperCase().replace(/\s/g, '');
+                                                                        setLocalSerials(prev => ({ ...prev, [`${idx}_kgb`]: val }));
+                                                                    }}
+                                                                    onBlur={() => {
+                                                                        const val = localSerials[`${idx}_kgb`] ?? (part.kgbSerial || '');
                                                                         const updatedParts = repair.parts.map(p => {
                                                                             if (p.inventoryId === part.inventoryId) {
                                                                                 const newPart = { ...p, kgbSerial: val };
@@ -503,7 +544,7 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
                                                                         updateRepair(repairId, { parts: updatedParts });
                                                                     }}
                                                                 />
-                                                                {part.kgbSerial && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                                                                {(localSerials[`${idx}_kgb`] || part.kgbSerial) && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
                                                             </div>
                                                         </div>
                                                     </div>
