@@ -59,6 +59,8 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
         customerEmail: repair?.customerEmail || '',
         device: repair?.device || '',
         serial: repair?.serial || repair?.serialNumber || '',
+        imei1: repair?.imei1 || '',
+        imei2: repair?.imei2 || '',
         issue: repair?.issue || '',
         tcNo: repair?.tcNo || '',
         customerAddress: repair?.customerAddress || ''
@@ -81,6 +83,8 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                 customerEmail: repair.customerEmail || '',
                 device: repair.device,
                 serial: repair.serial || repair.serialNumber,
+                imei1: repair.imei1 || '',
+                imei2: repair.imei2 || '',
                 issue: repair.issue,
                 tcNo: repair.tcNo || '',
                 customerAddress: repair.customerAddress || ''
@@ -443,8 +447,20 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                         <span className="text-[10px] font-semibold text-xs uppercase tracking-wide">Cihaz & Durum</span>
                                     </div>
                                     <div>
-                                        <div className="inline-flex px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md border border-gray-200 text-xs font-mono font-bold">
-                                            S/N: <span className="text-gray-900 ml-1 uppercase">{repair.serial || repair.serialNumber || 'Girilmedi'}</span>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="inline-flex px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md border border-gray-200 text-xs font-mono font-bold">
+                                                S/N: <span className="text-gray-900 ml-1 uppercase">{repair.serial || repair.serialNumber || 'Girilmedi'}</span>
+                                            </div>
+                                            {repair.imei1 && (
+                                                <div className="inline-flex px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md border border-gray-200 text-[10px] font-mono font-bold">
+                                                    IMEI 1: <span className="text-gray-900 ml-1 uppercase">{repair.imei1}</span>
+                                                </div>
+                                            )}
+                                            {repair.imei2 && (
+                                                <div className="inline-flex px-3 py-1.5 bg-gray-50 text-gray-700 rounded-md border border-gray-200 text-[10px] font-mono font-bold">
+                                                    IMEI 2: <span className="text-gray-900 ml-1 uppercase">{repair.imei2}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <p className="text-xs text-apple-blue font-semibold uppercase mt-4 flex items-center gap-1.5 p-2 bg-blue-50 border border-blue-100 rounded-md inline-flex shadow-sm">
                                             <Shield size={14}/> {repair.warrantyStatus || 'Garanti Durumu'}
@@ -875,6 +891,32 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                                         placeholder="Seri numarası bulunamadı..."
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-bold font-mono text-gray-900 focus:bg-white focus:border-apple-blue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all disabled:opacity-70" 
                                     />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">IMEI 1</label>
+                                        <input 
+                                            type="text" 
+                                            value={editForm.imei1} 
+                                            onChange={e => setEditForm({...editForm, imei1: e.target.value.replace(/\D/g, '')})} 
+                                            disabled={!isAdmin}
+                                            maxLength="15"
+                                            placeholder="35..."
+                                            className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-[16px] text-xs font-bold font-mono text-gray-900 focus:bg-white focus:border-apple-blue outline-none transition-all disabled:opacity-70" 
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">IMEI 2</label>
+                                        <input 
+                                            type="text" 
+                                            value={editForm.imei2} 
+                                            onChange={e => setEditForm({...editForm, imei2: e.target.value.replace(/\D/g, '')})} 
+                                            disabled={!isAdmin}
+                                            maxLength="15"
+                                            placeholder="35..."
+                                            className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-[16px] text-xs font-bold font-mono text-gray-900 focus:bg-white focus:border-apple-blue outline-none transition-all disabled:opacity-70" 
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest ml-1 block">Müşteri Şikayeti / Arıza Notu</label>

@@ -109,6 +109,18 @@ const DeliveryFormPrint = ({ repair, signature, onClose }) => {
                                         <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">Seri No</span>
                                         <span className="text-sm font-mono font-semibold tracking-tight text-gray-900 uppercase">{repair.serialNumber || repair.serial || 'Belirtilmedi'}</span>
                                     </div>
+                                    {repair.imei1 && (
+                                        <div className="flex justify-between items-end border-b border-gray-50 pb-2">
+                                            <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">IMEI 1</span>
+                                            <span className="text-sm font-mono font-semibold tracking-tight text-gray-900 uppercase">{repair.imei1}</span>
+                                        </div>
+                                    )}
+                                    {repair.imei2 && (
+                                        <div className="flex justify-between items-end border-b border-gray-50 pb-2">
+                                            <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">IMEI 2</span>
+                                            <span className="text-sm font-mono font-semibold tracking-tight text-gray-900 uppercase">{repair.imei2}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-end border-b border-gray-50 pb-2">
                                         <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">Garanti</span>
                                         <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{repair.warrantyStatus || 'Standart'}</span>

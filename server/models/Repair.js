@@ -14,6 +14,8 @@ const repairSchema = new mongoose.Schema({
     date: { type: String },
     storeId: { type: Number, default: 1 },
     serial: { type: String },
+    imei1: { type: String },
+    imei2: { type: String },
     warrantyStatus: { type: String },
     visualCondition: [String],
     findMyOff: { type: Boolean, default: false },

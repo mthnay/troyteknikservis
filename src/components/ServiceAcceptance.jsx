@@ -160,6 +160,8 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         productGroup: '', // iphone, ipad, mac, watch, airpods, other
         serviceType: 'repair',
         serialNumber: '',
+        imei1: '',
+        imei2: '',
         deviceModel: '',
         warrantyStatus: '',
         estimatedCost: '', // Tahmini/Alınan Ücret
@@ -223,6 +225,8 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                 ...formData, // Tüm form verilerini aktar
                 device: formData.deviceModel,
                 serial: formData.serialNumber, // Fix Serial Number Mapping
+                imei1: formData.imei1,
+                imei2: formData.imei2,
                 customer: formData.customerName,
                 customerPhone: formData.customerPhone,
                 customerEmail: formData.customerEmail,
@@ -487,6 +491,8 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         } else {
             setFormData({
                 serialNumber: '',
+                imei1: '',
+                imei2: '',
                 deviceModel: '',
                 warrantyStatus: '',
                 visualCondition: [],
@@ -662,6 +668,32 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                     {searching ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Search size={20} strokeWidth={2.5} />}
                                                 </button>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* IMEI Alanları (İsteğe Bağlı) */}
+                                    <div className="grid grid-cols-2 gap-4 mt-2">
+                                        <div className="group relative">
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">IMEI 1 (Opsiyonel)</label>
+                                            <input
+                                                type="text"
+                                                maxLength="15"
+                                                placeholder="35..."
+                                                className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 outline-none transition-all font-mono text-sm uppercase text-gray-900 font-bold"
+                                                value={formData.imei1}
+                                                onChange={(e) => setFormData({ ...formData, imei1: e.target.value.replace(/\D/g, '') })}
+                                            />
+                                        </div>
+                                        <div className="group relative">
+                                            <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">IMEI 2 (Opsiyonel)</label>
+                                            <input
+                                                type="text"
+                                                maxLength="15"
+                                                placeholder="35..."
+                                                className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 outline-none transition-all font-mono text-sm uppercase text-gray-900 font-bold"
+                                                value={formData.imei2}
+                                                onChange={(e) => setFormData({ ...formData, imei2: e.target.value.replace(/\D/g, '') })}
+                                            />
                                         </div>
                                     </div>
 

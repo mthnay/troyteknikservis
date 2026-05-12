@@ -208,6 +208,18 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
                                         <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">Seri No</span>
                                         <span className="text-sm font-mono font-semibold tracking-tight text-gray-900 uppercase">{formData.serialNumber}</span>
                                     </div>
+                                    {formData.imei1 && (
+                                        <div className="flex justify-between items-end border-b border-gray-50 pb-2 animate-in fade-in">
+                                            <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">IMEI 1</span>
+                                            <span className="text-sm font-mono font-semibold tracking-tight text-gray-900 uppercase">{formData.imei1}</span>
+                                        </div>
+                                    )}
+                                    {formData.imei2 && (
+                                        <div className="flex justify-between items-end border-b border-gray-50 pb-2 animate-in fade-in">
+                                            <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">IMEI 2</span>
+                                            <span className="text-sm font-mono font-semibold tracking-tight text-gray-900 uppercase">{formData.imei2}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-end border-b border-gray-50 pb-2">
                                         <span className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide">Garanti</span>
                                         <span className="text-sm font-semibold text-gray-700 uppercase">{formData.warrantyStatus}</span>
