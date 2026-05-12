@@ -54,6 +54,15 @@ const PRODUCT_FALLBACKS = {
     })
 };
 
+const PRODUCT_PHOTOS = {
+    iphone: '/product-images/iphone.jpg',
+    ipad: '/product-images/ipad.jpg',
+    mac: '/product-images/mac.jpg',
+    watch: '/product-images/watch.jpg',
+    airpods: '/product-images/airpods.jpg',
+    other: '/product-images/accessory.jpg'
+};
+
 export const getProductImage = (group = '', model = '') => {
     const groupLower = (group || '').toLowerCase();
     const modelLower = (model || '').toLowerCase();
@@ -61,36 +70,36 @@ export const getProductImage = (group = '', model = '') => {
 
     // iPhone Serisi
     if (fullText.includes('iphone')) {
-        return PRODUCT_FALLBACKS.iphone;
+        return PRODUCT_PHOTOS.iphone || PRODUCT_FALLBACKS.iphone;
     }
     
     // Mac / MacBook Serisi
     if (fullText.includes('mac') || fullText.includes('bilgisayar')) {
-        return PRODUCT_FALLBACKS.mac;
+        return PRODUCT_PHOTOS.mac || PRODUCT_FALLBACKS.mac;
     }
     
     // iPad Serisi
     if (fullText.includes('ipad') || fullText.includes('tablet')) {
-        return PRODUCT_FALLBACKS.ipad;
+        return PRODUCT_PHOTOS.ipad || PRODUCT_FALLBACKS.ipad;
     }
     
     // Watch Serisii
     if (fullText.includes('watch') || fullText.includes('saat')) {
-        return PRODUCT_FALLBACKS.watch;
+        return PRODUCT_PHOTOS.watch || PRODUCT_FALLBACKS.watch;
     }
     
     // Ses / AirPods / Beats
     if (fullText.includes('airpods') || fullText.includes('ses') || fullText.includes('audio') || fullText.includes('kulaklık') || fullText.includes('beats')) {
-        return PRODUCT_FALLBACKS.airpods;
+        return PRODUCT_PHOTOS.airpods || PRODUCT_FALLBACKS.airpods;
     }
 
     // Parça / Teknik Görseller
     if (fullText.includes('parça') || fullText.includes('ekran') || fullText.includes('pil') || fullText.includes('batarya')) {
-        return PRODUCT_FALLBACKS.other;
+        return PRODUCT_PHOTOS.other || PRODUCT_FALLBACKS.other;
     }
 
     // Varsayılan: Teknoloji/Servis Temalı Şık Bir Görsel
-    return PRODUCT_FALLBACKS.other;
+    return PRODUCT_PHOTOS.other || PRODUCT_FALLBACKS.other;
 };
 
 export const getSafeRepairImageUrl = (imagePath, group, model, apiUrl) => {
