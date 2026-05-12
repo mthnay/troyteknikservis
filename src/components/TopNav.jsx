@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext';
 import { hasPermission } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
 import NotificationCenter from './NotificationCenter';
+import RepairHistoryModal from './RepairHistoryModal';
 
 const TopNav = ({ activeTab, setActiveTab }) => {
     const { logout, currentUser, selectedStoreId, setSelectedStoreId, servicePoints, alerts, searchQuery, setSearchQuery, repairs } = useAppContext();
@@ -61,6 +62,7 @@ const TopNav = ({ activeTab, setActiveTab }) => {
 
     const [hoveredCategory, setHoveredCategory] = useState(null);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [selectedSearchRepair, setSelectedSearchRepair] = useState(null);
     const searchRef = useRef(null);
 
     // Close dropdown when clicking outside
@@ -81,38 +83,32 @@ const TopNav = ({ activeTab, setActiveTab }) => {
             r.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             r.device?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             r.serial?.toLowerCase().includes(searchQuery.toLowerCase())
-          )
+        )
         : [];
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Beklemede':               return 'bg-gray-100 text-gray-600';
-            case 'İşlemde':                 return 'bg-blue-100 text-blue-700';
-            case 'Parça Bekleniyor':        return 'bg-orange-100 text-orange-700';
-            case 'Cihaz Hazır':             return 'bg-green-100 text-green-700';
-            case 'Teslim Edildi':           return 'bg-purple-100 text-purple-700';
+            case 'Beklemede': return 'bg-gray-100 text-gray-600';
+            case 'İşlemde': return 'bg-blue-100 text-blue-700';
+            case 'Parça Bekleniyor': return 'bg-orange-100 text-orange-700';
+            case 'Cihaz Hazır': return 'bg-green-100 text-green-700';
+            case 'Teslim Edildi': return 'bg-purple-100 text-purple-700';
             case 'Müşteri Onayı Bekliyor': return 'bg-yellow-100 text-yellow-700';
-            default:                        return 'bg-gray-100 text-gray-500';
+            default: return 'bg-gray-100 text-gray-500';
         }
     };
 
     const handleResultClick = (repair) => {
-        let target = 'pending-repairs';
-        if (repair.status === 'Müşteri Onayı Bekliyor') target = 'approval-pending';
-        else if (['İşlemde', 'Parça Bekleniyor'].includes(repair.status)) target = 'in-store';
-        else if (repair.status === "Apple'a Gönderildi") target = 'apple-center';
-        else if (['Cihaz Hazır', 'İade Hazır'].includes(repair.status)) target = 'ready-pickup';
-        else if (['Tamamlandı', 'Teslim Edildi', 'İade Edildi'].includes(repair.status)) target = 'archive';
-        setActiveTab(target);
-        setSearchQuery(repair.id);
+        setSelectedSearchRepair(repair);
         setSearchOpen(false);
+        setSearchQuery('');
     };
 
     return (
         <div className="w-full fixed top-0 left-0 z-50">
             {/* Unified Top Navigation Bar */}
             <div className="h-16 bg-white/80 backdrop-blur-md border-b border-black/5 flex items-center justify-between px-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                
+
                 {/* Left: Logo & Navigation Combined */}
                 <div className="flex items-center gap-8">
                     {/* OSS Logo - Ana Sayfaya git */}
@@ -129,15 +125,15 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                         {CATEGORIES.map(category => {
                             const isCategoryActive = category.items.some(item => item.id === activeTab);
                             const isHovered = hoveredCategory === category.id;
-                            
+
                             return (
-                                <div 
-                                    key={category.id} 
+                                <div
+                                    key={category.id}
                                     className="relative"
                                     onMouseEnter={() => setHoveredCategory(category.id)}
                                     onMouseLeave={() => setHoveredCategory(null)}
                                 >
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             if (category.id === 'dashboard') {
                                                 setActiveTab('dashboard');
@@ -149,9 +145,9 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                                         `}>
                                         {category.label}
                                         {category.items.length > 1 && category.id !== 'dashboard' && (
-                                            <ChevronDown 
-                                                size={12} 
-                                                className={`opacity-50 transition-transform ${isHovered ? 'rotate-180' : ''}`} 
+                                            <ChevronDown
+                                                size={12}
+                                                className={`opacity-50 transition-transform ${isHovered ? 'rotate-180' : ''}`}
                                             />
                                         )}
                                     </button>
@@ -199,9 +195,9 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                     {/* Search with live dropdown */}
                     <div ref={searchRef} className="relative w-64 hidden lg:block">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        <input 
-                            type="text" 
-                            placeholder="Kayıt veya müşteri ara..." 
+                        <input
+                            type="text"
+                            placeholder="Kayıt veya müşteri ara..."
                             className="w-full pl-9 pr-8 py-1.5 text-xs font-medium border border-gray-200 rounded-md bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-apple-blue focus:ring-1 focus:ring-apple-blue transition-all"
                             value={searchQuery}
                             onChange={(e) => {
@@ -278,9 +274,9 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
-                    
+
                     <NotificationCenter />
 
                     <div className="flex items-center gap-3">
@@ -297,10 +293,22 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                         </button>
                     </div>
                 </div>
-                
+
             </div>
         </div>
+
+        {/* Search Result Detail Modal */ }
+    {
+        selectedSearchRepair && (
+            <RepairHistoryModal
+                repair={selectedSearchRepair}
+                onClose={() => setSelectedSearchRepair(null)}
+            />
+        )
+    }
+    </div >
     );
 };
+
 
 export default TopNav;
