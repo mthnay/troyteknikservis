@@ -33,24 +33,25 @@ import Toast from './Toast'; // Import Toast
 import { useAppContext } from '../context/AppContext';
 import { appConfirm } from '../utils/alert';
 import MyPhoneIcon from './LocalIcons';
+import { getProductImage } from '../utils/productImages';
 
 const PRODUCT_GROUPS = [
-    { id: 'iphone', label: 'iPhone', icon: MyPhoneIcon, color: 'bg-blue-600', img: 'https://images.officialapple.store/product/iphone15pro/iphone15pro-hero.png' },
-    { id: 'ipad', label: 'iPad', icon: Package, color: 'bg-indigo-500', img: 'https://images.officialapple.store/product/ipadpro/ipadpro-hero.png' },
-    { id: 'mac', label: 'Mac', icon: FileText, color: 'bg-slate-700', img: 'https://images.officialapple.store/product/macbookpro/macbookpro-hero.png' },
-    { id: 'watch', label: 'Apple Watch', icon: Clock, color: 'bg-orange-600', img: 'https://images.officialapple.store/product/applewatchs9/applewatchs9-hero.png' },
-    { id: 'airpods', label: 'AirPods', icon: Zap, color: 'bg-emerald-600', img: 'https://images.officialapple.store/product/airpodspro/airpodspro-hero.png' },
-    { id: 'other', label: 'Aksesuar & Beats', icon: Box, color: 'bg-purple-600', img: 'https://images.officialapple.store/product/accessories/accessories-hero.png' }
+    { id: 'iphone', label: 'iPhone', icon: MyPhoneIcon, color: 'bg-blue-600', img: getProductImage('iphone') },
+    { id: 'ipad', label: 'iPad', icon: Package, color: 'bg-indigo-500', img: getProductImage('ipad') },
+    { id: 'mac', label: 'Mac', icon: FileText, color: 'bg-slate-700', img: getProductImage('mac') },
+    { id: 'watch', label: 'Apple Watch', icon: Clock, color: 'bg-orange-600', img: getProductImage('watch') },
+    { id: 'airpods', label: 'AirPods', icon: Zap, color: 'bg-emerald-600', img: getProductImage('airpods') },
+    { id: 'other', label: 'Aksesuar & Beats', icon: Box, color: 'bg-purple-600', img: getProductImage('other') }
 ];
 
 // Fallback images if the ones above are not reachable
 const PRODUCT_IMAGES = {
-    iphone: 'https://img.icons8.com/color/480/iphone-14-pro.png',
-    ipad: 'https://img.icons8.com/color/480/ipad.png',
-    mac: 'https://img.icons8.com/color/480/macbook-pro--v1.png',
-    watch: 'https://img.icons8.com/color/480/apple-watch--v1.png',
-    airpods: 'https://img.icons8.com/color/480/airpods-pro.png',
-    other: 'https://img.icons8.com/color/480/apple-tv.png'
+    iphone: getProductImage('iphone'),
+    ipad: getProductImage('ipad'),
+    mac: getProductImage('mac'),
+    watch: getProductImage('watch'),
+    airpods: getProductImage('airpods'),
+    other: getProductImage('other')
 };
 
 const DEVICE_DATABASE = [
@@ -574,8 +575,6 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                 key={group.id}
                                                 onClick={() => {
                                                     const isExchangeDefault = ['watch', 'airpods', 'other'].includes(group.id);
-                                                    const currentFiles = formData.mediaFiles || [];
-                                                    const otherFiles = currentFiles.filter(f => !f.isDefault);
                                                     
                                                     setFormData(prev => {
                                                         const currentFiles = prev.mediaFiles || [];
