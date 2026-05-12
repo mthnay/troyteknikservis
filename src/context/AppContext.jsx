@@ -7,12 +7,28 @@ const AppContext = createContext();
 export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
+
     const API_URL = import.meta.env.VITE_API_URL || 
                     (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                      ? 'http://localhost:5001/api' 
                      : '/api');
 
-    // --- State Definitions ---
+    const apiFetch = async (url, options = {}) => {
+        const token = sessionStorage.getItem('token');
+        const headers = {
+            ...options.headers,
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        const res = await fetch(url, { ...options, headers });
+        if (res.status === 401 && !url.includes('/login') && !url.includes('/forgot-password')) {
+            sessionStorage.clear();
+            setCurrentUser(null);
+            window.location.href = '/';
+            throw new Error('Oturum süresi doldu, lütfen tekrar giriş yapın.');
+        }
+        return res;
+    };
+
     const [servicePoints, setServicePoints] = useState([]);
     const [users, setUsers] = useState([]);
     const [currentUser, setCurrentUser] = useState(() => {
