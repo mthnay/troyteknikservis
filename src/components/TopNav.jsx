@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X } from 'lucide-react';
+import { Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { hasPermission } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
@@ -9,13 +9,6 @@ const TopNav = ({ activeTab, setActiveTab }) => {
     const { logout, currentUser, selectedStoreId, setSelectedStoreId, servicePoints, alerts, searchQuery, setSearchQuery, repairs } = useAppContext();
 
     const CATEGORIES = [
-        {
-            id: 'dashboard',
-            label: 'Ana Sayfa',
-            items: [
-                { id: 'dashboard', icon: Home, label: 'Genel Bakış' }
-            ]
-        },
         {
             id: 'servis',
             label: 'Servis',
@@ -122,10 +115,14 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                 
                 {/* Left: Logo & Navigation Combined */}
                 <div className="flex items-center gap-8">
-                    {/* OSS Logo */}
-                    <div className="flex items-center">
-                        <span className="text-xl font-black tracking-tighter text-[#1d1d1f]">OSS</span>
-                    </div>
+                    {/* OSS Logo - Ana Sayfaya git */}
+                    <button
+                        onClick={() => setActiveTab('dashboard')}
+                        className="flex items-center hover:opacity-70 transition-opacity active:scale-95"
+                        title="Ana Sayfa"
+                    >
+                        <span className="text-xl font-black tracking-tighter text-[#1d1d1f] select-none">OSS</span>
+                    </button>
 
                     {/* Categorized Navigation */}
                     <div className="flex items-center gap-1">
