@@ -73,7 +73,8 @@ router.use((req, res, next) => {
     const publicPaths = [
         '/system/check-updates',
         '/login',
-        '/users/forgot-password'
+        '/users/forgot-password',
+        '/users/check-email'
     ];
     
     // Allow public exact matches or paths starting with /public/ or /media/
@@ -355,6 +356,23 @@ router.get('/users', async (req, res) => {
         res.json(users);
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+});
+
+// --- Check Email (For Login Flow) ---
+router.post('/users/check-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ message: 'E-posta gerekli' });
+        
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (user) {
+            return res.json({ success: true, name: user.name });
+        } else {
+            return res.status(404).json({ success: false, message: 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
 
