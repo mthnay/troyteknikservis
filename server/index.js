@@ -48,9 +48,18 @@ mongoose.connect(MONGODB_URI)
     });
 
 // --- Security Middleware ---
-// Helmet aktif edildi, resim ve medya yüklemelerinin bozulmaması için Cross-Origin politikası esnetildi
+// Render proxy ayarı (Rate limit ve IP tespiti için gerekli)
+app.set('trust proxy', 1);
+
+// CORS en başta olmalı ki preflight (OPTIONS) istekleri bloklanmasın
+app.use(cors()); 
+
+// Helmet ayarları esnetildi (Frontend'in bozulmaması için CSP kapatıldı)
 app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginOpenerPolicy: false,
     crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false
 }));
 
 // Rate Limit aktif edildi (DDoS ve Brute Force koruması)
@@ -60,9 +69,6 @@ const limiter = rateLimit({
     message: 'Çok fazla istek gönderildi, lütfen biraz bekleyin.'
 });
 app.use('/api/', limiter);
-
-// CORS Yapılandırması - Geliştirme sürecinde Failed to Fetch hatasını önlemek için basitleştirildi
-app.use(cors()); 
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));

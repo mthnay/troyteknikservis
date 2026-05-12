@@ -396,7 +396,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/users', upload.single('avatar'), async (req, res) => {
+router.post('/users', requireRole(['superadmin']), upload.single('avatar'), async (req, res) => {
     try {
         const userData = req.body;
         // Şifreyi hashleyelim
@@ -411,7 +411,7 @@ router.post('/users', upload.single('avatar'), async (req, res) => {
     }
 });
 
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const id = req.params.id;
         console.log(`[UserUpdate] Request for ID: ${id}`);
@@ -449,7 +449,7 @@ router.put('/users/:id', async (req, res) => {
     }
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const id = req.params.id;
         let deleted = await User.findOneAndDelete({ id: id });
