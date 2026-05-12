@@ -111,7 +111,7 @@ const DEVICE_DATABASE = [
 
 
 const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
-    const { addRepair, customers, addCustomer, companyProfile, uploadMedia } = useAppContext();
+    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast } = useAppContext();
     const [step, setStep] = useState(1);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [showKioskModal, setShowKioskModal] = useState(false);
@@ -139,22 +139,6 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
     }, []);
 
     // Handle Initial Data (from Customer Detail)
-    React.useEffect(() => {
-        if (initialData) {
-            setFormData(prev => ({
-                ...prev,
-                ...initialData,
-                customerTC: initialData.tcNo || initialData.customerTC || '',
-                customerAddress: initialData.customerAddress || initialData.address || '',
-                serialNumber: initialData.serial || initialData.serialNumber || '',
-                deviceModel: initialData.device || initialData.deviceModel || ''
-            }));
-            // We set step to 1 (initially), but maybe we can keep it as is.
-            // But if we want to visually show the data is filled, user sees it when they reach step 2.
-            // Or we could auto-advance if we had device info too. But we don't.
-            if (clearInitialData) clearInitialData();
-        }
-    }, [initialData]);
 
     const [formData, setFormData] = useState({
         productGroup: '', // iphone, ipad, mac, watch, airpods, other
@@ -399,6 +383,39 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         }
         const url = `https://checkcoverage.apple.com/?sn=${formData.serialNumber}`;
         window.open(url, '_blank');
+    };
+
+    // Handle Initial Data (from Customer Detail)
+    React.useEffect(() => {
+        if (initialData) {
+            setFormData(prev => ({
+                ...prev,
+                ...initialData,
+                customerTC: initialData.tcNo || initialData.customerTC || '',
+                customerAddress: initialData.customerAddress || initialData.address || '',
+                serialNumber: initialData.serial || initialData.serialNumber || '',
+                deviceModel: initialData.device || initialData.deviceModel || ''
+            }));
+            if (clearInitialData) clearInitialData();
+        }
+    }, [initialData]);
+
+    // Customer Matching
+    const matchingCustomer = React.useMemo(() => {
+        if (!formData?.customerTC || formData.customerTC.length < 3) return null;
+        return customers.find(c => c.tc === formData.customerTC);
+    }, [formData?.customerTC, customers]);
+
+    const handleSelectCustomer = (customer) => {
+        setFormData(prev => ({
+            ...prev,
+            customerName: customer.name || prev.customerName,
+            customerPhone: customer.phone || prev.customerPhone,
+            customerEmail: customer.email || prev.customerEmail,
+            customerAddress: customer.address || prev.customerAddress,
+            customerType: customer.type || prev.customerType || 'positive'
+        }));
+        showToast('Müşteri bilgileri aktarıldı.', 'success');
     };
 
     const toggleCondition = (condition) => {
@@ -1055,6 +1072,37 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Kayıtlı Müşteri Önerisi */}
+                                {matchingCustomer && (
+                                    <div 
+                                        onClick={() => handleSelectCustomer(matchingCustomer)}
+                                        className="mt-3 p-4 bg-white border border-blue-100 rounded-xl shadow-xl shadow-blue-500/5 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-all animate-in slide-in-from-top-4 duration-500 group relative overflow-hidden"
+                                    >
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-inner group-hover:scale-110 transition-transform">
+                                                {matchingCustomer.name?.[0] || 'M'}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-gray-900 text-sm">{matchingCustomer.name}</h4>
+                                                    <span className="text-[9px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Kayıtlı</span>
+                                                </div>
+                                                <p className="text-[11px] text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+                                                    <Phone size={10} /> {matchingCustomer.phone}
+                                                </p>
+                                            </div>
+                                            <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <ChevronRight size={20} />
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">Bilgileri Otomatik Doldur</span>
+                                            <span className="text-[9px] text-gray-400 font-mono">{matchingCustomer.tc}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Telefon</label>
