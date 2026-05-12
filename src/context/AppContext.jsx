@@ -21,9 +21,12 @@ export const AppProvider = ({ children }) => {
         };
         const res = await fetch(url, { ...options, headers });
         if (res.status === 401 && !url.includes('/login') && !url.includes('/forgot-password')) {
-            sessionStorage.clear();
-            setCurrentUser(null);
-            window.location.href = '/';
+            const currentToken = sessionStorage.getItem('token');
+            if (currentToken) {
+                sessionStorage.clear();
+                setCurrentUser(null);
+                window.location.href = '/';
+            }
             throw new Error('Oturum süresi doldu, lütfen tekrar giriş yapın.');
         }
         return res;
@@ -178,6 +181,7 @@ export const AppProvider = ({ children }) => {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!currentUser) return;
             try {
                 const [usersRes, servicePointsRes] = await Promise.all([
                     apiFetch(`${API_URL}/users`),
@@ -192,7 +196,7 @@ export const AppProvider = ({ children }) => {
                     }
                 }
                 if (servicePointsRes.ok) setServicePoints(await servicePointsRes.json());
-                if (!currentUser) return;
+                
                 let queryParams = '';
                 if (!hasPermission(currentUser, 'view_all_stores') && currentUser.storeId) {
                     queryParams = `?storeId=${currentUser.storeId}`;
