@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { hasPermission } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
@@ -67,6 +67,53 @@ const TopNav = ({ activeTab, setActiveTab }) => {
         : (servicePoints.find(p => Number(p.id) === Number(selectedStoreId || currentUser?.storeId))?.name || 'Mağaza Seçilmedi');
 
     const [hoveredCategory, setHoveredCategory] = useState(null);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const searchRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handler = (e) => {
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setSearchOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    // Compute matching repairs for the dropdown
+    const searchResults = searchQuery.trim().length >= 1
+        ? repairs.filter(r =>
+            r.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.device?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.serial?.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        : [];
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Beklemede':               return 'bg-gray-100 text-gray-600';
+            case 'İşlemde':                 return 'bg-blue-100 text-blue-700';
+            case 'Parça Bekleniyor':        return 'bg-orange-100 text-orange-700';
+            case 'Cihaz Hazır':             return 'bg-green-100 text-green-700';
+            case 'Teslim Edildi':           return 'bg-purple-100 text-purple-700';
+            case 'Müşteri Onayı Bekliyor': return 'bg-yellow-100 text-yellow-700';
+            default:                        return 'bg-gray-100 text-gray-500';
+        }
+    };
+
+    const handleResultClick = (repair) => {
+        let target = 'pending-repairs';
+        if (repair.status === 'Müşteri Onayı Bekliyor') target = 'approval-pending';
+        else if (['İşlemde', 'Parça Bekleniyor'].includes(repair.status)) target = 'in-store';
+        else if (repair.status === "Apple'a Gönderildi") target = 'apple-center';
+        else if (['Cihaz Hazır', 'İade Hazır'].includes(repair.status)) target = 'ready-pickup';
+        else if (['Tamamlandı', 'Teslim Edildi', 'İade Edildi'].includes(repair.status)) target = 'archive';
+        setActiveTab(target);
+        setSearchQuery(repair.id);
+        setSearchOpen(false);
+    };
 
     return (
         <div className="w-full fixed top-0 left-0 z-50">
@@ -152,36 +199,87 @@ const TopNav = ({ activeTab, setActiveTab }) => {
 
                 {/* Right: Search & User Info */}
                 <div className="flex items-center gap-6">
-                    <div className="relative w-56 hidden lg:block">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    {/* Search with live dropdown */}
+                    <div ref={searchRef} className="relative w-64 hidden lg:block">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         <input 
                             type="text" 
                             placeholder="Kayıt veya müşteri ara..." 
-                            className="w-full pl-9 pr-4 py-1.5 text-xs font-medium border border-gray-200 rounded-md bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-apple-blue focus:ring-1 focus:ring-apple-blue transition-all"
+                            className="w-full pl-9 pr-8 py-1.5 text-xs font-medium border border-gray-200 rounded-md bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-apple-blue focus:ring-1 focus:ring-apple-blue transition-all"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setSearchOpen(true);
+                            }}
+                            onFocus={() => setSearchOpen(true)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter' && searchQuery.trim()) {
-                                    const foundRepair = repairs.find(r => 
-                                        r.id?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                        r.serial?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                        r.customer?.toLowerCase().includes(searchQuery.toLowerCase())
-                                    );
-                                    if (foundRepair) {
-                                        // Determine which tab to show based on repair status
-                                        let target = 'pending-repairs';
-                                        if (foundRepair.status === 'Müşteri Onayı Bekliyor') target = 'approval-pending';
-                                        else if (['İşlemde', 'Parça Bekleniyor'].includes(foundRepair.status)) target = 'in-store';
-                                        else if (foundRepair.status === "Apple'a Gönderildi") target = 'apple-center';
-                                        else if (['Cihaz Hazır', 'İade Hazır'].includes(foundRepair.status)) target = 'ready-pickup';
-                                        
-                                        setActiveTab(target);
-                                    } else {
-                                        setActiveTab('pending-repairs');
-                                    }
+                                if (e.key === 'Escape') {
+                                    setSearchOpen(false);
+                                    setSearchQuery('');
+                                }
+                                if (e.key === 'Enter' && searchResults.length > 0) {
+                                    handleResultClick(searchResults[0]);
                                 }
                             }}
                         />
+                        {searchQuery && (
+                            <button
+                                onClick={() => { setSearchQuery(''); setSearchOpen(false); }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                            >
+                                <X size={12} />
+                            </button>
+                        )}
+
+                        {/* Dropdown results panel */}
+                        {searchOpen && searchResults.length > 0 && (
+                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-2xl shadow-black/10 z-[200] overflow-hidden">
+                                {/* Scrollable list — max 3 items tall */}
+                                <div
+                                    className="overflow-y-auto"
+                                    style={{ maxHeight: `${3 * 64}px` }}
+                                >
+                                    {searchResults.map((repair) => (
+                                        <button
+                                            key={repair.id}
+                                            onClick={() => handleResultClick(repair)}
+                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0 text-left"
+                                        >
+                                            {/* Repair ID badge */}
+                                            <span className="shrink-0 text-[9px] font-black font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                #{repair.id}
+                                            </span>
+                                            {/* Device + Customer */}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-semibold text-gray-900 truncate">{repair.device}</p>
+                                                <p className="text-[10px] text-gray-400 font-medium truncate">{repair.customer}</p>
+                                            </div>
+                                            {/* Status badge */}
+                                            <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md ${getStatusColor(repair.status)}`}>
+                                                {repair.status}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* Footer count */}
+                                <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-[10px] text-gray-400 font-medium">
+                                        {searchResults.length} sonuç bulundu
+                                    </span>
+                                    <span className="text-[10px] text-gray-300 font-medium">
+                                        ↵ ilkine git &nbsp;·&nbsp; Esc kapat
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* No results message */}
+                        {searchOpen && searchQuery.trim().length >= 1 && searchResults.length === 0 && (
+                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-2xl shadow-black/10 z-[200] px-4 py-5 text-center">
+                                <p className="text-xs font-semibold text-gray-400">Eşleşen kayıt bulunamadı</p>
+                                <p className="text-[10px] text-gray-300 mt-0.5">&ldquo;{searchQuery}&rdquo; için sonuç yok</p>
+                            </div>
+                        )}
                     </div>
                     
                     <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
