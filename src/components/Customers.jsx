@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { User, Plus, Search, Filter, Mail, MapPin, MoreHorizontal, Edit, Calendar, DollarSign, Tag, Clock, ChevronRight, MessageCircle } from 'lucide-react';
+import { User, Plus, Search, Filter, Mail, MapPin, MoreHorizontal, Edit, Calendar, DollarSign, Tag, Clock, ChevronRight, MessageCircle, Trash2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import MyPhoneIcon from './LocalIcons';
+import { appConfirm, appAlert } from '../utils/alert';
 
 const Customers = ({ setActiveTab, setServiceInitialData }) => {
-    const { customers, addCustomer, updateCustomer, repairs, sendWhatsApp } = useAppContext();
+    const { customers, addCustomer, updateCustomer, repairs, sendWhatsApp, removeCustomer, currentUser } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -61,6 +62,24 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
 
         updateCustomer(selectedCustomer.id, { tags: newTags });
         setSelectedCustomer(prev => ({ ...prev, tags: newTags }));
+    };
+
+    const confirmAndDeleteCustomer = async (customer) => {
+        if (!customer) return;
+        
+        const confirmed = await appConfirm(
+            `<div class="text-red-600 font-bold mb-2">DİKKAT: MÜŞTERİ SİLİNİYOR</div>
+            <span><b>${customer.name}</b> isimli müşteri veritabanından kalıcı olarak silinecektir. Onaylıyor musunuz?</span>`
+        );
+
+        if (confirmed) {
+            const success = await removeCustomer(customer.id || customer._id);
+            if (success !== false) {
+                if (selectedCustomer?.id === customer.id || selectedCustomer?._id === customer._id) {
+                    setSelectedCustomer(null);
+                }
+            }
+        }
     };
 
     // Filter Logic
@@ -195,6 +214,20 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
                                                             <Tag size={8} className="text-yellow-900 fill-current" />
                                                         </div>
                                                     )}
+
+                                                    {/* Quick Delete for Superadmin */}
+                                                    {currentUser?.role === 'superadmin' && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                confirmAndDeleteCustomer(customer);
+                                                            }}
+                                                            className="absolute -top-2 -left-2 bg-red-500 text-white p-1.5 rounded-lg shadow-lg opacity-0 group-hover/card:opacity-100 transition-all hover:scale-110 active:scale-95 z-20"
+                                                            title="Müşteriyi Sil"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    )}
                                                 </button>
                                             ))}
                                         </div>
@@ -226,6 +259,15 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
                                     </button>
                                     
                                     <div className="flex gap-3 ml-auto">
+                                        {currentUser?.role === 'superadmin' && (
+                                            <button
+                                                onClick={() => confirmAndDeleteCustomer(selectedCustomer)}
+                                                className="border border-red-200 px-4 py-2 hover:bg-red-50 bg-white rounded-md text-sm font-semibold flex items-center gap-2 text-red-600 transition-colors"
+                                                title="Müşteriyi Sil"
+                                            >
+                                                <Trash2 size={16} /> Sil
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => openEditModal(selectedCustomer)}
                                             className="border border-[#d2d2d7] px-4 py-2 hover:bg-[#f5f5f7] bg-white rounded-md text-sm font-semibold flex items-center gap-2 text-gray-700"
