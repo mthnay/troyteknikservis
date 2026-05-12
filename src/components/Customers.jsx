@@ -216,7 +216,7 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
                                                     )}
 
                                                     {/* Quick Delete for Superadmin */}
-                                                    {currentUser?.role === 'superadmin' && (
+                                                    {currentUser?.role?.toLowerCase() === 'superadmin' && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -259,7 +259,7 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
                                     </button>
                                     
                                     <div className="flex gap-3 ml-auto">
-                                        {currentUser?.role === 'superadmin' && (
+                                        {currentUser?.role?.toLowerCase() === 'superadmin' && (
                                             <button
                                                 onClick={() => confirmAndDeleteCustomer(selectedCustomer)}
                                                 className="border border-red-200 px-4 py-2 hover:bg-red-50 bg-white rounded-md text-sm font-semibold flex items-center gap-2 text-red-600 transition-colors"
