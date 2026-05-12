@@ -120,6 +120,12 @@ export const AppProvider = ({ children }) => {
     const [alerts, setAlerts] = useState([]);
     const [roles, setRoles] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [serviceTerms, setServiceTerms] = useState({
+        termsTitle: '1. GENEL ŞARTLAR VE KOŞULLAR',
+        termsContent: "İşbu sözleşme, Troy Teknik Servis ile müşteri arasında servis girişi yapılan cihazın onarım ve hizmet şartlarını belirler. Cihaz içindeki verilerin yedeklenmesi tamamen müşterinin sorumluluğundadır. Sökülen koruyucu aksesuarların iadesi mümkün değildir. Sıvı temaslı veya darbeli cihazlarda onarım sırasında oluşabilecek riskler müşteriye aittir.",
+        approvalText: "Müşteri olarak, yukarıdaki sözleşme metnini ve teknik riskleri okudum, anladım ve cihazımı bu şartlar altında teslim ediyorum.",
+        kvkkText: "Kişisel verileriniz KVKK kapsamında işlenmektedir. Aydınlatma metnini okuduğumu kabul ediyorum."
+    });
 
     // SLA Helper
     const checkSLA = (repair) => {

@@ -382,9 +382,24 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         try {
             const data = await uploadMedia(file);
             if (data && data.url) {
+                const imageUrl = data.url;
+                const imageId = data.id || data.filename || Date.now();
+                
                 setFormData(prev => {
                     const field = category === 'before' ? 'beforeImages' : 'afterImages';
-                    return { ...prev, [field]: [...(prev[field] || []), data.url] };
+                    const currentFieldImages = prev[field] || [];
+                    const currentMediaFiles = prev.mediaFiles || [];
+
+                    return { 
+                        ...prev, 
+                        [field]: [...currentFieldImages, imageUrl],
+                        // mediaFiles'ı da güncelle ki addRepair aşamasında kullanılabilsin
+                        mediaFiles: [...currentMediaFiles, { 
+                            url: imageUrl, 
+                            id: imageId, 
+                            isDefault: false 
+                        }]
+                    };
                 });
                 showToast('Fotoğraf başarıyla eklendi.', 'success');
             } else {

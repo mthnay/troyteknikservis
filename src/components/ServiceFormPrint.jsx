@@ -6,6 +6,7 @@ import { useReactToPrint } from 'react-to-print';
 import Swal from 'sweetalert2';
 
 const ServiceFormPrint = ({ formData, repairId, onClose }) => {
+    const componentRef = useRef();
     const { emailSettings, companyProfile, API_URL, serviceTerms } = useAppContext();
     const [sendingEmail, setSendingEmail] = useState(false);
 
