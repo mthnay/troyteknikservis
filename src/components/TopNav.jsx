@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X } from 'lucide-react';
+import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { hasPermission } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
