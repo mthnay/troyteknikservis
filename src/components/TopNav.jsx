@@ -105,7 +105,8 @@ const TopNav = ({ activeTab, setActiveTab }) => {
     };
 
     return (
-        <div className="w-full fixed top-0 left-0 z-50">
+        <>
+            <div className="w-full fixed top-0 left-0 z-50">
             {/* Unified Top Navigation Bar */}
             <div className="h-16 bg-white/80 backdrop-blur-md border-b border-black/5 flex items-center justify-between px-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
 
@@ -295,18 +296,16 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                 </div>
 
             </div>
-        </div>
+            </div>
 
-        {/* Search Result Detail Modal */ }
-    {
-        selectedSearchRepair && (
-            <RepairHistoryModal
-                repair={selectedSearchRepair}
-                onClose={() => setSelectedSearchRepair(null)}
-            />
-        )
-    }
-    </div >
+            {/* Search Result Detail Modal */}
+            {selectedSearchRepair && (
+                <RepairHistoryModal
+                    repair={selectedSearchRepair}
+                    onClose={() => setSelectedSearchRepair(null)}
+                />
+            )}
+        </>
     );
 };
 
