@@ -7,7 +7,7 @@ import NotificationCenter from './NotificationCenter';
 import RepairHistoryModal from './RepairHistoryModal';
 
 const TopNav = ({ activeTab, setActiveTab }) => {
-    const { logout, currentUser, selectedStoreId, setSelectedStoreId, servicePoints, alerts, searchQuery, setSearchQuery, repairs } = useAppContext();
+    const { logout, currentUser, alerts, searchQuery, setSearchQuery, repairs } = useAppContext();
 
     const CATEGORIES = [
         {
@@ -55,10 +55,6 @@ const TopNav = ({ activeTab, setActiveTab }) => {
             ]
         }
     ];
-
-    const currentStore = Number(selectedStoreId) === 0 && hasPermission(currentUser, 'view_all_stores')
-        ? 'Tüm Mağazalar'
-        : (servicePoints.find(p => Number(p.id) === Number(selectedStoreId || currentUser?.storeId))?.name || 'Mağaza Seçilmedi');
 
     const [hoveredCategory, setHoveredCategory] = useState(null);
     const [searchOpen, setSearchOpen] = useState(false);
