@@ -71,10 +71,7 @@ const router = express.Router();
 // --- Global Authentication Middleware ---
 router.use((req, res, next) => {
     const publicPaths = [
-        '/system/seed-roles',
         '/system/check-updates',
-        '/system/reboot',
-        '/fix-stores',
         '/login',
         '/users/forgot-password'
     ];
@@ -93,11 +90,11 @@ router.post('/system/seed-roles', async (req, res) => {
         const count = await Role.countDocuments();
         if (count === 0) {
             const defaultRoles = [
-                { name: 'SuperAdmin', displayName: 'Super Admin', permissions: ['view_all_stores', 'manage_users', 'manage_settings', 'manage_stock'], isSystem: true },
-                { name: 'StoreManager', displayName: 'Mağaza Müdürü', permissions: ['manage_stock', 'delete_repair'], isSystem: true },
-                { name: 'Reception', displayName: 'Resepsiyon', permissions: ['manage_stock'], isSystem: true },
-                { name: 'Technician', displayName: 'Teknisyen', permissions: [], isSystem: true },
-                { name: 'Accountant', displayName: 'Muhasebe', permissions: ['view_all_stores'], isSystem: true },
+                { name: 'superadmin', displayName: 'Super Admin', permissions: ['view_all_stores', 'manage_users', 'manage_settings', 'manage_stock'], isSystem: true },
+                { name: 'storemanager', displayName: 'Mağaza Müdürü', permissions: ['manage_stock', 'delete_repair'], isSystem: true },
+                { name: 'reception', displayName: 'Resepsiyon', permissions: ['manage_stock'], isSystem: true },
+                { name: 'technician', displayName: 'Teknisyen', permissions: [], isSystem: true },
+                { name: 'accountant', displayName: 'Muhasebe', permissions: ['view_all_stores'], isSystem: true },
             ];
             await Role.insertMany(defaultRoles);
             res.json({ success: true, message: 'Default roles seeded successfully' });
@@ -119,7 +116,7 @@ router.get('/roles', async (req, res) => {
     }
 });
 
-router.post('/roles', async (req, res) => {
+router.post('/roles', requireRole(['superadmin']), async (req, res) => {
     try {
         const { name, displayName, permissions } = req.body;
         const roleExists = await Role.findOne({ name });
@@ -133,7 +130,7 @@ router.post('/roles', async (req, res) => {
     }
 });
 
-router.put('/roles/:id', async (req, res) => {
+router.put('/roles/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const { displayName, permissions } = req.body;
         const role = await Role.findById(req.params.id);
@@ -149,7 +146,7 @@ router.put('/roles/:id', async (req, res) => {
     }
 });
 
-router.delete('/roles/:id', async (req, res) => {
+router.delete('/roles/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
         if (!role) return res.status(404).json({ message: 'Rol bulunamadı' });
@@ -172,7 +169,7 @@ router.get('/system/check-updates', (req, res) => {
     });
 });
 
-router.post('/system/reboot', (req, res) => {
+router.post('/system/reboot', requireRole(['superadmin']), (req, res) => {
     res.json({ success: true, message: 'Server is rebooting...' });
     
     // İşlemi sonlandırmak için kısa bir gecikme verelim (cevap dönebilsin)
@@ -181,7 +178,7 @@ router.post('/system/reboot', (req, res) => {
         process.exit(0);
     }, 1000);
 });
-router.get('/fix-stores', async (req, res) => {
+router.get('/fix-stores', requireRole(['superadmin']), async (req, res) => {
     try {
         const firstPoint = await ServicePoint.findOne({});
         if (!firstPoint) return res.status(404).json({ message: 'No service points found' });
@@ -496,7 +493,7 @@ router.get('/inventory', async (req, res) => {
     }
 });
 
-router.post('/inventory', async (req, res) => {
+router.post('/inventory', requireRole(['superadmin', 'storemanager']), async (req, res) => {
     const item = new Inventory(req.body);
     try {
         const newItem = await item.save();
@@ -506,7 +503,7 @@ router.post('/inventory', async (req, res) => {
     }
 });
 
-router.put('/inventory/:id', async (req, res) => {
+router.put('/inventory/:id', requireRole(['superadmin', 'storemanager']), async (req, res) => {
     try {
         const id = req.params.id;
         let updatedItem = await Inventory.findOneAndUpdate({ id: id }, req.body, { new: true });
@@ -519,7 +516,7 @@ router.put('/inventory/:id', async (req, res) => {
     }
 });
 
-router.delete('/inventory/:id', async (req, res) => {
+router.delete('/inventory/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const id = req.params.id;
         console.log(`[Inventory] DELETE request for id/_id: ${id}`);

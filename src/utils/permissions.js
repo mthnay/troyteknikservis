@@ -1,11 +1,11 @@
 // src/utils/permissions.js
 
 export const ROLES = {
-    SUPER_ADMIN: 'SuperAdmin',
-    STORE_MANAGER: 'StoreManager',
-    RECEPTION: 'Reception',
-    TECHNICIAN: 'Technician',
-    ACCOUNTANT: 'Accountant'
+    SUPER_ADMIN: 'superadmin',
+    STORE_MANAGER: 'storemanager',
+    RECEPTION: 'reception',
+    TECHNICIAN: 'technician',
+    ACCOUNTANT: 'accountant'
 };
 
 let dynamicRoles = [];

@@ -48,12 +48,12 @@ export const AppProvider = ({ children }) => {
     });
 
     const [emailSettings, setEmailSettings] = useState({
-        host: 'smail05.doruk.net.tr',
-        port: '465',
-        incomingHost: 'smail05.doruk.net.tr',
-        incomingPort: '993',
-        user: 'servis.mavibahce@troyapr.com',
-        pass: '1A@Uv*5k8TOd'
+        host: '',
+        port: '',
+        incomingHost: '',
+        incomingPort: '',
+        user: '',
+        pass: ''
     });
 
     const [companyProfile, setCompanyProfile] = useState({
