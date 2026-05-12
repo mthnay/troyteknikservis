@@ -18,6 +18,10 @@ import { sendAutomatedEmail } from './emailService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
+import { verifyToken, requireRole } from './middleware/auth.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'troy-fallback-secret-key-2026';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,6 +67,25 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const router = express.Router();
+
+// --- Global Authentication Middleware ---
+router.use((req, res, next) => {
+    const publicPaths = [
+        '/system/seed-roles',
+        '/system/check-updates',
+        '/system/reboot',
+        '/fix-stores',
+        '/login',
+        '/users/forgot-password'
+    ];
+    
+    // Allow public exact matches or paths starting with /public/
+    if (publicPaths.includes(req.path) || req.path.startsWith('/public/')) {
+        return next();
+    }
+    
+    return verifyToken(req, res, next);
+});
 
 // --- Seed Default Roles ---
 router.post('/system/seed-roles', async (req, res) => {
@@ -358,9 +381,15 @@ router.post('/login', async (req, res) => {
 
         console.log(`[LOGIN] SUCCESS: User ${user.name} logged in.`);
         
+        const token = jwt.sign(
+            { id: user._id || user.id, email: user.email, role: user.role, storeId: user.storeId },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        
         // Şifreyi objeden çıkarıp geri kalanı dönüyoruz
         const { password: _, ...userWithoutPassword } = user._doc || user;
-        res.json(userWithoutPassword);
+        res.json({ user: userWithoutPassword, token });
     } catch (err) {
         console.error(`[LOGIN] ERROR:`, err.message);
         res.status(500).json({ message: err.message });
@@ -784,7 +813,7 @@ router.put('/customers/:id', async (req, res) => {
     }
 });
 
-router.delete('/customers/:id', async (req, res) => {
+router.delete('/customers/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const id = req.params.id;
         let deleted = await Customer.findOneAndDelete({ id: id });

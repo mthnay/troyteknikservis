@@ -145,7 +145,7 @@ export const AppProvider = ({ children }) => {
         try {
             const formData = new FormData();
             formData.append('file', file);
-            const res = await fetch(`${API_URL}/upload`, {
+            const res = await apiFetch(`${API_URL}/upload`, {
                 method: 'POST',
                 body: formData
             });
@@ -164,8 +164,8 @@ export const AppProvider = ({ children }) => {
         const fetchData = async () => {
             try {
                 const [usersRes, servicePointsRes] = await Promise.all([
-                    fetch(`${API_URL}/users`),
-                    fetch(`${API_URL}/service-points`)
+                    apiFetch(`${API_URL}/users`),
+                    apiFetch(`${API_URL}/service-points`)
                 ]);
                 if (usersRes.ok) {
                     const fetchedUsers = await usersRes.json();
@@ -182,16 +182,16 @@ export const AppProvider = ({ children }) => {
                     queryParams = `?storeId=${currentUser.storeId}`;
                 }
                 const [repairsRes, inventoryRes, techniciansRes, settingsRes, customersRes, companyRes, earningsRes, notifSetRes, notifTempRes, rolesRes] = await Promise.all([
-                    fetch(`${API_URL}/repairs${queryParams}`),
-                    fetch(`${API_URL}/inventory${queryParams}`),
-                    fetch(`${API_URL}/technicians${queryParams}`),
-                    fetch(`${API_URL}/settings/emailSettings`),
-                    fetch(`${API_URL}/customers${queryParams}`),
-                    fetch(`${API_URL}/settings/companyProfile`),
-                    fetch(`${API_URL}/earnings${queryParams}`),
-                    fetch(`${API_URL}/settings/notificationSettings`),
-                    fetch(`${API_URL}/settings/notificationTemplates`),
-                    fetch(`${API_URL}/roles`)
+                    apiFetch(`${API_URL}/repairs${queryParams}`),
+                    apiFetch(`${API_URL}/inventory${queryParams}`),
+                    apiFetch(`${API_URL}/technicians${queryParams}`),
+                    apiFetch(`${API_URL}/settings/emailSettings`),
+                    apiFetch(`${API_URL}/customers${queryParams}`),
+                    apiFetch(`${API_URL}/settings/companyProfile`),
+                    apiFetch(`${API_URL}/earnings${queryParams}`),
+                    apiFetch(`${API_URL}/settings/notificationSettings`),
+                    apiFetch(`${API_URL}/settings/notificationTemplates`),
+                    apiFetch(`${API_URL}/roles`)
                 ]);
                 if (repairsRes.ok) {
                     const data = await repairsRes.json();
@@ -244,7 +244,7 @@ export const AppProvider = ({ children }) => {
 
     const saveSettings = async (key, value) => {
         try {
-            await fetch(`${API_URL}/settings`, {
+            await apiFetch(`${API_URL}/settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key, value })
@@ -254,15 +254,16 @@ export const AppProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const res = await fetch(`${API_URL}/login`, {
+            const res = await apiFetch(`${API_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
             
             if (res.ok) {
-                const user = await res.json();
-                setCurrentUser(user);
+                const data = await res.json();
+                setCurrentUser(data.user);
+                sessionStorage.setItem('token', data.token);
                 return true;
             }
             return false;
@@ -280,7 +281,7 @@ export const AppProvider = ({ children }) => {
 
     const addUser = async (user) => {
         try {
-            const res = await fetch(`${API_URL}/users`, {
+            const res = await apiFetch(`${API_URL}/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...user, id: user.id || `u${Date.now()}` })
@@ -296,7 +297,7 @@ export const AppProvider = ({ children }) => {
     const updateUser = async (id, updates) => {
         try {
             console.log(`[AppContext] Updating user ${id}...`, updates);
-            const res = await fetch(`${API_URL}/users/${id}`, {
+            const res = await apiFetch(`${API_URL}/users/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -332,7 +333,7 @@ export const AppProvider = ({ children }) => {
 
     const removeUser = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setUsers(prev => prev.filter(u => u.id !== id && u._id !== id));
                 return true;
@@ -355,7 +356,7 @@ export const AppProvider = ({ children }) => {
             storeId: parseInt(currentUser?.storeId) || 0
         };
         try {
-            const res = await fetch(`${API_URL}/repairs`, {
+            const res = await apiFetch(`${API_URL}/repairs`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newRepairInitial)
@@ -377,7 +378,7 @@ export const AppProvider = ({ children }) => {
 
     const removeRepair = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/repairs/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/repairs/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setRepairs(prev => prev.filter(r => r.id !== id && r._id !== id));
                 return true;
@@ -413,7 +414,7 @@ export const AppProvider = ({ children }) => {
             // undefined alanları temizle ki DB'deki veriyi silmesin
             Object.keys(normalizedUpdates).forEach(key => normalizedUpdates[key] === undefined && delete normalizedUpdates[key]);
 
-            const res = await fetch(`${API_URL}/repairs/${id}`, {
+            const res = await apiFetch(`${API_URL}/repairs/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...normalizedUpdates, ...extraUpdates, history: newHistory })
@@ -439,7 +440,7 @@ export const AppProvider = ({ children }) => {
 
     const addTechnician = async (tech) => {
         try {
-            const res = await fetch(`${API_URL}/technicians`, {
+            const res = await apiFetch(`${API_URL}/technicians`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...tech, id: tech.id || `t${Date.now()}` })
@@ -454,7 +455,7 @@ export const AppProvider = ({ children }) => {
 
     const updateTechnician = async (id, updates) => {
         try {
-            const res = await fetch(`${API_URL}/technicians/${id}`, {
+            const res = await apiFetch(`${API_URL}/technicians/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -469,7 +470,7 @@ export const AppProvider = ({ children }) => {
 
     const removeTechnician = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/technicians/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/technicians/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setTechnicians(prev => prev.filter(t => t.id !== id && t._id !== id));
                 return true;
@@ -489,7 +490,7 @@ export const AppProvider = ({ children }) => {
 
     const updateServicePoint = async (id, updates) => {
         try {
-            const res = await fetch(`${API_URL}/service-points/${id}`, {
+            const res = await apiFetch(`${API_URL}/service-points/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -504,7 +505,7 @@ export const AppProvider = ({ children }) => {
 
     const removeServicePoint = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/service-points/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/service-points/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setServicePoints(prev => prev.filter(p => p.id !== id && p._id !== id));
                 return true;
@@ -514,7 +515,7 @@ export const AppProvider = ({ children }) => {
 
     const addServicePoint = async (point) => {
         try {
-            const res = await fetch(`${API_URL}/service-points`, {
+            const res = await apiFetch(`${API_URL}/service-points`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...point, id: point.id || Date.now() })
@@ -534,7 +535,7 @@ export const AppProvider = ({ children }) => {
 
     const addCustomer = async (customer) => {
         try {
-            const res = await fetch(`${API_URL}/customers`, {
+            const res = await apiFetch(`${API_URL}/customers`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...customer, id: customer.id || `c${Date.now()}` })
@@ -549,7 +550,7 @@ export const AppProvider = ({ children }) => {
 
     const updateCustomer = async (id, updates) => {
         try {
-            const res = await fetch(`${API_URL}/customers/${id}`, {
+            const res = await apiFetch(`${API_URL}/customers/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -564,7 +565,7 @@ export const AppProvider = ({ children }) => {
 
     const removeCustomer = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/customers/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/customers/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setCustomers(prev => prev.filter(c => c.id !== id && c._id !== id));
                 return true;
@@ -575,7 +576,7 @@ export const AppProvider = ({ children }) => {
 
     const addInventoryItem = async (item) => {
         try {
-            const res = await fetch(`${API_URL}/inventory`, {
+            const res = await apiFetch(`${API_URL}/inventory`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...item, storeId: item.storeId || currentUser?.storeId || 0 })
@@ -590,7 +591,7 @@ export const AppProvider = ({ children }) => {
 
     const updateInventoryItem = async (id, updates) => {
         try {
-            const res = await fetch(`${API_URL}/inventory/${id}`, {
+            const res = await apiFetch(`${API_URL}/inventory/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -605,7 +606,7 @@ export const AppProvider = ({ children }) => {
 
     const removeInventoryItem = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/inventory/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/inventory/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setInventory(prev => prev.filter(i => i.id !== id && i._id !== id));
                 return true;
@@ -616,7 +617,7 @@ export const AppProvider = ({ children }) => {
 
     const usePart = async (partId, quantity = 1) => {
         try {
-            const res = await fetch(`${API_URL}/inventory/use`, {
+            const res = await apiFetch(`${API_URL}/inventory/use`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ partId, quantity })
@@ -631,7 +632,7 @@ export const AppProvider = ({ children }) => {
 
     const transferInventorySerial = async (sourceItemId, targetStoreId, serialNumbers, serialType) => {
         try {
-            const res = await fetch(`${API_URL}/inventory/transfer-serial`, {
+            const res = await apiFetch(`${API_URL}/inventory/transfer-serial`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sourceItemId, targetStoreId, serialNumbers, serialType })
@@ -659,7 +660,7 @@ export const AppProvider = ({ children }) => {
 
     const addEarning = async (earning) => {
         try {
-            const res = await fetch(`${API_URL}/earnings`, {
+            const res = await apiFetch(`${API_URL}/earnings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(earning)
@@ -678,7 +679,7 @@ export const AppProvider = ({ children }) => {
 
     const addRole = async (role) => {
         try {
-            const res = await fetch(`${API_URL}/roles`, {
+            const res = await apiFetch(`${API_URL}/roles`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(role)
@@ -701,7 +702,7 @@ export const AppProvider = ({ children }) => {
 
     const updateRole = async (id, roleData) => {
         try {
-            const res = await fetch(`${API_URL}/roles/${id}`, {
+            const res = await apiFetch(`${API_URL}/roles/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(roleData)
@@ -723,7 +724,7 @@ export const AppProvider = ({ children }) => {
 
     const deleteRole = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/roles/${id}`, {
+            const res = await apiFetch(`${API_URL}/roles/${id}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
