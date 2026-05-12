@@ -113,7 +113,7 @@ const DEVICE_DATABASE = [
 
 
 const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
-    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast } = useAppContext();
+    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast, serviceTerms } = useAppContext();
     const [step, setStep] = useState(1);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [showKioskModal, setShowKioskModal] = useState(false);
@@ -736,7 +736,18 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                     <div className="md:w-[45%] bg-gray-50 flex flex-col p-8 overflow-y-auto">
                         <div className="flex items-center justify-between mb-8"><h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Kabul Formu<br/><span className="text-blue-600">ve Sözleşme</span></h2><button onClick={() => setShowKioskModal(false)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-400 shadow-sm border border-gray-100 hover:bg-gray-100 transition-colors"><X size={24} /></button></div>
                         <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm mb-6 flex flex-col gap-4"><h3 className="text-xs font-semibold uppercase text-gray-400 tracking-widest border-b border-gray-100 pb-3">Servis Detayları</h3><div className="flex justify-between items-center"><span className="text-xs font-bold text-gray-500">Müşteri Adı:</span><span className="text-sm font-semibold text-gray-900">{formData.customerName}</span></div><div className="flex justify-between items-center"><span className="text-xs font-bold text-gray-500">Cihaz Modeli:</span><span className="text-sm font-semibold text-gray-900">{formData.deviceModel}</span></div>{formData.estimatedCost && formData.warrantyStatus === 'out-of-warranty' && (<div className="flex justify-between items-center"><span className="text-xs font-bold text-gray-500">Ön Tutar:</span><span className="text-lg font-semibold text-orange-600">{Number(formData.estimatedCost).toLocaleString('tr-TR')} ₺</span></div>)}</div>
-                        <div className="text-xs font-medium text-gray-500 space-y-4 leading-relaxed pr-4 text-justify h-full overflow-y-auto custom-scrollbar bg-white p-6 rounded-lg border border-gray-100 shadow-sm"><h3 className="text-base font-semibold text-gray-900 mb-2">Hüküm ve Koşullar</h3><p><strong>1. VERİ GÜVENLİĞİ:</strong> Veri yedekleme müşteriye aittir.</p><p><strong>2. AKSESUARLAR:</strong> Koruyucu cam vb. sökülebilir.</p><p><strong>3. RİSK BEYANI:</strong> Onarım sırasında oluşabilecek riskler kabul edilmiştir.</p><div className="mt-8 p-4 bg-orange-50 text-orange-800 rounded-md italic font-bold">* Onarım şartlarını kabul ediyorum.</div></div>
+                        <div className="text-xs font-medium text-gray-500 space-y-4 leading-relaxed pr-4 text-justify h-full overflow-y-auto custom-scrollbar bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                            <h3 className="text-base font-semibold text-gray-900 mb-2">{serviceTerms?.termsTitle || 'Hüküm ve Koşullar'}</h3>
+                            <div className="whitespace-pre-line">
+                                {serviceTerms?.termsContent}
+                            </div>
+                            <div className="mt-8 p-4 bg-orange-50 text-orange-800 rounded-md italic font-bold">
+                                * {serviceTerms?.approvalText}
+                            </div>
+                            <div className="mt-4 flex items-center gap-2 text-[10px] text-gray-400">
+                                <Check size={12} className="text-green-500" /> {serviceTerms?.kvkkText}
+                            </div>
+                        </div>
                     </div>
                     <div className="md:w-[55%] bg-white flex flex-col p-10 relative">
                         <div className="flex-1 flex flex-col items-center justify-center relative">

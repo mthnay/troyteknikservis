@@ -6,8 +6,7 @@ import { useReactToPrint } from 'react-to-print';
 import Swal from 'sweetalert2';
 
 const ServiceFormPrint = ({ formData, repairId, onClose }) => {
-    const componentRef = useRef();
-    const { emailSettings, companyProfile, API_URL } = useAppContext();
+    const { emailSettings, companyProfile, API_URL, serviceTerms } = useAppContext();
     const [sendingEmail, setSendingEmail] = useState(false);
 
     // Güvenli yazdırma fonksiyonu
@@ -137,13 +136,13 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
                             </div>
                             <div className="text-right flex flex-col items-end gap-2">
                                 <div className="flex items-start gap-4">
-                                    <div className="flex flex-col items-end bg-white p-1 rounded-md border border-gray-100 shadow-sm">
+                                    <div className="flex flex-col items-end bg-white p-1 rounded-lg border border-gray-100 shadow-sm">
                                         <img 
-                                            src={`https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent(window.location.origin + '?track=' + repairId)}&choe=UTF-8`} 
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '?track=' + repairId)}&bgcolor=ffffff&color=000000&margin=1`} 
                                             alt="Sorgulama QR" 
                                             className="w-20 h-20"
                                         />
-                                        <span className="text-[7px] font-semibold text-gray-400 mt-1 uppercase tracking-tight">Kamera ile Sorgula</span>
+                                        <span className="text-[7px] font-bold text-gray-400 mt-1 uppercase tracking-tight text-center w-full">Sorgulama QR</span>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
                                         <div className="bg-black text-white px-4 py-1.5 rounded-full text-[10px] font-semibold text-xs uppercase tracking-wide shadow-lg">Servis Kabul Formu</div>
@@ -355,48 +354,13 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
                             </div>
                         </div>
 
-                        <div className="columns-2 gap-10 text-[10px] text-gray-600 space-y-3 text-justify leading-relaxed font-medium">
-                            <section className="break-inside-avoid mb-6">
-                                <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> 1. GENEL ŞARTLAR
-                                </h3>
-                                <p className="opacity-80">İşbu sözleşme, Troy Teknik Servis (Artıbilgi Teknoloji A.Ş.) ile müşteri arasında servis girişi yapılan cihazın onarım ve hizmet şartlarını belirler. Cihazın servise bırakılmasıyla birlikte müşteri bu şartları gayrikabili rücu kabul etmiş sayılır.</p>
-                            </section>
-
-                            <section className="break-inside-avoid mb-6">
-                                <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> 2. VERİ GÜVENLİĞİ
-                                </h3>
-                                <p className="opacity-80">Cihaz içindeki verilerin yedeklenmesi tamamen müşterinin sorumluluğundadır. Servis işlemi sırasında oluşabilecek veri kayıplarından Troy Teknik Servis kesinlikle sorumlu tutulamaz. Yazılım onarımlarında cihaz formatlanarak fabrika ayarlarına döndürülür.</p>
-                            </section>
-
-                            <section className="break-inside-avoid mb-6">
-                                <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> 3. AKSESUARLAR
-                                </h3>
-                                <p className="opacity-80">Cihaz üzerindeki kırılmaz cam, kamera koruyucu, kaplama veya sticker gibi aksesuarlar onarım süreci gereği sökülmek zorundadır. Sökülen bu ürünlerin iadesi veya ücretsiz olarak takılması mümkün değildir.</p>
-                            </section>
-
-                            <section className="break-inside-avoid mb-6">
-                                <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> 4. SIVI TEMAS VE DARBE
-                                </h3>
-                                <p className="opacity-80">Sıvı temaslı cihazlarda oksitlenme süreci durdurulamaz. Arıza tespiti çalışmaları sırasında cihazın tamamen kapanma riski mevcuttur. Darbeli cihazlarda ise ana kart üzerindeki mikro çatlaklar söküm sırasında kalıcı hasara dönüşebilir.</p>
-                            </section>
-
-                            <section className="break-inside-avoid mb-6">
-                                <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> 5. GARANTİ ŞARTLARI
-                                </h3>
-                                <p className="opacity-80">Apple yetkili servisimizce yapılan onarımlarda Apple global garanti şartları geçerlidir. Ücretli onarımlarda ise değiştirilen parça kullanıcı hatası olmaksızın 90 gün boyunca işlem garantisi altındadır.</p>
-                            </section>
-
-                            <section className="break-inside-avoid mb-6">
-                                <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> 6. MUHAFAZA VE TESLİM
-                                </h3>
-                                <p className="opacity-80">Bildirim tarihinden itibaren 90 (doksan) gün içerisinde teslim alınmayan cihazlardan firmamız sorumlu değildir. 90 günü aşan beklemelerde 'depolama ücreti' talep edilebilir veya hukuki süreç başlatılır.</p>
-                            </section>
+                        <div className="text-[10px] text-gray-600 space-y-3 text-justify leading-relaxed font-medium">
+                            <h3 className="font-semibold text-black mb-2 uppercase flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div> {serviceTerms?.termsTitle || '1. GENEL ŞARTLAR VE KOŞULLAR'}
+                            </h3>
+                            <div className="whitespace-pre-line opacity-80">
+                                {serviceTerms?.termsContent || "İşbu sözleşme, Troy Teknik Servis ile müşteri arasında servis girişi yapılan cihazın onarım ve hizmet şartlarını belirler. Cihaz içindeki verilerin yedeklenmesi tamamen müşterinin sorumluluğundadır. Sökülen koruyucu aksesuarların iadesi mümkün değildir. Sıvı temaslı veya darbeli cihazlarda onarım sırasında oluşabilecek riskler müşteriye aittir."}
+                            </div>
                         </div>
 
                         {/* İmza Alanı (Sayfa 2 - Sözleşme Onayı) */}
@@ -406,7 +370,11 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
                                     <CheckCircle size={24} />
                                 </div>
                                 <p className="text-[12px] font-bold text-gray-900 leading-tight">
-                                    Müşteri olarak, yukarıdaki 2 sayfalık sözleşme metnini ve teknik riskleri okudum, anladım ve cihazımı bu şartlar altında teslim ediyorum.
+                                    {serviceTerms?.approvalText || "Müşteri olarak, yukarıdaki sözleşme metnini ve teknik riskleri okudum, anladım ve cihazımı bu şartlar altında teslim ediyorum."}
+                                    <br />
+                                    <span className="text-[10px] font-medium text-gray-400 mt-1 block">
+                                        {serviceTerms?.kvkkText}
+                                    </span>
                                 </p>
                             </div>
                             

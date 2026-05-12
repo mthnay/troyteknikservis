@@ -16,7 +16,8 @@ const Settings = () => {
         notificationSettings, setNotificationSettings,
         notificationTemplates, setNotificationTemplates,
         earnings, addEarning,
-        roles, addRole, updateRole, deleteRole
+        roles, addRole, updateRole, deleteRole,
+        serviceTerms, setServiceTerms
     } = useAppContext();
 
     const [activeTab, setActiveTab] = useState('general');
@@ -180,6 +181,31 @@ const Settings = () => {
     const [isAddingPoint, setIsAddingPoint] = useState(false);
     const [editingPointId, setEditingPointId] = useState(null);
     const [editPointData, setEditPointData] = useState(null);
+
+    // --- Service Terms Form ---
+    const [tempServiceTerms, setTempServiceTerms] = useState(serviceTerms || {
+        termsTitle: "Hüküm ve Koşullar",
+        termsContent: "",
+        approvalText: "",
+        kvkkText: ""
+    });
+
+    React.useEffect(() => {
+        if (serviceTerms) {
+            setTempServiceTerms(serviceTerms);
+        }
+    }, [serviceTerms]);
+
+    const handleSaveServiceTerms = () => {
+        setServiceTerms(tempServiceTerms);
+        Swal.fire({
+            title: 'Başarılı!',
+            text: 'Servis metinleri başarıyla güncellendi.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    };
 
     const handleAddPoint = async () => {
         if (!newPoint.name || !newPoint.address || !newPoint.shipTo) {
@@ -1646,6 +1672,97 @@ const Settings = () => {
                         )}
                     </div>
                 );
+            case 'service_terms':
+                return (
+                    <div className="space-y-8 animate-fade-in max-w-5xl">
+                        <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-10 rounded-lg text-white shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                            <div className="relative z-10">
+                                <h4 className="text-2xl font-semibold mb-2 flex items-center gap-3">
+                                    <MessageSquare size={28} className="text-blue-200" />
+                                    Servis Onay ve Gizlilik Metinleri
+                                </h4>
+                                <p className="text-blue-100/70 font-medium">Kiosk modunda ve servis formlarında müşteriye gösterilecek yasal metinleri buradan düzenleyin.</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm space-y-8">
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Sözleşme Başlığı</label>
+                                <input 
+                                    type="text" 
+                                    value={tempServiceTerms.termsTitle}
+                                    onChange={(e) => setTempServiceTerms({ ...tempServiceTerms, termsTitle: e.target.value })}
+                                    className="w-full px-5 py-4 bg-gray-50 rounded-md border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-gray-900" 
+                                    placeholder="Örn: Hüküm ve Koşullar"
+                                />
+                            </div>
+
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Sözleşme İçeriği (Madde Madde)</label>
+                                <textarea 
+                                    rows="10" 
+                                    value={tempServiceTerms.termsContent}
+                                    onChange={(e) => setTempServiceTerms({ ...tempServiceTerms, termsContent: e.target.value })}
+                                    className="w-full px-5 py-4 bg-gray-50 rounded-md border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-gray-700 leading-relaxed" 
+                                    placeholder="Servis kabul şartlarını buraya yazınız..."
+                                />
+                                <p className="text-[10px] text-gray-400 italic">* Her bir maddeyi yeni satıra yazınız.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">Onay Cümlesi (İmza Öncesi)</label>
+                                    <textarea 
+                                        rows="4" 
+                                        value={tempServiceTerms.approvalText}
+                                        onChange={(e) => setTempServiceTerms({ ...tempServiceTerms, approvalText: e.target.value })}
+                                        className="w-full px-5 py-4 bg-gray-50 rounded-md border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-gray-800" 
+                                        placeholder="Müşterinin kabul ettiğine dair beyan metni..."
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide ml-1">KVKK / Aydınlatma Metni Kısa Notu</label>
+                                    <textarea 
+                                        rows="4" 
+                                        value={tempServiceTerms.kvkkText}
+                                        onChange={(e) => setTempServiceTerms({ ...tempServiceTerms, kvkkText: e.target.value })}
+                                        className="w-full px-5 py-4 bg-gray-50 rounded-md border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-sm text-gray-600" 
+                                        placeholder="Kişisel verilerin işlenmesine dair kısa onay metni..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-gray-100 flex justify-end">
+                                <button 
+                                    onClick={handleSaveServiceTerms}
+                                    className="bg-gray-900 hover:bg-black text-white px-10 py-5 rounded-md font-bold text-xs shadow-xl shadow-gray-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-3 uppercase tracking-widest"
+                                >
+                                    <Save size={20} /> Metinleri Sisteme Kaydet
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Önizleme Alanı */}
+                        <div className="bg-gray-50 rounded-lg p-8 border border-dashed border-gray-200">
+                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Globe size={14} /> Kiosk Önizleme (Müşteri Ekranı)
+                            </h5>
+                            <div className="bg-white rounded-md shadow-sm p-6 border border-gray-100 max-w-2xl mx-auto">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">{tempServiceTerms.termsTitle}</h3>
+                                <div className="text-[10px] text-gray-500 space-y-2 whitespace-pre-line leading-relaxed mb-6">
+                                    {tempServiceTerms.termsContent}
+                                </div>
+                                <div className="p-3 bg-blue-50 text-blue-800 rounded-md text-[10px] font-bold italic mb-4">
+                                    * {tempServiceTerms.approvalText}
+                                </div>
+                                <div className="flex items-center gap-2 text-[9px] text-gray-400 font-medium">
+                                    <Check size={12} className="text-green-500" /> {tempServiceTerms.kvkkText}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
         }
     };
 
@@ -1665,6 +1782,7 @@ const Settings = () => {
                             { id: 'kbb_history', label: 'KBB Arşivi', icon: Store, color: 'text-rose-600', bg: 'bg-rose-50' },
                             { id: 'earnings', label: 'Hakediş Kayıtları', icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
                             { id: 'notifications', label: 'E-Posta & SMTP', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50' },
+                            { id: 'service_terms', label: 'Servis Metinleri', icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
                             { id: 'security', label: 'Sistem Güvenliği', icon: Shield, color: 'text-orange-600', bg: 'bg-orange-50' },
                             { id: 'roles', label: 'Yetki ve İzinler', icon: Key, color: 'text-rose-500', bg: 'bg-rose-50' },
                             { id: 'updates', label: 'Yazılım Güncelleme', icon: RefreshCw, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -1704,6 +1822,7 @@ const Settings = () => {
                              activeTab === 'stock' ? 'Envanter Veritabanı' :
                              activeTab === 'updates' ? 'Yazılım Güncelleme' :
                              activeTab === 'roles' ? 'Yetki ve Rol Yönetimi' :
+                             activeTab === 'service_terms' ? 'Servis Onay & Gizlilik' :
                              'Genel Sistem Settingsı'}
                         </h2>
                         <p className="text-gray-500 mt-2 font-medium text-lg leading-relaxed max-w-2xl">
@@ -1711,6 +1830,7 @@ const Settings = () => {
                              activeTab === 'locations' ? 'Fiziksel servis noktalarınızı ve Ship-To numaralarınızı tanımlayın.' :
                               activeTab === 'updates' ? 'Sistem yazılımını güncel tutarak en yeni özelliklere ve güvenlik iyileştirmelerine sahip olun.' :
                               activeTab === 'roles' ? 'Sistemdeki rolleri tanımlayabilir ve her rolün hangi sayfalara/işlemlere erişebileceğini belirleyebilirsiniz.' :
+                              activeTab === 'service_terms' ? 'Onay formlarında ve Kiosk ekranında yer alan yasal metinleri ve sözleşme maddelerini özelleştirin.' :
                               'Tüm sistem parametrelerini ve kurumsal verileri merkezi olarak buradan yapılandırın.'}
                         </p>
                     </div>

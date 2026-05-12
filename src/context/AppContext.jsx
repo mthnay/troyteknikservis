@@ -201,7 +201,7 @@ export const AppProvider = ({ children }) => {
                 if (!hasPermission(currentUser, 'view_all_stores') && currentUser.storeId) {
                     queryParams = `?storeId=${currentUser.storeId}`;
                 }
-                const [repairsRes, inventoryRes, techniciansRes, settingsRes, customersRes, companyRes, earningsRes, notifSetRes, notifTempRes, rolesRes] = await Promise.all([
+                const [repairsRes, inventoryRes, techniciansRes, settingsRes, customersRes, companyRes, earningsRes, notifSetRes, notifTempRes, serviceTermsRes, rolesRes] = await Promise.all([
                     apiFetch(`${API_URL}/repairs${queryParams}`),
                     apiFetch(`${API_URL}/inventory${queryParams}`),
                     apiFetch(`${API_URL}/technicians${queryParams}`),
@@ -211,6 +211,7 @@ export const AppProvider = ({ children }) => {
                     apiFetch(`${API_URL}/earnings${queryParams}`),
                     apiFetch(`${API_URL}/settings/notificationSettings`),
                     apiFetch(`${API_URL}/settings/notificationTemplates`),
+                    apiFetch(`${API_URL}/settings/serviceTerms`),
                     apiFetch(`${API_URL}/roles`)
                 ]);
                 if (repairsRes.ok) {
@@ -243,6 +244,10 @@ export const AppProvider = ({ children }) => {
                 if (notifTempRes.ok) {
                     const notifTemp = await notifTempRes.json();
                     if (notifTemp) setNotificationTemplates(notifTemp);
+                }
+                if (serviceTermsRes.ok) {
+                    const terms = await serviceTermsRes.json();
+                    if (terms) setServiceTerms(terms);
                 }
                 if (rolesRes && rolesRes.ok) {
                     const fetchedRoles = await rolesRes.json();
@@ -832,6 +837,7 @@ export const AppProvider = ({ children }) => {
             companyProfile, setCompanyProfile: (p) => { setCompanyProfile(p); saveSettings('companyProfile', p); },
             notificationSettings, setNotificationSettings: (s) => { setNotificationSettings(s); saveSettings('notificationSettings', s); },
             notificationTemplates, setNotificationTemplates: (s) => { setNotificationTemplates(s); saveSettings('notificationTemplates', s); },
+            serviceTerms, setServiceTerms: (s) => { setServiceTerms(s); saveSettings('serviceTerms', s); },
             roles, addRole, updateRole, deleteRole,
             selectedStoreId, setSelectedStoreId, showToast, alerts, checkSLA, API_URL, sendWhatsApp, uploadMedia
         }}>
