@@ -6,7 +6,7 @@ import ConfirmationModal from './ConfirmationModal';
 import AISuggestionCard from './AISuggestionCard';
 
 const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
-    const { inventory, usePart, showToast, updateInventoryItem, addInventoryItem } = useAppContext(); // Get inventory and usePart action
+    const { inventory, usePart, showToast, updateInventoryItem, addInventoryItem, API_URL } = useAppContext(); // Get inventory and usePart action
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         repairType: '', // En üstte olacak
@@ -248,7 +248,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
         setAiDiagnosis(null);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001/api'}/ai/diagnose`, {
+            const response = await fetch(`${API_URL}/ai/diagnose`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
