@@ -108,7 +108,7 @@ const Settings = () => {
         if (activeTab === 'audit_logs') {
             fetch('/api/system/audit-logs', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 }
             })
             .then(res => res.json())
@@ -237,7 +237,7 @@ const Settings = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
                     sourceItemId: itemId,
