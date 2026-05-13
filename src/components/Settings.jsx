@@ -28,6 +28,16 @@ const Settings = () => {
     const [showEarningsModal, setShowEarningsModal] = useState(false);
     const [newEarning, setNewEarning] = useState({ storeId: '', month: '', amount: '' });
 
+    // --- Stock Transfer States ---
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [transferForm, setTransferForm] = useState({
+        sourceStoreId: '',
+        targetStoreId: '',
+        itemId: '',
+        serialNumbers: [],
+        serialType: 'kgb'
+    });
+
     // --- Company Profile Form ---
     const [tempCompanyProfile, setTempCompanyProfile] = useState(companyProfile || {
         name: "TROY",
@@ -85,6 +95,7 @@ const Settings = () => {
     const [file, setFile] = useState(null);
     const [uploadStatus, setUploadStatus] = useState('');
     const [attachmentExists, setAttachmentExists] = useState(false);
+    const [auditLogs, setAuditLogs] = useState([]);
 
     React.useEffect(() => {
         if (activeTab === 'notifications') {
@@ -92,6 +103,17 @@ const Settings = () => {
                 .then(res => res.json())
                 .then(data => setAttachmentExists(data.exists))
                 .catch(err => console.error('Attachment check failed:', err));
+        }
+
+        if (activeTab === 'audit_logs') {
+            fetch('/api/system/audit-logs', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(res => res.json())
+            .then(data => setAuditLogs(data))
+            .catch(err => console.error('Audit logs fetch failed:', err));
         }
     }, [activeTab]);
 
@@ -196,6 +218,54 @@ const Settings = () => {
             setTempServiceTerms(serviceTerms);
         }
     }, [serviceTerms]);
+
+    const handleExecuteTransfer = async () => {
+        const { sourceStoreId, targetStoreId, itemId, serialNumbers, serialType } = transferForm;
+        
+        if (!sourceStoreId || !targetStoreId || !itemId || serialNumbers.length === 0) {
+            Swal.fire('Hata', 'Lütfen tüm alanları doldurun ve en az bir seri numarası seçin.', 'error');
+            return;
+        }
+
+        if (sourceStoreId === targetStoreId) {
+            Swal.fire('Hata', 'Kaynak ve hedef mağaza aynı olamaz.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/inventory/transfer-serial', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    sourceItemId: itemId,
+                    targetStoreId: parseInt(targetStoreId),
+                    serialNumbers,
+                    serialType
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                Swal.fire({
+                    title: 'Başarılı!',
+                    text: 'Stok transferi başarıyla tamamlandı.',
+                    icon: 'success',
+                    timer: 2000
+                }).then(() => {
+                    setShowTransferModal(false);
+                    // Refresh data
+                    window.location.reload();
+                });
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            Swal.fire('Hata', 'Transfer işlemi başarısız: ' + error.message, 'error');
+        }
+    };
 
     const handleSaveServiceTerms = () => {
         setServiceTerms(tempServiceTerms);
@@ -1833,12 +1903,103 @@ const Settings = () => {
                                     <p className="text-gray-400 max-w-md text-sm leading-relaxed">Şubeler arası parça transferlerini buradan yönetebilir, ambarlar arası dengelemeyi sağlayabilirsiniz. (Sadece Admin yetkisi ile)</p>
                                 </div>
                                 <button 
-                                    onClick={() => Swal.fire('Yakında', 'Şubeler arası otomatik transfer modülü bir sonraki güncellemede aktif edilecektir.', 'info')}
+                                    onClick={() => {
+                                        setTransferForm({
+                                            sourceStoreId: '',
+                                            targetStoreId: '',
+                                            itemId: '',
+                                            serialNumbers: [],
+                                            serialType: 'kgb'
+                                        });
+                                        setShowTransferModal(true);
+                                    }}
                                     className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all flex items-center gap-2 shadow-xl"
                                 >
                                     <RefreshCw size={20} /> Transfer Başlat
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                );
+            case 'audit_logs':
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">Sistem Denetim Günlükleri</h3>
+                                <p className="text-sm text-gray-400 font-medium">Sistem üzerinde gerçekleştirilen tüm kritik işlemlerin şeffaf kaydı.</p>
+                            </div>
+                            <div className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold">
+                                <Clock size={16} /> Son 200 İşlem
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50/50 border-b border-gray-100">
+                                        <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Zaman Damgası</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kullanıcı</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Modül / İşlem</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Açıklama</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">IP Adresi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {auditLogs.length > 0 ? (
+                                        auditLogs.map((log) => (
+                                            <tr key={log._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[13px] font-bold text-gray-900">{new Date(log.createdAt).toLocaleDateString('tr-TR')}</span>
+                                                        <span className="text-[11px] text-gray-400 font-medium">{new Date(log.createdAt).toLocaleTimeString('tr-TR')}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[13px] font-bold text-gray-900">{log.userName}</span>
+                                                        <span className="text-[11px] text-gray-400 font-medium">{log.userEmail}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                                            log.module === 'AUTH' ? 'bg-amber-50 text-amber-600' :
+                                                            log.module === 'INVENTORY' ? 'bg-blue-50 text-blue-600' :
+                                                            log.module === 'REPAIR' ? 'bg-emerald-50 text-emerald-600' :
+                                                            'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                            {log.module}
+                                                        </span>
+                                                        <span className="text-[11px] font-bold text-gray-500">{log.action}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <p className="text-[13px] text-gray-600 font-medium max-w-md truncate" title={log.details}>
+                                                        {log.details}
+                                                    </p>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <span className="text-[11px] font-mono font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                                                        {log.ipAddress}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-20 text-center">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                                                        <Clock size={24} />
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Henüz günlük kaydı bulunmuyor</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 );
@@ -1865,6 +2026,7 @@ const Settings = () => {
                                 { id: 'notifications', label: 'E-Posta & SMTP', icon: Mail },
                                 { id: 'service_terms', label: 'Servis Metinleri', icon: MessageSquare },
                                 { id: 'security', label: 'Sistem Güvenliği', icon: Shield },
+                                { id: 'audit_logs', label: 'Sistem Günlükleri', icon: Clock },
                                 { id: 'roles', label: 'Yetki ve İzinler', icon: Key },
                                 { id: 'updates', label: 'Yazılım Güncelleme', icon: RefreshCw },
                             ].map((item) => (
@@ -1914,6 +2076,120 @@ const Settings = () => {
                     </div>
                 </div>
             </div>
+            {showTransferModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[100] flex items-center justify-center p-4 overflow-hidden">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl animate-scale-up border border-white/20 overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="px-8 py-6 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                    <RefreshCw size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">Stok Transferi Başlat</h3>
+                                    <p className="text-xs text-gray-400 font-medium">Ambarlar arası güvenli parça transferi</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowTransferModal(false)} className="w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-full transition-all">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 space-y-6 overflow-y-auto">
+                            {/* Step 1: Stores */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kaynak Ambar</label>
+                                    <select 
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                                        value={transferForm.sourceStoreId}
+                                        onChange={(e) => setTransferForm({...transferForm, sourceStoreId: e.target.value, itemId: '', serialNumbers: []})}
+                                    >
+                                        <option value="">Seçiniz...</option>
+                                        {servicePoints.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Hedef Ambar</label>
+                                    <select 
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                                        value={transferForm.targetStoreId}
+                                        onChange={(e) => setTransferForm({...transferForm, targetStoreId: e.target.value})}
+                                    >
+                                        <option value="">Seçiniz...</option>
+                                        {servicePoints.filter(p => String(p.id) !== String(transferForm.sourceStoreId)).map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Step 2: Item Selection */}
+                            {transferForm.sourceStoreId && (
+                                <div className="space-y-2 animate-fade-in">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Transfer Edilecek Parça</label>
+                                    <select 
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                                        value={transferForm.itemId}
+                                        onChange={(e) => setTransferForm({...transferForm, itemId: e.target.value, serialNumbers: []})}
+                                    >
+                                        <option value="">Parça Seçiniz...</option>
+                                        {inventory.filter(i => String(i.storeId) === String(transferForm.sourceStoreId) && i.quantity > 0).map(i => (
+                                            <option key={i._id || i.id} value={i._id || i.id}>{i.name} ({i.partNumber}) - Mevcut: {i.quantity}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Step 3: Serial Selection */}
+                            {transferForm.itemId && (
+                                <div className="space-y-4 animate-fade-in">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Seri Numaraları Seçimi</label>
+                                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Seçilen: {transferForm.serialNumbers.length}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                        {(inventory.find(i => (i._id || i.id) === transferForm.itemId)?.kgbSerials || []).map(sn => (
+                                            <label key={sn} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 cursor-pointer hover:border-blue-300 transition-all group">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                                                    checked={transferForm.serialNumbers.includes(sn)}
+                                                    onChange={(e) => {
+                                                        const sns = e.target.checked 
+                                                            ? [...transferForm.serialNumbers, sn]
+                                                            : transferForm.serialNumbers.filter(s => s !== sn);
+                                                        setTransferForm({...transferForm, serialNumbers: sns});
+                                                    }}
+                                                />
+                                                <span className="text-xs font-mono font-bold text-gray-700 group-hover:text-blue-600">{sn}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-4">
+                            <button
+                                onClick={() => setShowTransferModal(false)}
+                                className="flex-1 py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-all"
+                            >
+                                Vazgeç
+                            </button>
+                            <button
+                                onClick={handleExecuteTransfer}
+                                disabled={!transferForm.targetStoreId || !transferForm.itemId || transferForm.serialNumbers.length === 0}
+                                className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw size={18} />
+                                Transferi Gerçekleştir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}

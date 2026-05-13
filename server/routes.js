@@ -12,6 +12,7 @@ import DeviceModel from './models/DeviceModel.js';
 import Earning from './models/Earning.js';
 import Notification from './models/Notification.js';
 import Role from './models/Role.js';
+import AuditLog from './models/AuditLog.js';
 import multer from 'multer';
 import bcrypt from 'bcryptjs';
 import { sendAutomatedEmail } from './emailService.js';
@@ -23,6 +24,25 @@ import { verifyToken, requireRole } from './middleware/auth.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'troy-fallback-secret-key-2026';
+
+// --- Audit Log Helper ---
+const createLog = async (req, action, module, details = '') => {
+    try {
+        const user = req.user; // Set by verifyToken middleware
+        await AuditLog.create({
+            userId: user?.id || 'SYSTEM',
+            userName: user?.name || 'Sistem',
+            userEmail: user?.email,
+            action,
+            module,
+            details: typeof details === 'object' ? JSON.stringify(details) : details,
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || '',
+            storeId: user?.storeId
+        });
+    } catch (err) {
+        console.error('Audit Log Error:', err);
+    }
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -371,6 +391,9 @@ router.delete('/repairs/:id', async (req, res) => {
         if (!deleted) {
             deleted = await Repair.findOneAndDelete({ _id: id });
         }
+        if (deleted) {
+            await createLog(req, 'DELETE_REPAIR', 'REPAIR', `Servis kaydı silindi: ${deleted.serviceNo} - ${deleted.customerName}`);
+        }
         res.json({ message: 'Repair deleted', success: !!deleted });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -428,6 +451,10 @@ router.post('/login', async (req, res) => {
 
         console.log(`[LOGIN] SUCCESS: User ${user.name} logged in.`);
         
+        // --- Audit Log ---
+        req.user = user; // Manual set for login route
+        await createLog(req, 'LOGIN', 'AUTH', `Kullanıcı sisteme giriş yaptı: ${user.email}`);
+
         const token = jwt.sign(
             { id: user._id || user.id, email: user.email, role: user.role, storeId: user.storeId },
             JWT_SECRET,
@@ -667,6 +694,8 @@ router.post('/inventory/transfer-serial', async (req, res) => {
         targetItem[serialField] = [...targetItem[serialField], ...serialNumbers];
         targetItem.quantity += serialNumbers.length;
         await targetItem.save();
+
+        await createLog(req, 'STOCK_TRANSFER', 'INVENTORY', `${serialNumbers.length} adet seri nolu parça transfer edildi. Kaynak: ${sourceItem.storeId}, Hedef: ${targetStoreId}`);
 
         res.json({ success: true, sourceItem, targetItem });
     } catch(err) {
@@ -1088,6 +1117,16 @@ router.post('/ai/enhance-message', async (req, res) => {
     } catch (error) {
         console.error('AI Enhance Error:', error);
         res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// --- Audit Logs ---
+router.get('/system/audit-logs', requireRole(['superadmin']), async (req, res) => {
+    try {
+        const logs = await AuditLog.find().sort({ createdAt: -1 }).limit(200);
+        res.json(logs);
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
