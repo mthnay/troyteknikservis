@@ -255,6 +255,37 @@ router.post('/public/repairs/:id/quote', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+// Public Route: Müşteri Geribildirimi (NPS)
+router.post('/public/repairs/:id/feedback', async (req, res) => {
+    try {
+        const { score, comment } = req.body;
+        const repair = await Repair.findOne({ id: req.params.id });
+
+        if (!repair) return res.status(404).json({ message: 'Kayıt bulunamadı.' });
+        
+        // Eğer zaten bir skor varsa güncellemeye izin vermeyebiliriz veya güncelleyebiliriz. 
+        // Apple standartlarında genellikle bir kez verilir.
+        if (repair.feedback && repair.feedback.score) {
+            return res.status(400).json({ message: 'Bu kayıt için zaten geribildirim verilmiş.' });
+        }
+
+        await Repair.findOneAndUpdate(
+            { id: req.params.id },
+            { 
+                feedback: { 
+                    score, 
+                    comment, 
+                    createdAt: new Date() 
+                } 
+            }
+        );
+
+        res.json({ success: true, message: 'Geribildiriminiz için teşekkür ederiz!' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
 // --- Repairs ---
 router.get('/repairs', async (req, res) => {
     try {
@@ -1056,6 +1087,55 @@ router.post('/ai/enhance-message', async (req, res) => {
         res.json({ success: true, enhancedMessage: response.text().trim() });
     } catch (error) {
         console.error('AI Enhance Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// AI Route: Otomatik Model ve Garanti Sorgulama (Simüle)
+router.get('/ai/apple-coverage/:serial', async (req, res) => {
+    const { serial } = req.params;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
+        // Mock data if no API key
+        return res.json({
+            success: true,
+            model: "iPhone 15 Pro (Simulated)",
+            productGroup: "iphone",
+            warrantyStatus: "standard",
+            color: "Natural Titanium",
+            capacity: "256 GB"
+        });
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+        Analyze this Apple Serial Number: "${serial}". 
+        If it's a valid serial, identify the model, color, and capacity. 
+        If it's not valid, guess based on typical patterns.
+        
+        Return a JSON object with:
+        1. "model": Full device name (e.g. iPhone 15 Pro Max)
+        2. "warrantyStatus": One of ["standard", "applecare", "out-of-warranty"]
+        3. "color": Device color
+        4. "capacity": Storage capacity
+        5. "productGroup": One of ["iphone", "ipad", "mac", "watch", "airpods", "other"]
+
+        Return ONLY the JSON.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const data = jsonMatch ? JSON.parse(jsonMatch[0]) : { model: "Unknown Device", productGroup: "other", warrantyStatus: "out-of-warranty" };
+
+        res.json({ success: true, ...data });
+    } catch (error) {
+        console.error('AI Coverage Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });

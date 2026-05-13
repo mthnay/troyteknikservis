@@ -312,12 +312,52 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
     };
 
     const handleSerialSearch = async () => {
-        if (!formData.serialNumber) return;
+        if (!formData.serialNumber) {
+            showToast('Lütfen bir seri numarası giriniz.', 'warning');
+            return;
+        }
+        
         setSearching(true);
-        setTimeout(() => {
+        try {
+            // AppContext içindeki API_URL'i kullanmak yerine yerel URL belirleyelim (AppContext'ten de alınabilir)
+            const API_URL = import.meta.env.VITE_API_URL || 
+                            (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                            ? 'http://localhost:5001/api' 
+                            : '/api');
+                            
+            const res = await fetch(`${API_URL}/ai/apple-coverage/${formData.serialNumber}`, {
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const fullModelName = `${data.model}${data.capacity ? `, ${data.capacity}` : ''}${data.color ? `, ${data.color}` : ''}`;
+                
+                setFormData(prev => {
+                    const group = data.productGroup || 'iphone';
+                    const isExchangeDefault = ['watch', 'airpods', 'other'].includes(group);
+                    
+                    return {
+                        ...prev,
+                        deviceModel: fullModelName,
+                        productGroup: group,
+                        warrantyStatus: data.warrantyStatus || 'out-of-warranty',
+                        serviceType: isExchangeDefault ? 'exchange' : 'repair'
+                    };
+                });
+                
+                showToast(`${data.model} başarıyla tanımlandı.`, 'success');
+            } else {
+                showToast('Bilgiler otomatik alınamadı, lütfen manuel devam edin.', 'info');
+            }
+        } catch (error) {
+            console.error("Inquiry Error:", error);
+            showToast('Sorgulama sırasında bir hata oluştu.', 'error');
+        } finally {
             setSearching(false);
-            showToast('Seri numarası yerel veritabanında bulunamadı. Lütfen bilgileri manuel giriniz.', 'info');
-        }, 800);
+        }
     };
 
     const openAppleCoverage = () => {

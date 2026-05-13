@@ -60,7 +60,12 @@ const repairSchema = new mongoose.Schema({
         text: String,
         date: String,
         user: String
-    }]
+    }],
+    feedback: {
+        score: { type: Number, min: 1, max: 5 },
+        comment: String,
+        createdAt: { type: Date }
+    }
 }, { timestamps: true, strict: false });
 
 export default mongoose.models.Repair || mongoose.model('Repair', repairSchema);

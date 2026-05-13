@@ -28,12 +28,27 @@ const TechnicianPerformance = () => {
 
         const avgTime = countWithTime > 0 ? Math.round(totalMinutes / countWithTime) : 0;
         
+        // Feedbacks for this tech
+        const feedbacks = completed.filter(r => r.feedback && r.feedback.score);
+        const avgScore = feedbacks.length > 0 ? (feedbacks.reduce((acc, r) => acc + r.feedback.score, 0) / feedbacks.length).toFixed(1) : '5.0';
+
+        // Composite Efficiency Score
+        // 1. Time Score (0-40) -> assuming < 30 mins is 40, > 120 mins is 10
+        const timeScore = avgTime === 0 ? 30 : Math.max(10, Math.min(40, 40 - (avgTime - 30) / 2));
+        // 2. CSAT Score (0-30) -> avgScore * 6
+        const csatScore = parseFloat(avgScore) * 6;
+        // 3. Completion Score (0-30) -> based on total vs completed
+        const completionScore = techRepairs.length > 0 ? (completed.length / techRepairs.length) * 30 : 25;
+
+        const totalEfficiency = Math.round(timeScore + csatScore + completionScore);
+        
         return {
             total: techRepairs.length,
             completed: completed.length,
             active: active.length,
             avgTime: avgTime,
-            efficiency: techRepairs.length > 0 ? Math.round((completed.length / techRepairs.length) * 100) : 0
+            avgScore: avgScore,
+            efficiency: totalEfficiency
         };
     };
 
@@ -87,7 +102,8 @@ const TechnicianPerformance = () => {
                                 <th className="px-6 py-5">Biten İş</th>
                                 <th className="px-6 py-5">Aktif Yük</th>
                                 <th className="px-6 py-5">Ort. Hız</th>
-                                <th className="px-6 py-5">Skor</th>
+                                <th className="px-6 py-5">Müşteri Puanı</th>
+                                <th className="px-6 py-5">Verimlilik</th>
                                 <th className="px-8 py-5 text-right">Durum</th>
                             </tr>
                         </thead>
@@ -113,6 +129,12 @@ const TechnicianPerformance = () => {
                                             <div className="flex items-center gap-2">
                                                 <Clock size={14} className="text-gray-300" />
                                                 <span className="text-sm font-bold text-gray-600">{stats.avgTime > 0 ? `${stats.avgTime} dk` : '--'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-6">
+                                            <div className="flex items-center gap-1 font-bold text-yellow-500">
+                                                <Award size={14} className="fill-current" />
+                                                {stats.avgScore}
                                             </div>
                                         </td>
                                         <td className="px-6 py-6">

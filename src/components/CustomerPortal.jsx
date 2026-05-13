@@ -9,6 +9,8 @@ const CustomerPortal = ({ trackId }) => {
     const [error, setError] = useState('');
     const [repair, setRepair] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [feedback, setFeedback] = useState({ score: 0, comment: '' });
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL || 
                     (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -55,6 +57,32 @@ const CustomerPortal = ({ trackId }) => {
             }
         } catch (err) {
             alert('İşlem başarısız oldu. Lütfen daha sonra tekrar deneyin.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleFeedback = async () => {
+        if (feedback.score === 0) {
+            alert('Lütfen bir puan seçiniz.');
+            return;
+        }
+        
+        setActionLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/public/repairs/${trackId}/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(feedback)
+            });
+            if (res.ok) {
+                setFeedbackSubmitted(true);
+            } else {
+                const data = await res.json();
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('İşlem başarısız oldu.');
         } finally {
             setActionLoading(false);
         }
@@ -225,6 +253,53 @@ const CustomerPortal = ({ trackId }) => {
                         
                     </div>
                 </div>
+
+                {/* Feedback Section (If Delivered) */}
+                {(status === 'Teslim Edildi' || status === 'Tamamlandı') && !repair.feedback?.score && !feedbackSubmitted && (
+                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-8 text-white shadow-xl shadow-blue-200 animate-in zoom-in-95 duration-500">
+                        <h2 className="text-2xl font-bold mb-2">Hizmetimizi Değerlendirin</h2>
+                        <p className="text-blue-100 mb-8 opacity-90 font-medium">Size daha iyi hizmet verebilmemiz için deneyiminizi paylaşır mısınız?</p>
+                        
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="flex gap-4">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <button 
+                                        key={star} 
+                                        onClick={() => setFeedback({ ...feedback, score: star })}
+                                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${feedback.score >= star ? 'bg-white text-blue-600 scale-110 shadow-lg' : 'bg-white/10 text-white/40 hover:bg-white/20'}`}
+                                    >
+                                        <Apple size={32} className={feedback.score >= star ? 'fill-current' : ''} />
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            <textarea 
+                                placeholder="Görüş ve önerileriniz (Opsiyonel)"
+                                className="w-full bg-white/10 border border-white/20 rounded-2xl p-4 text-white placeholder-white/40 outline-none focus:bg-white/20 transition-all resize-none min-h-[100px] font-medium"
+                                value={feedback.comment}
+                                onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })}
+                            />
+                            
+                            <button 
+                                onClick={handleFeedback}
+                                disabled={actionLoading}
+                                className="w-full bg-white text-blue-600 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                {actionLoading ? 'Gönderiliyor...' : 'Değerlendirmeyi Gönder'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {(repair.feedback?.score || feedbackSubmitted) && (
+                    <div className="bg-white rounded-[2rem] p-8 text-center shadow-sm border border-gray-100 animate-in fade-in duration-500">
+                        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
+                            <CheckCircle size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Geribildiriminiz İçin Teşekkürler!</h3>
+                        <p className="text-gray-500">Görüşleriniz hizmet kalitemizi artırmak için kullanılacaktır.</p>
+                    </div>
+                )}
 
                 <div className="text-center mt-8 text-sm text-gray-400 pb-8">
                     Troy Apple Yetkili Servis Sağlayıcısı

@@ -11,31 +11,57 @@ const Reports = () => {
         const totalRepairCount = repairs.length;
         const completedRepairs = repairs.filter(r => r.status === 'Tamamlandı' || r.status === 'Teslim Edildi' || r.status === 'Cihaz Hazır').length;
 
-        const feedbackRepairs = repairs.filter(r => r.customerType === 'positive' || r.customerType === 'negative');
-        const positiveFeedbacks = repairs.filter(r => r.customerType === 'positive').length;
+        const feedbackRepairs = repairs.filter(r => r.feedback && r.feedback.score);
         const totalFeedbacks = feedbackRepairs.length;
+        const totalScore = feedbackRepairs.reduce((acc, r) => acc + (r.feedback.score || 0), 0);
+        const avgRating = totalFeedbacks > 0 ? (totalScore / totalFeedbacks).toFixed(1) : '5.0';
 
-        const satisfactionRate = totalFeedbacks > 0 ? (positiveFeedbacks / totalFeedbacks) * 100 : 100;
-        const avgRating = totalFeedbacks > 0 ? ((satisfactionRate / 20).toFixed(1)) : '5.0';
-
-        const promoterCount = positiveFeedbacks;
-        const detractorCount = totalFeedbacks - positiveFeedbacks;
-        const npsScore = totalFeedbacks > 0 ? Math.round(((promoterCount - detractorCount) / totalFeedbacks) * 100) : 100;
+        const promoters = feedbackRepairs.filter(r => r.feedback.score >= 4).length;
+        const detractors = feedbackRepairs.filter(r => r.feedback.score <= 2).length;
+        const npsScore = totalFeedbacks > 0 ? Math.round(((promoters - detractors) / totalFeedbacks) * 100) : 100;
 
         const phoneCounts = {};
+        const serials = {};
         repairs.forEach(r => {
             if (r.customerPhone) {
                 phoneCounts[r.customerPhone] = (phoneCounts[r.customerPhone] || 0) + 1;
             }
+            if (r.serial) {
+                serials[r.serial] = (serials[r.serial] || 0) + 1;
+            }
         });
+
         const returningCustomersCount = Object.values(phoneCounts).filter(count => count > 1).length;
         const totalUniqueCustomers = Object.keys(phoneCounts).length;
         const loyaltyRate = totalUniqueCustomers > 0 ? Math.round((returningCustomersCount / totalUniqueCustomers) * 100) : 0;
+        
+        const reRepairCount = Object.values(serials).filter(count => count > 1).length;
+        const reRepairRate = totalRepairCount > 0 ? Math.round((reRepairCount / totalRepairCount) * 100) : 0;
 
-        return { totalRepairCount, completedRepairs, satisfactionRate, avgRating, npsScore, loyaltyRate, totalFeedbacks, positiveFeedbacks, detractorCount };
+        return { 
+            totalRepairCount, 
+            completedRepairs, 
+            avgRating, 
+            npsScore, 
+            loyaltyRate, 
+            totalFeedbacks, 
+            promoters, 
+            detractors,
+            reRepairCount,
+            reRepairRate
+        };
     }, [repairs]);
 
-    const { totalRepairCount, completedRepairs, satisfactionRate, avgRating, npsScore, loyaltyRate, totalFeedbacks, positiveFeedbacks, detractorCount } = stats;
+    const { 
+        totalRepairCount, 
+        completedRepairs, 
+        avgRating, 
+        npsScore, 
+        loyaltyRate, 
+        totalFeedbacks, 
+        reRepairCount,
+        reRepairRate
+    } = stats;
 
     const satisfactionTrend = useMemo(() => {
         const daysLabel = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
@@ -46,21 +72,25 @@ const Reports = () => {
             d.setDate(d.getDate() - i);
             const dayName = daysLabel[d.getDay()];
             const dayRepairs = repairs.filter(r => r.createdAt && new Date(r.createdAt).toDateString() === d.toDateString());
-            const dayPos = dayRepairs.filter(r => r.customerType === 'positive').length;
-            const dayTotal = dayRepairs.filter(r => r.customerType === 'positive' || r.customerType === 'negative').length;
-            const dayScore = dayTotal > 0 ? Math.round((dayPos / dayTotal) * 100) : (satisfactionRate || 100);
+            const dayFeedbacks = dayRepairs.filter(r => r.feedback && r.feedback.score);
+            const dayTotalScore = dayFeedbacks.reduce((acc, r) => acc + r.feedback.score, 0);
+            const dayScore = dayFeedbacks.length > 0 ? Math.round((dayTotalScore / (dayFeedbacks.length * 5)) * 100) : 100;
             trend.push({ label: dayName, value: dayScore });
         }
         return trend;
-    }, [repairs, satisfactionRate]);
+    }, [repairs]);
 
-    const ratingDistribution = useMemo(() => [
-        { label: '5 Yıldız', value: totalFeedbacks > 0 ? Math.round((positiveFeedbacks / totalFeedbacks) * 100) : 100, color: 'bg-green-500' },
-        { label: '4 Yıldız', value: 0, color: 'bg-blue-500' },
-        { label: '3 Yıldız', value: 0, color: 'bg-yellow-500' },
-        { label: '2 Yıldız', value: 0, color: 'bg-orange-500' },
-        { label: '1 Yıldız', value: totalFeedbacks > 0 ? Math.round((detractorCount / totalFeedbacks) * 100) : 0, color: 'bg-red-500' }
-    ], [totalFeedbacks, positiveFeedbacks, detractorCount]);
+    const ratingDistribution = useMemo(() => {
+        const feedbackRepairs = repairs.filter(r => r.feedback && r.feedback.score);
+        const total = feedbackRepairs.length || 1;
+        return [
+            { label: '5 Yıldız', value: Math.round((feedbackRepairs.filter(r => r.feedback.score === 5).length / total) * 100), color: 'bg-green-500' },
+            { label: '4 Yıldız', value: Math.round((feedbackRepairs.filter(r => r.feedback.score === 4).length / total) * 100), color: 'bg-blue-500' },
+            { label: '3 Yıldız', value: Math.round((feedbackRepairs.filter(r => r.feedback.score === 3).length / total) * 100), color: 'bg-yellow-500' },
+            { label: '2 Yıldız', value: Math.round((feedbackRepairs.filter(r => r.feedback.score === 2).length / total) * 100), color: 'bg-orange-500' },
+            { label: '1 Yıldız', value: Math.round((feedbackRepairs.filter(r => r.feedback.score === 1).length / total) * 100), color: 'bg-red-500' }
+        ];
+    }, [repairs]);
 
     // SLA ve Karar Destek Metrikleri
     const slaStats = useMemo(() => {
@@ -228,6 +258,20 @@ const Reports = () => {
                     <div className="bg-blue-50 rounded-md p-5 border border-blue-100 flex flex-col justify-between">
                         <span className="text-[10px] font-semibold uppercase text-blue-500 tracking-wider">Ortalama Süre</span>
                         <div className="text-4xl font-semibold text-blue-600 mt-2">{slaStats.avgResolutionTime} <span className="text-lg text-blue-400 font-bold">Gün</span></div>
+                    </div>
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    <div className="bg-white p-5 rounded-md border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tekrarlanan Onarım (Re-Repair)</p>
+                            <h4 className="text-2xl font-bold text-gray-900">{reRepairCount} Cihaz</h4>
+                            <p className="text-[10px] text-red-500 font-bold mt-1">Son 90 gün içinde aynı seri no ile 2. giriş</p>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xl font-bold text-red-600">%{reRepairRate}</div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase">Hata Oranı</p>
+                        </div>
                     </div>
                 </div>
             </div>
