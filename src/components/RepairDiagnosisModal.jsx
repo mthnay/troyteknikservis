@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, Save, AlertCircle, Wrench, Plus, Trash2, DollarSign, Mail, ArrowRight, ArrowLeft, ChevronRight, Activity, Zap, RotateCcw, Check } from 'lucide-react';
+import { X, Save, AlertCircle, Wrench, Plus, Trash2, DollarSign, Mail, ArrowRight, ArrowLeft, ChevronRight, Activity, Zap, RotateCcw, Check, Sparkles } from 'lucide-react';
 import CustomerNotificationModal from './CustomerNotificationModal';
 import { useAppContext } from '../context/AppContext';
 import ConfirmationModal from './ConfirmationModal';
+import AISuggestionCard from './AISuggestionCard';
 
 const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
     const { inventory, usePart, showToast, updateInventoryItem, addInventoryItem } = useAppContext(); // Get inventory and usePart action
@@ -15,6 +16,8 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
     });
     const [repairId, setRepairId] = useState('');
     const [showHelper, setShowHelper] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiDiagnosis, setAiDiagnosis] = useState(null);
     
     // Return States
     const [showReturnModal, setShowReturnModal] = useState(false);
@@ -235,6 +238,52 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
         onClose();
     };
 
+    const handleAIDiagnose = async () => {
+        if (!repair.issue) {
+            showToast('Müşteri şikayeti bulunamadığı için analiz yapılamıyor.', 'warning');
+            return;
+        }
+
+        setAiLoading(true);
+        setAiDiagnosis(null);
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001/api'}/ai/diagnose`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    deviceModel: repair.device,
+                    issueDescription: repair.issue
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setAiDiagnosis(data.diagnosis);
+            } else {
+                showToast(data.message || 'AI analizi başarısız oldu.', 'error');
+            }
+        } catch (error) {
+            console.error('AI Error:', error);
+            showToast('Sunucu ile iletişim kurulamadı.', 'error');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const applyAISuggestion = (diagnosis) => {
+        setFormData({
+            ...formData,
+            notes: diagnosis.techNote,
+            tests: (formData.tests ? formData.tests + '\n' : '') + `AI Analizi: ${diagnosis.steps.join(', ')}`
+        });
+        setAiDiagnosis(null);
+        showToast('AI önerileri forma uygulandı.', 'success');
+    };
+
     const finalizeSave = () => {
         let targetView = 'in-store';
         const selectedType = repairTypes.find(t => t.id === formData.repairType);
@@ -322,7 +371,35 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
 
                             {/* 2. Tanı Testleri (Opsiyonel) */}
                             <div>
-                                <label className="block text-xs font-semibold text-gray-400 text-xs uppercase tracking-wide mb-3">Tanı Testleri ve Gözlemler <span className="font-medium opacity-50">(Opsiyonel)</span></label>
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="block text-xs font-semibold text-gray-400 text-xs uppercase tracking-wide">Tanı Testleri ve Gözlemler <span className="font-medium opacity-50">(Opsiyonel)</span></label>
+                                    <button 
+                                        onClick={handleAIDiagnose}
+                                        disabled={aiLoading}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${aiLoading ? 'bg-gray-100 text-gray-400' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-100 hover:scale-105 active:scale-95'}`}
+                                    >
+                                        {aiLoading ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                                                Analiz Ediliyor...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={12} />
+                                                AI Asistanı ile Çözüm Üret
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                                
+                                {aiDiagnosis && (
+                                    <AISuggestionCard 
+                                        diagnosis={aiDiagnosis} 
+                                        onApply={applyAISuggestion} 
+                                        onClose={() => setAiDiagnosis(null)} 
+                                    />
+                                )}
+
                                 <textarea
                                     className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-md focus:ring-4 focus:ring-gray-100 focus:border-gray-300 outline-none min-h-[100px] text-sm font-medium transition-all resize-none"
                                     placeholder="Yapılan testler, gözlemler ve tanı sonuçları..."

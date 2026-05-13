@@ -45,6 +45,7 @@
     }
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tailwindcss/vite": "^4.1.18",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",

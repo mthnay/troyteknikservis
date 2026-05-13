@@ -20,6 +20,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import { verifyToken, requireRole } from './middleware/auth.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'troy-fallback-secret-key-2026';
 
@@ -978,6 +979,84 @@ router.post('/notifications', async (req, res) => {
         res.status(201).json(savedNotification);
     } catch (err) {
         res.status(400).json({ message: err.message });
+    }
+});
+
+// --- AI Routes ---
+router.post('/ai/diagnose', async (req, res) => {
+    const { deviceModel, issueDescription } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Gemini API Key is missing or not configured. Please check your .env file.' 
+        });
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+            Sen bir Apple Yetkili Servis teknisyen asistanısın. 
+            Cihaz: ${deviceModel}
+            Müşteri Şikayeti: ${issueDescription}
+
+            Lütfen bu bilgiler doğrultusunda şu formatta JSON cevabı ver:
+            {
+                "likelyCauses": ["Neden 1", "Neden 2"],
+                "steps": ["Adım 1", "Adım 2"],
+                "suggestedParts": ["Parça 1", "Parça 2"],
+                "techNote": "Teknisyen için profesyonel not özeti..."
+            }
+            Sadece JSON formatında cevap ver, başka açıklama ekleme.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        // JSON ayıklama (bazen AI markdown içinde verebiliyor)
+        const jsonMatch = text.match(/\\{.*\\}/s) || text.match(/\\{.*\\}/);
+        const diagnosis = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+
+        res.json({ success: true, diagnosis });
+    } catch (error) {
+        console.error('AI Diagnose Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.post('/ai/enhance-message', async (req, res) => {
+    const { rawMessage, customerName, deviceModel } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Gemini API Key is missing.' 
+        });
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+            Aşağıdaki teknik notu, müşteri ${customerName} için, ${deviceModel} cihazı hakkında nazik, profesyonel ve kurumsal bir bilgilendirme mesajına dönüştür. 
+            Mesaj Türkçe olmalı. 
+            Not: ${rawMessage}
+            
+            Sadece geliştirilmiş mesaj metnini döndür.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        res.json({ success: true, enhancedMessage: response.text().trim() });
+    } catch (error) {
+        console.error('AI Enhance Error:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     MessageSquare, Mail, Send, X, Check,
-    Bell, AlertCircle, Eye, ChevronRight, MessageCircle, History
+    Bell, AlertCircle, Eye, ChevronRight, MessageCircle, History, Sparkles, RotateCcw
 } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
@@ -16,6 +16,8 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
     const [historyData, setHistoryData] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [recipient, setRecipient] = useState(repair.customerEmail || '');
+    const [isEnhancing, setIsEnhancing] = useState(false);
+    const [customText, setCustomText] = useState(null);
 
     React.useEffect(() => {
         if (showHistory) {
@@ -130,6 +132,42 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
             showToast(error.message || 'Email sunucusuna bağlanılamadı.', 'error');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleEnhanceMessage = async () => {
+        const rawText = getReplacedText(
+            activeChannel === 'whatsapp' ? templates.whatsapp[selectedTemplate] :
+            activeChannel === 'sms' ? templates.sms[selectedTemplate] :
+            templates.email[selectedTemplate].body
+        );
+
+        setIsEnhancing(true);
+        try {
+            const response = await fetch(`${API_URL}/ai/enhance-message`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    rawMessage: rawText,
+                    customerName: repair.customer,
+                    deviceModel: repair.device
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setCustomText(data.enhancedMessage);
+                showToast('Mesaj AI tarafından profesyonel hale getirildi!', 'success');
+            } else {
+                showToast(data.message || 'AI iyileştirme başarısız.', 'error');
+            }
+        } catch (err) {
+            console.error('AI Error:', err);
+            showToast('AI servisine bağlanılamadı.', 'error');
+        } finally {
+            setIsEnhancing(false);
         }
     };
 
@@ -290,7 +328,31 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
 
                     {/* Preview Area */}
                     <div className="bg-gray-50/50 p-6 rounded-lg border border-gray-200/60 relative overflow-hidden group shadow-inner">
-                        <div className="absolute top-4 right-4 z-10">
+                        <div className="absolute top-4 right-4 z-10 flex gap-2">
+                            {customText && (
+                                <button 
+                                    onClick={() => setCustomText(null)}
+                                    className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-red-500 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-red-100 shadow-sm hover:bg-red-50"
+                                >
+                                    <RotateCcw size={12} /> Sıfırla
+                                </button>
+                            )}
+                            <button 
+                                onClick={handleEnhanceMessage}
+                                disabled={isEnhancing}
+                                className={`flex items-center gap-1.5 text-[10px] uppercase font-bold px-3 py-1.5 rounded-lg border shadow-sm transition-all ${isEnhancing ? 'bg-gray-100 text-gray-400 border-gray-200' : 'text-blue-600 bg-white/90 backdrop-blur-md border-blue-100 hover:bg-blue-50'}`}
+                            >
+                                {isEnhancing ? (
+                                    <>
+                                        <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                                        Düzenleniyor...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles size={12} className="text-blue-500" /> AI İyileştir
+                                    </>
+                                )}
+                            </button>
                             <span className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
                                 <Eye size={12} className="text-apple-blue" /> Canlı Önizleme
                             </span>
@@ -299,7 +361,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                         {activeChannel === 'whatsapp' ? (
                             <div className="flex flex-col gap-2 max-w-[85%] animate-in slide-in-from-left-4 fade-in duration-500">
                                 <div className="bg-[#dcf8c6] p-5 rounded-md rounded-tl-none text-sm text-gray-800 leading-relaxed shadow-sm font-medium border border-[#c7eba9]">
-                                    {getReplacedText(templates.whatsapp[selectedTemplate])}
+                                    {customText || getReplacedText(templates.whatsapp[selectedTemplate])}
                                 </div>
                                 <span className="text-[10px] text-gray-400 font-bold text-right mr-1">İletildi ✓✓</span>
                             </div>
@@ -307,7 +369,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                             <div className="flex flex-col gap-2 max-w-[85%] animate-in slide-in-from-left-4 fade-in duration-500">
                                 <span className="text-[10px] text-gray-400 font-bold ml-1 uppercase tracking-tight">TroyServis Bilgilendirme</span>
                                 <div className="bg-[#e9e9eb] p-5 rounded-md rounded-tl-none text-sm text-gray-800 leading-relaxed shadow-sm font-medium border border-gray-200">
-                                    {getReplacedText(templates.sms[selectedTemplate])}
+                                    {customText || getReplacedText(templates.sms[selectedTemplate])}
                                 </div>
                                 <span className="text-[10px] text-gray-400 font-bold text-right mr-1">Az önce</span>
                             </div>
@@ -327,7 +389,7 @@ const CustomerNotificationModal = ({ repair, onClose, onActionComplete }) => {
                                     </p>
                                 </div>
                                 <div className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto pr-2 custom-scrollbar font-medium">
-                                    {getReplacedText(templates.email[selectedTemplate]?.body)}
+                                    {customText || getReplacedText(templates.email[selectedTemplate]?.body)}
                                 </div>
                             </div>
                         )}
