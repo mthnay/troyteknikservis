@@ -576,88 +576,102 @@ const KBBManagement = () => {
             {/* Stock Detail Modal (Logistics View) */}
             {selectedStockItem && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg w-full max-w-2xl p-8 shadow-2xl animate-scale-up border border-white/50 flex flex-col max-h-[90vh]">
-                        <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-md flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                    <Box size={28} />
+                    <div className="bg-white rounded-[20px] w-full max-w-4xl shadow-2xl animate-scale-up border border-white/50 flex flex-col max-h-[90vh] overflow-hidden">
+                        {/* Header Area */}
+                        <div className="bg-gray-50/80 px-10 py-8 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 bg-white border border-gray-200 text-gray-900 rounded-2xl flex items-center justify-center shadow-sm">
+                                    <Package size={32} />
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        <h3 className="text-xl font-semibold text-gray-900">{selectedStockItem.name}</h3>
-                                        <span className="bg-blue-50 text-blue-600 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase border border-blue-100">Lojistik Görünümü</span>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{selectedStockItem.name}</h3>
+                                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-blue-500/20">Aktif Stok</span>
                                     </div>
-                                    <p className="text-sm font-mono text-gray-400 font-bold uppercase">P/N: {selectedStockItem.partNumber}</p>
+                                    <div className="flex items-center gap-4 text-sm font-medium">
+                                        <span className="text-gray-400">P/N: <span className="font-mono text-gray-900 font-bold">{selectedStockItem.partNumber}</span></span>
+                                        <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+                                        <span className="text-gray-400">Ambar: <span className="text-blue-600 font-bold">{servicePoints.find(s => String(s.id) === String(selectedStockItem.storeId))?.name || 'Genel'}</span></span>
+                                    </div>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedStockItem(null)} className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-md transition-all">
-                                <X size={20} className="text-gray-400" />
+                            <button onClick={() => setSelectedStockItem(null)} className="w-12 h-12 flex items-center justify-center hover:bg-gray-200 rounded-full transition-all group">
+                                <X size={24} className="text-gray-400 group-hover:text-gray-900" />
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2 custom-scrollbar">
-                            <div className="space-y-6">
-                                <div className="bg-gray-50/50 p-6 rounded-lg border border-gray-100">
-                                    <p className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest mb-4">Sistem Durumu</p>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold text-gray-500">Mevcut Stok</span>
-                                            <span className="text-2xl font-semibold text-gray-900">{selectedStockItem.quantity} Adet</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold text-gray-500">Kritik Seviye</span>
-                                            <span className="text-sm font-semibold text-red-500">{selectedStockItem.minLevel || 5} Adet</span>
-                                        </div>
-                                        <div className="pt-4 border-t border-gray-200/50">
-                                             <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="flex-1 flex overflow-hidden">
+                            {/* Left Side: Stats & Info */}
+                            <div className="w-80 border-r border-gray-100 p-10 bg-gray-50/30 space-y-8 overflow-y-auto">
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Mevcut Durum</p>
+                                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-sm font-bold text-gray-500">Stok</span>
+                                                <span className="text-3xl font-bold text-gray-900">{selectedStockItem.quantity}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
                                                 <div 
-                                                    className={`h-2 rounded-full transition-all ${selectedStockItem.quantity <= 5 ? 'bg-red-500' : 'bg-blue-500'}`}
+                                                    className={`h-1.5 rounded-full transition-all ${selectedStockItem.quantity <= 5 ? 'bg-rose-500' : 'bg-emerald-500'}`}
                                                     style={{ width: `${Math.min((selectedStockItem.quantity / 20) * 100, 100)}%` }}
                                                 ></div>
                                             </div>
+                                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                                                <span className="text-gray-400">Min: {selectedStockItem.minLevel || 5}</span>
+                                                <span className={selectedStockItem.quantity <= 5 ? 'text-rose-500' : 'text-emerald-500'}>
+                                                    {selectedStockItem.quantity <= 5 ? 'KRİTİK' : 'NORMAL'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ambar Politikası</p>
+                                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl space-y-2">
+                                            <h4 className="text-[11px] font-bold text-blue-900 flex items-center gap-2">
+                                                <AlertCircle size={14} /> Apple KBB Takibi
+                                            </h4>
+                                            <p className="text-[10px] text-blue-800 leading-relaxed font-medium">Bu parçaya ait tüm seri numaraları Apple GSX iade süreçlerine tabidir. Seri no doğruluğu zorunludur.</p>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="bg-blue-50/30 p-6 rounded-lg border border-blue-100/50">
-                                    <h4 className="text-xs font-semibold uppercase text-blue-900 tracking-widest mb-3 flex items-center gap-2">
-                                        <AlertCircle size={14} /> Apple KBB Politikası
-                                    </h4>
-                                    <p className="text-[11px] text-blue-800 leading-relaxed font-medium">Bu parçaya ait KBB seri numaraları Apple GSX sistemi üzerinden takip edilmelidir. Her bir seri no iade sürecinde kritik öneme sahiptir.</p>
-                                </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <p className="text-[10px] font-semibold uppercase text-gray-400 tracking-widest">Kayıtlı KBB Seri Numaraları</p>
-                                <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                            {/* Right Side: Serial Management */}
+                            <div className="flex-1 p-10 flex flex-col">
+                                <div className="flex items-center justify-between mb-6">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kayıtlı Seri Numaraları (S/N)</p>
+                                    <div className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                        Toplam: {selectedStockItem.kbbSerials?.length || 0}
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar space-y-2">
                                     {(selectedStockItem.kbbSerials || []).length > 0 ? (
                                         selectedStockItem.kbbSerials.map((s, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-md shadow-sm hover:border-blue-200 transition-all group">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center text-[10px] font-semibold group-hover:bg-blue-50 group-hover:text-blue-500 transition-all">
+                                            <div key={idx} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-md transition-all group">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center text-[11px] font-bold group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
                                                         {idx + 1}
                                                     </div>
-                                                    <span className="text-xs font-semibold font-mono text-gray-700 tracking-tight">{s}</span>
+                                                    <span className="text-sm font-bold font-mono text-gray-900 tracking-tight">{s}</span>
                                                 </div>
                                                 
-                                                {/* Admin Only Actions */}
                                                 {hasPermission(currentUser, 'manage_settings') && (
-                                                    <div className="flex gap-2">
+                                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button 
-                                                            type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setEditingSerialIdx(idx);
                                                                 setEditingSerialVal(s);
                                                                 setShowEditSerialModal(true);
                                                             }}
-                                                            className="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:shadow-md"
-                                                            title="Düzenle"
+                                                            className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
                                                         >
-                                                            <Edit3 size={16} />
+                                                            <Edit3 size={14} />
                                                         </button>
                                                         <button 
-                                                            type="button"
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
                                                                 const confirmed = await appConfirm(`<strong>${s}</strong> seri numarasını silmek istediğinize emin misiniz?`);
@@ -668,37 +682,36 @@ const KBBManagement = () => {
                                                                         kbbSerials: updatedSerials,
                                                                         quantity: (selectedStockItem.quantity || 1) - 1 
                                                                     };
-                                            await updateInventoryItem(selectedStockItem._id || selectedStockItem.id, updatedItem);
+                                                                    await updateInventoryItem(selectedStockItem._id || selectedStockItem.id, updatedItem);
                                                                     setSelectedStockItem(updatedItem);
                                                                     showToast('Seri no silindi.', 'info');
                                                                 }
                                                             }}
-                                                            className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 rounded-md hover:bg-red-600 hover:text-white transition-all shadow-sm group-hover:shadow-md"
-                                                            title="Sil"
+                                                            className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:bg-red-600 hover:text-white transition-all"
                                                         >
-                                                            <Trash2 size={16} />
+                                                            <Trash2 size={14} />
                                                         </button>
                                                     </div>
                                                 )}
-                                                {!hasPermission(currentUser, 'manage_settings') && <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-400 transition-all" />}
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-center py-10">
-                                            <p className="text-xs text-gray-400 font-bold uppercase italic">Seri No Kaydı Bulunamadı</p>
+                                        <div className="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                                            <Package size={40} className="text-gray-200 mb-4" />
+                                            <p className="text-xs text-gray-400 font-bold uppercase">Seri No Kaydı Bulunamadı</p>
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className="mt-8 flex gap-3">
-                            <button 
-                                onClick={() => setSelectedStockItem(null)}
-                                className="flex-1 py-4 bg-gray-900 text-white rounded-md font-semibold text-xs uppercase tracking-wide text-[11px] hover:bg-black transition-all shadow-xl active:scale-95"
-                            >
-                                Pencereyi Kapat
-                            </button>
+                                <div className="mt-8 pt-8 border-t border-gray-100 flex justify-end">
+                                    <button 
+                                        onClick={() => setSelectedStockItem(null)}
+                                        className="px-10 py-4 bg-gray-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-black shadow-xl transition-all active:scale-95"
+                                    >
+                                        Kapat
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
