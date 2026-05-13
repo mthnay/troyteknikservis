@@ -17,7 +17,8 @@ const Settings = () => {
         notificationTemplates, setNotificationTemplates,
         earnings, addEarning,
         roles, addRole, updateRole, deleteRole,
-        serviceTerms, setServiceTerms
+        serviceTerms, setServiceTerms,
+        inventory, updateInventoryItem
     } = useAppContext();
 
     const [activeTab, setActiveTab] = useState('general');
@@ -1763,80 +1764,153 @@ const Settings = () => {
                         </div>
                     </div>
                 );
+            case 'warehouse_management':
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {servicePoints.map(point => {
+                                const storeStock = inventory.filter(i => String(i.storeId) === String(point.id));
+                                const kgbCount = storeStock.filter(i => i.category !== 'loaner').reduce((sum, i) => sum + (i.quantity || 0), 0);
+                                const loanerCount = storeStock.filter(i => i.category === 'loaner').length;
+                                
+                                return (
+                                    <div key={point.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <Package size={80} />
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="w-12 h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-lg">
+                                                {point.name[0]}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-900">{point.name}</h4>
+                                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Ambar Kodu: {point.shipTo}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">STOK (KGB)</p>
+                                                <p className="text-xl font-bold text-gray-900">{kgbCount} Adet</p>
+                                            </div>
+                                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                                <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-1">EMANET</p>
+                                                <p className="text-xl font-bold text-blue-600">{loanerCount} Cihaz</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between">
+                                            <div className="flex -space-x-2">
+                                                {[1,2,3].map(i => (
+                                                    <div key={i} className={`w-6 h-6 rounded-full border-2 border-white bg-gray-${100 * i}`}></div>
+                                                ))}
+                                            </div>
+                                            <button 
+                                                onClick={() => {
+                                                    Swal.fire({
+                                                        title: `${point.name} Ambar Detayı`,
+                                                        html: `<div class="text-left text-sm">Bu ambar şu an aktif ve ${kgbCount} parça barındırıyor. Stok transfer modülü yakında eklenecektir.</div>`,
+                                                        icon: 'info',
+                                                        confirmButtonColor: '#111827'
+                                                    });
+                                                }}
+                                                className="text-xs font-bold text-gray-400 hover:text-gray-900 flex items-center gap-1 transition-colors"
+                                            >
+                                                Ambarı Yönet <ChevronRight size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="bg-gray-900 rounded-[32px] p-10 text-white shadow-2xl relative overflow-hidden">
+                            <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                                <div>
+                                    <h4 className="text-2xl font-bold mb-2">Ambarlar Arası Stok Transferi</h4>
+                                    <p className="text-gray-400 max-w-md text-sm leading-relaxed">Şubeler arası parça transferlerini buradan yönetebilir, ambarlar arası dengelemeyi sağlayabilirsiniz. (Sadece Admin yetkisi ile)</p>
+                                </div>
+                                <button 
+                                    onClick={() => Swal.fire('Yakında', 'Şubeler arası otomatik transfer modülü bir sonraki güncellemede aktif edilecektir.', 'info')}
+                                    className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all flex items-center gap-2 shadow-xl"
+                                >
+                                    <RefreshCw size={20} /> Transfer Başlat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
         }
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto pb-32 animate-fade-in px-4 md:px-8">
-            <div className="flex flex-col lg:flex-row gap-12">
-                {/* Sol Menü: Premium Sidebar */}
-                <div className="lg:w-80 shrink-0">
-                    <div className="sticky top-24 space-y-2 bg-white/40 backdrop-blur-xl p-4 rounded-lg border border-white shadow-sm ring-1 ring-black/5">
-                        <div className="px-6 py-6 mb-4 border-b border-gray-100/50">
-                            <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.2em]">Yönetim Paneli</h3>
+        <div className="max-w-[1400px] mx-auto pb-32 animate-fade-in px-4 md:px-8">
+            <div className="flex flex-col lg:flex-row gap-8 mt-4">
+                {/* Sol Menü: GSX Sidebar */}
+                <div className="lg:w-72 shrink-0">
+                    <div className="sticky top-24 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <div className="px-6 py-5 bg-gray-50 border-b border-gray-200">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Sistem Ayarları</h3>
                         </div>
-                        {[
-                            { id: 'general', label: 'Kurumsal Kimlik', icon: Building, color: 'text-blue-600', bg: 'bg-blue-50' },
-                            { id: 'locations', label: 'Mağaza Ağı', icon: MapPin, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                            { id: 'users', label: 'Ekip & Erişim', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                            { id: 'kbb_history', label: 'KBB Arşivi', icon: Store, color: 'text-rose-600', bg: 'bg-rose-50' },
-                            { id: 'earnings', label: 'Hakediş Kayıtları', icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
-                            { id: 'notifications', label: 'E-Posta & SMTP', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50' },
-                            { id: 'service_terms', label: 'Servis Metinleri', icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
-                            { id: 'security', label: 'Sistem Güvenliği', icon: Shield, color: 'text-orange-600', bg: 'bg-orange-50' },
-                            { id: 'roles', label: 'Yetki ve İzinler', icon: Key, color: 'text-rose-500', bg: 'bg-rose-50' },
-                            { id: 'updates', label: 'Yazılım Güncelleme', icon: RefreshCw, color: 'text-blue-600', bg: 'bg-blue-50' },
-                        ].map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-4 px-6 py-4 rounded-lg text-sm font-semibold transition-all group ${
-                                    activeTab === item.id 
-                                    ? 'bg-gray-900 text-white shadow-2xl shadow-gray-200 -translate-x-1' 
-                                    : 'text-gray-500 hover:bg-white hover:text-gray-900'
-                                }`}
-                            >
-                                <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-all ${
-                                    activeTab === item.id ? 'bg-white/10 text-white' : `${item.bg} ${item.color} group-hover:scale-110 shadow-sm`
-                                }`}>
-                                    <item.icon size={20} />
-                                </div>
-                                <span className="flex-1 text-left">{item.label}</span>
-                                {activeTab === item.id && <ChevronRight size={16} className="text-gray-400" />}
-                            </button>
-                        ))}
+                        <nav className="p-2 space-y-1">
+                            {[
+                                { id: 'general', label: 'Kurumsal Kimlik', icon: Building },
+                                { id: 'locations', label: 'Mağaza Ağı', icon: MapPin },
+                                { id: 'users', label: 'Ekip & Erişim', icon: Users },
+                                { id: 'warehouse_management', label: 'Ambar Yönetimi', icon: Package },
+                                { id: 'kbb_history', label: 'KBB Arşivi', icon: Store },
+                                { id: 'earnings', label: 'Hakediş Kayıtları', icon: CreditCard },
+                                { id: 'notifications', label: 'E-Posta & SMTP', icon: Mail },
+                                { id: 'service_terms', label: 'Servis Metinleri', icon: MessageSquare },
+                                { id: 'security', label: 'Sistem Güvenliği', icon: Shield },
+                                { id: 'roles', label: 'Yetki ve İzinler', icon: Key },
+                                { id: 'updates', label: 'Yazılım Güncelleme', icon: RefreshCw },
+                            ].map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[13px] font-semibold transition-all group ${
+                                        activeTab === item.id 
+                                        ? 'bg-blue-50 text-blue-700' 
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    }`}
+                                >
+                                    <item.icon size={18} className={activeTab === item.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} />
+                                    <span className="flex-1 text-left">{item.label}</span>
+                                    {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>}
+                                </button>
+                            ))}
+                        </nav>
                     </div>
                 </div>
 
                 {/* Sağ İçerik Alanı */}
                 <div className="flex-1">
-                    <div className="mb-10 pl-4">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="bg-gray-900 text-white px-2.5 py-1 rounded-lg text-[9px] font-semibold text-xs uppercase tracking-wide">SİSTEM</span>
-                            <div className="h-px w-12 bg-gray-200"></div>
+                    <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded">GSX Portal</span>
+                            <ChevronRight size={12} className="text-gray-300" />
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Settings</span>
                         </div>
-                        <h2 className="text-4xl font-semibold text-gray-900 tracking-tight">
+                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                             {activeTab === 'users' ? 'Personel & Rol Yönetimi' :
                              activeTab === 'locations' ? 'Mağaza & Lokasyon Ağı' :
                              activeTab === 'notifications' ? 'E-Posta & SMTP Yapısı' :
+                             activeTab === 'warehouse_management' ? 'Ambar & Lojistik Yönetimi' :
                              activeTab === 'stock' ? 'Envanter Veritabanı' :
                              activeTab === 'updates' ? 'Yazılım Güncelleme' :
                              activeTab === 'roles' ? 'Yetki ve Rol Yönetimi' :
                              activeTab === 'service_terms' ? 'Servis Onay & Gizlilik' :
-                             'Genel Sistem Settingsı'}
+                             'Genel Sistem Ayarları'}
                         </h2>
-                        <p className="text-gray-500 mt-2 font-medium text-lg leading-relaxed max-w-2xl">
-                            {activeTab === 'users' ? 'Sisteme erişimi olan kullanıcıları ve yetkilerini buradan yönetebilirsiniz.' :
-                             activeTab === 'locations' ? 'Fiziksel servis noktalarınızı ve Ship-To numaralarınızı tanımlayın.' :
-                              activeTab === 'updates' ? 'Sistem yazılımını güncel tutarak en yeni özelliklere ve güvenlik iyileştirmelerine sahip olun.' :
-                              activeTab === 'roles' ? 'Sistemdeki rolleri tanımlayabilir ve her rolün hangi sayfalara/işlemlere erişebileceğini belirleyebilirsiniz.' :
-                              activeTab === 'service_terms' ? 'Onay formlarında ve Kiosk ekranında yer alan yasal metinleri ve sözleşme maddelerini özelleştirin.' :
-                              'Tüm sistem parametrelerini ve kurumsal verileri merkezi olarak buradan yapılandırın.'}
-                        </p>
                     </div>
 
-                    <div className="bg-white/40 backdrop-blur-xl p-6 lg:p-12 rounded-[56px] border border-white shadow-sm ring-1 ring-black/5 min-h-[800px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {renderTabContent()}
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm min-h-[700px] overflow-hidden">
+                        <div className="p-8 md:p-10">
+                            {renderTabContent()}
+                        </div>
                     </div>
                 </div>
             </div>
