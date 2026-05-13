@@ -7,7 +7,7 @@ import { appConfirm, appPrompt } from '../utils/alert';
 import { hasPermission } from '../utils/permissions';
 
 const KBBManagement = () => {
-    const { repairs, updateRepair, showToast, currentUser, servicePoints, inventory, updateInventoryItem, addInventoryItem, removeInventoryItem } = useAppContext();
+    const { repairs, updateRepair, showToast, currentUser, servicePoints, inventory, updateInventoryItem, addInventoryItem, removeInventoryItem, selectedStoreId } = useAppContext();
     
     // Debugging current role
     useEffect(() => {
@@ -16,7 +16,7 @@ const KBBManagement = () => {
         }
     }, [currentUser]);
 
-    const [activeTab, setActiveTab] = useState('parts'); // 'parts', 'loaners', 'returns'
+    const [activeTab, setActiveTab] = useState('stocks'); // 'stocks', 'loaners', 'returns'
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItems, setSelectedItems] = useState([]);
     const [showReturnModal, setShowReturnModal] = useState(false);
@@ -48,9 +48,10 @@ const KBBManagement = () => {
 
     const getShipTo = (sId) => servicePoints.find(p => p.id === sId)?.shipTo || '-';
 
-    // Optimize KBB list derivation
+    // Optimize KBB list derivation with Store Filter
     const kbbList = useMemo(() => {
-        return repairs.flatMap(repair =>
+        const baseRepairs = selectedStoreId === 0 ? repairs : repairs.filter(r => String(r.storeId) === String(selectedStoreId));
+        return baseRepairs.flatMap(repair =>
             (repair.parts || []).map((part, index) => ({
                 ...part,
                 uniqueId: `${repair.id}-${index}`,
@@ -63,7 +64,7 @@ const KBBManagement = () => {
                 returnCode: part.returnCode || ''
             }))
         ).filter(item => item.kbbStatus !== 'Returned');
-    }, [repairs]);
+    }, [repairs, selectedStoreId]);
 
     // Optimize filtering
     const filteredItems = useMemo(() => {
@@ -141,8 +142,10 @@ const KBBManagement = () => {
                         <Box size={28} />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Stok & KBB Yönetimi</h2>
-                        <p className="text-gray-500 mt-1 font-medium">Yedek parça stoklarını ve iade (KBB) süreçlerini takip edin.</p>
+                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">
+                            {selectedStoreId === 0 ? 'Genel Ambar' : servicePoints.find(s => String(s.id) === String(selectedStoreId))?.name + ' Ambarı'}
+                        </h2>
+                        <p className="text-gray-500 mt-1 font-medium">Yedek parça stoklarını ve iade (KBB) süreçlerini mağaza bazlı takip edin.</p>
                     </div>
                 </div>
 
@@ -160,6 +163,12 @@ const KBBManagement = () => {
                         >
                             İade Havuzu (KBB)
                         </button>
+                        <button
+                            onClick={() => setActiveTab('loaners')}
+                            className={`px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all ${activeTab === 'loaners' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Ödünç Cihazlar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -167,10 +176,10 @@ const KBBManagement = () => {
             {/* İstatistik Kartları - Ana Sayfa Stili */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[
-                    { label: 'TOPLAM PARÇA', value: inventory.length, icon: Package, color: 'text-gray-400', bg: 'bg-white', iconBg: 'bg-gray-50' },
+                    { label: 'TOPLAM PARÇA', value: (selectedStoreId === 0 ? inventory : inventory.filter(i => String(i.storeId) === String(selectedStoreId))).length, icon: Package, color: 'text-gray-400', bg: 'bg-white', iconBg: 'bg-gray-50' },
                     { label: 'BEKLEYEN İADE', value: kbbList.length, icon: ArrowRightLeft, color: 'text-indigo-500', bg: 'bg-white', iconBg: 'bg-indigo-50' },
-                    { label: 'KRİTİK STOK', value: inventory.filter(s => s.quantity < 3).length, icon: AlertCircle, color: 'text-orange-500', bg: 'bg-white', iconBg: 'bg-orange-50' },
-                    { label: 'BUGÜN GELEN', value: '12', icon: Clock, color: 'text-green-500', bg: 'bg-white', iconBg: 'bg-green-50' }
+                    { label: 'KRİTİK STOK', value: (selectedStoreId === 0 ? inventory : inventory.filter(i => String(i.storeId) === String(selectedStoreId))).filter(s => s.quantity < 3).length, icon: AlertCircle, color: 'text-orange-500', bg: 'bg-white', iconBg: 'bg-orange-50' },
+                    { label: 'MAĞAZA SAYISI', value: selectedStoreId === 0 ? servicePoints.length : '1', icon: Clock, color: 'text-green-500', bg: 'bg-white', iconBg: 'bg-green-50' }
                 ].map((stat, idx) => (
                     <div key={idx} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
                         <div>
@@ -304,19 +313,20 @@ const KBBManagement = () => {
                             </tbody>
                         </table>
                     </div>
-                    ) : activeTab === 'parts' ? (
+                    ) : activeTab === 'stocks' ? (
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 text-[10px] font-semibold text-xs uppercase tracking-wide text-gray-400">
                                 <tr>
                                     <th className="px-8 py-4">BİLGİ</th>
                                     <th className="px-4 py-4">P/N KODU</th>
+                                    {selectedStoreId === 0 && <th className="px-4 py-4">ŞUBE</th>}
                                     <th className="px-4 py-4 text-center">STOK SEVİYESİ</th>
                                     <th className="px-8 py-4 text-right">İŞLEM</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {inventory.filter(i => i.category !== 'loaner').length > 0 ? (
-                                    inventory.filter(i => i.category !== 'loaner').map((item) => (
+                                {inventory.filter(i => i.category !== 'loaner' && (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId))).length > 0 ? (
+                                    inventory.filter(i => i.category !== 'loaner' && (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId))).map((item) => (
                                         <tr key={item._id || item.id} onClick={() => setSelectedStockItem(item)} className="hover:bg-blue-50/50 transition-colors group cursor-pointer">
                                             <td className="px-8 py-4">
                                                 <div className="flex items-center gap-4">
@@ -330,6 +340,13 @@ const KBBManagement = () => {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4 font-mono text-xs text-gray-500 font-bold">{item.partNumber || '-'}</td>
+                                            {selectedStoreId === 0 && (
+                                                <td className="px-4 py-4">
+                                                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase">
+                                                        {servicePoints.find(s => String(s.id) === String(item.storeId))?.name || 'Genel'}
+                                                    </span>
+                                                </td>
+                                            )}
                                             <td className="px-4 py-4">
                                                 <div className="flex flex-col items-center">
                                                     <span className={`text-[13px] font-semibold mb-1 ${item.quantity <= (item.minLevel || 5) ? 'text-red-600' : 'text-gray-900'}`}>{item.quantity} Adet</span>
@@ -377,7 +394,7 @@ const KBBManagement = () => {
                     ) : (
                         // Loaners Tab
                         <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {inventory.filter(i => i.category === 'loaner').map((item) => (
+                            {inventory.filter(i => i.category === 'loaner' && (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId))).map((item) => (
                                 <div key={item.id} className="bg-white rounded-lg p-6 border border-gray-100 shadow-xl hover:translate-y-[-4px] transition-all group relative overflow-hidden">
                                      {item.currentCustomer && (
                                          <div className="absolute top-0 right-0 p-1">
@@ -535,6 +552,7 @@ const KBBManagement = () => {
                                         kbbSerials: serialList,
                                         minLevel: 5,
                                         maxLevel: 100,
+                                        storeId: selectedStoreId !== 0 ? selectedStoreId : currentUser.storeId,
                                         id: `item-${Date.now()}`
                                     };
 
