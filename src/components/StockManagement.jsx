@@ -147,6 +147,43 @@ const StockManagement = () => {
                 </div>
             </div>
 
+            {/* Quick Stock Entry Section */}
+            {hasPermission(currentUser, 'manage_stock') && (
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-6 shadow-xl shadow-blue-200/50 text-white">
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                        <div className="flex items-center gap-4 flex-shrink-0">
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/20">
+                                <Plus size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold">Hızlı Stok Girişi</h3>
+                                <p className="text-sm text-blue-100">Envantere hızlıca adet ekleyin.</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div className="md:col-span-2 relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors" size={16} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Parça ara veya P/N tara..."
+                                    className="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-4 py-2.5 text-sm placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all text-white"
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => setShowAddModal(true)}
+                                    className="flex-1 bg-white text-blue-600 hover:bg-blue-50 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm"
+                                >
+                                    Yeni Kart Oluştur
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Apple style Stats grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
@@ -240,11 +277,27 @@ const StockManagement = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <span className={`text-[14px] font-medium ${part.quantity <= part.minLevel ? 'text-red-600' : 'text-gray-900'}`}>
+                                                {hasPermission(currentUser, 'manage_stock') && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); updateStock(part, -1); }}
+                                                        className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors border border-gray-200"
+                                                    >
+                                                        <ArrowDownRight size={14} />
+                                                    </button>
+                                                )}
+                                                <span className={`text-[14px] font-bold min-w-[24px] text-center ${part.quantity <= part.minLevel ? 'text-red-600 animate-pulse' : 'text-gray-900'}`}>
                                                     {part.quantity}
                                                 </span>
+                                                {hasPermission(currentUser, 'manage_stock') && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); updateStock(part, 1); }}
+                                                        className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-green-50 text-gray-500 hover:text-green-600 transition-colors border border-gray-200"
+                                                    >
+                                                        <ArrowUpRight size={14} />
+                                                    </button>
+                                                )}
                                                 {part.quantity <= part.minLevel && (
-                                                    <AlertCircle size={14} className="text-red-500" />
+                                                    <AlertCircle size={14} className="text-red-500 ml-1" />
                                                 )}
                                             </div>
                                         </td>
@@ -352,7 +405,7 @@ const StockManagement = () => {
                                         {inventory
                                             .filter(i => (i.partNumber === selectedPartDetails.partNumber || i.name === selectedPartDetails.name))
                                             .map((item, idx) => (
-                                                <tr key={idx}>
+                                                <tr key={idx} className="group/row">
                                                     <td className="px-4 py-3">
                                                         <div className="flex flex-col">
                                                             <span className="font-medium text-gray-900">
@@ -363,8 +416,26 @@ const StockManagement = () => {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3 text-right font-medium text-gray-900">
-                                                        {item.quantity}
+                                                    <td className="px-4 py-3 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {hasPermission(currentUser, 'manage_stock') && (
+                                                                <button 
+                                                                    onClick={() => updateStock(item, -1)}
+                                                                    className="w-6 h-6 flex items-center justify-center rounded bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 border border-gray-100 opacity-0 group-hover/row:opacity-100 transition-all"
+                                                                >
+                                                                    -
+                                                                </button>
+                                                            )}
+                                                            <span className="font-bold text-gray-900 min-w-[20px] text-center">{item.quantity}</span>
+                                                            {hasPermission(currentUser, 'manage_stock') && (
+                                                                <button 
+                                                                    onClick={() => updateStock(item, 1)}
+                                                                    className="w-6 h-6 flex items-center justify-center rounded bg-gray-50 hover:bg-green-50 text-gray-400 hover:text-green-600 border border-gray-100 opacity-0 group-hover/row:opacity-100 transition-all"
+                                                                >
+                                                                    +
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
