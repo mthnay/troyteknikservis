@@ -122,7 +122,7 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                         {CATEGORIES.filter(category => {
                             if (category.id === 'yonetim') {
                                 const role = currentUser?.role?.toLowerCase();
-                                return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin';
+                                return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin' || role === ROLES.YONETICI;
                             }
                             return true;
                         }).map(category => {
