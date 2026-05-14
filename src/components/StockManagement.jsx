@@ -31,10 +31,7 @@ const StockManagement = () => {
     const [selectedPartDetails, setSelectedPartDetails] = useState(null);
     const [transferPart, setTransferPart] = useState(null);
     
-    // Quick Stock Entry Form State
-    const [quickEntry, setQuickEntry] = useState({ partId: '', quantity: 0, storeId: selectedStoreId || (currentUser?.storeId || '') });
-    const [quickSearch, setQuickSearch] = useState('');
-    const [showQuickResults, setShowQuickResults] = useState(false);
+    const [newPart, setNewPart] = useState({ name: '', partNumber: '', kgbSerial: '', category: 'iPhone', storeId: selectedStoreId || (currentUser?.storeId || ''), quantity: 1, minLevel: 5, warehouseType: 'KGB' });
 
     // KBB Specific State
     const [selectedItems, setSelectedItems] = useState([]);
@@ -256,111 +253,7 @@ const StockManagement = () => {
                         </div>
                     </div>
 
-                    {/* Stock Entry Area */}
-                    {hasPermission(currentUser, 'manage_stock') && (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                            <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Box size={18} className="text-blue-600" />
-                                    <h3 className="text-[14px] font-bold text-gray-900 uppercase tracking-tight">Hızlı Stok Kabul / Girişi</h3>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                                    <div className="md:col-span-1 relative">
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Parça Seçin</label>
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                                            <input 
-                                                type="text" 
-                                                placeholder="P/N veya Parça Adı..."
-                                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all"
-                                                value={quickSearch}
-                                                onChange={(e) => {
-                                                    setQuickSearch(e.target.value);
-                                                    setShowQuickResults(true);
-                                                }}
-                                                onFocus={() => setShowQuickResults(true)}
-                                            />
-                                            {showQuickResults && quickSearch.length > 0 && (
-                                                <>
-                                                    <div className="fixed inset-0 z-[60]" onClick={() => setShowQuickResults(false)}></div>
-                                                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[70] max-h-60 overflow-y-auto">
-                                                        {inventory
-                                                            .filter(i => (i.name?.toLowerCase().includes(quickSearch.toLowerCase()) || i.partNumber?.toLowerCase().includes(quickSearch.toLowerCase())))
-                                                            .slice(0, 10)
-                                                            .map(item => (
-                                                                <button 
-                                                                    key={item._id || item.id}
-                                                                    onClick={() => {
-                                                                        setQuickEntry({ ...quickEntry, partId: item._id || item.id });
-                                                                        setQuickSearch(item.name);
-                                                                        setShowQuickResults(false);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between border-b border-gray-50 last:border-0"
-                                                                >
-                                                                    <div>
-                                                                        <p className="text-[13px] font-bold text-gray-900">{item.name}</p>
-                                                                        <p className="text-[11px] text-gray-500 font-mono">{item.partNumber || item.id}</p>
-                                                                    </div>
-                                                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                                                        {servicePoints.find(s => String(s.id) === String(item.storeId))?.name}
-                                                                    </span>
-                                                                </button>
-                                                            ))
-                                                        }
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Hedef Mağaza</label>
-                                        <select 
-                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all appearance-none"
-                                            value={quickEntry.storeId}
-                                            onChange={(e) => setQuickEntry({ ...quickEntry, storeId: e.target.value })}
-                                        >
-                                            {servicePoints.map(s => (
-                                                <option key={s.id} value={s.id}>{s.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Miktar</label>
-                                        <input 
-                                            type="number" 
-                                            min="1"
-                                            placeholder="0"
-                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:border-blue-500 transition-all"
-                                            value={quickEntry.quantity || ''}
-                                            onChange={(e) => setQuickEntry({ ...quickEntry, quantity: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <button 
-                                            onClick={async () => {
-                                                if (!quickEntry.partId || quickEntry.quantity <= 0) {
-                                                    showToast('Lütfen parça ve miktar seçin', 'warning');
-                                                    return;
-                                                }
-                                                const part = inventory.find(i => (i._id || i.id) === quickEntry.partId);
-                                                if (part) {
-                                                    await updateInventoryItem(quickEntry.partId, { quantity: part.quantity + quickEntry.quantity });
-                                                    showToast(`${quickSearch} stoğuna ${quickEntry.quantity} adet eklendi`, 'success');
-                                                    setQuickEntry({ ...quickEntry, partId: '', quantity: 0 });
-                                                    setQuickSearch('');
-                                                }
-                                            }}
-                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                        >
-                                            <CheckCircle size={18} /> Stok Kabul Et
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -676,6 +569,122 @@ const StockManagement = () => {
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Add Part Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[28px] w-full max-w-lg shadow-2xl animate-scale-up overflow-hidden">
+                        <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                                    <Plus size={24} className="text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">Yeni Parça Kaydı</h3>
+                                    <p className="text-sm text-gray-500 font-medium">Envantere yeni ürün ekleyin.</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowAddModal(false)} className="w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-full transition-all">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Parça Tanımı (Açıklama)</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium"
+                                        placeholder="Örn: iPhone 13 Pro Ekran"
+                                        value={newPart.name}
+                                        onChange={(e) => setNewPart({...newPart, name: e.target.value})}
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Parça Kodu (P/N)</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-mono font-bold"
+                                            placeholder="661-XXXXX"
+                                            value={newPart.partNumber}
+                                            onChange={(e) => setNewPart({...newPart, partNumber: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">KGB Seri Numarası</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-mono font-bold"
+                                            placeholder="G0XXXX..."
+                                            value={newPart.kgbSerial}
+                                            onChange={(e) => setNewPart({...newPart, kgbSerial: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Mağaza Ambarı</label>
+                                    <select 
+                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none font-medium appearance-none"
+                                        value={newPart.storeId}
+                                        onChange={(e) => setNewPart({...newPart, storeId: e.target.value})}
+                                    >
+                                        {servicePoints.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Kategori</label>
+                                        <select 
+                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium appearance-none"
+                                            value={newPart.category}
+                                            onChange={(e) => setNewPart({...newPart, category: e.target.value})}
+                                        >
+                                            <option value="iPhone">iPhone</option>
+                                            <option value="iPad">iPad</option>
+                                            <option value="Mac">Mac</option>
+                                            <option value="Watch">Watch</option>
+                                            <option value="Aksesuar">Aksesuar</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Kritik Seviye</label>
+                                        <input 
+                                            type="number" 
+                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-bold"
+                                            value={newPart.minLevel}
+                                            onChange={(e) => setNewPart({...newPart, minLevel: parseInt(e.target.value) || 0})}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={async () => {
+                                    if (!newPart.name || !newPart.partNumber) {
+                                        showToast('Lütfen Tanım ve Kod alanlarını doldurun', 'warning');
+                                        return;
+                                    }
+                                    const success = await addInventoryItem(newPart);
+                                    if (success) {
+                                        showToast('Yeni parça başarıyla eklendi', 'success');
+                                        setShowAddModal(false);
+                                        setNewPart({ name: '', partNumber: '', kgbSerial: '', category: 'iPhone', storeId: selectedStoreId || (currentUser?.storeId || ''), quantity: 1, minLevel: 5, warehouseType: 'KGB' });
+                                    }
+                                }}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle size={20} /> Kaydı Tamamla
+                            </button>
                         </div>
                     </div>
                 </div>
