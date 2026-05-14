@@ -386,6 +386,29 @@ const Settings = () => {
 
     // --- User Form ---
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Technician', storeId: 1 });
+    
+    // Role change handler for new users
+    const handleNewUserRoleChange = (e) => {
+        const role = e.target.value;
+        let storeId = newUser.storeId;
+        if (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'admin' || role.toLowerCase() === 'yonetici') {
+            const merkez = servicePoints.find(sp => sp.type === 'Merkez' || sp.name.toLowerCase().includes('merkez'));
+            if (merkez) storeId = merkez.id;
+        }
+        setNewUser({ ...newUser, role, storeId });
+    };
+
+    // Role change handler for edit user
+    const handleEditRoleChange = (e) => {
+        const role = e.target.value;
+        let storeId = editUserData.storeId;
+        if (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'admin' || role.toLowerCase() === 'yonetici') {
+            const merkez = servicePoints.find(sp => sp.type === 'Merkez' || sp.name.toLowerCase().includes('merkez'));
+            if (merkez) storeId = merkez.id;
+        }
+        setEditUserData({ ...editUserData, role, storeId });
+    };
+
     const [editingUserId, setEditingUserId] = useState(null);
     const [editUserData, setEditUserData] = useState(null);
 
@@ -1212,7 +1235,7 @@ const Settings = () => {
                                 <div className="relative">
                                     <select
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
-                                        value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                        value={newUser.role} onChange={handleNewUserRoleChange}
                                     >
                                         {roles
                                             .filter(role => {
@@ -1283,7 +1306,7 @@ const Settings = () => {
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Yetki & Mağaza</label>
                                                     <div className="flex flex-col gap-1">
-                                                        <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.role} onChange={e => setEditUserData({ ...editUserData, role: e.target.value })}>
+                                                        <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.role} onChange={handleEditRoleChange}>
                                                             {!isYonetici(currentUser) && <option value="SuperAdmin">SÜPER ADMIN</option>}
                                                             {isYonetici(currentUser) && editUserData.role?.toLowerCase() === 'superadmin' && <option value="SuperAdmin">SÜPER ADMIN</option>}
                                                             <option value="Yonetici">YÖNETİCİ</option>
