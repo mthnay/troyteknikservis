@@ -245,7 +245,7 @@ const PendingRepairs = ({ setActiveTab }) => {
                                 <div
                                     key={repair.id}
                                     className={`group bg-white rounded-lg p-4 border ${isSlaBreached(repair) ? 'border-red-300 shadow-red-100' : 'border-gray-100'} shadow-sm hover:shadow-sm hover:border-orange-200 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-6 cursor-pointer relative overflow-hidden`}
-                                    onClick={() => setSelectedRepair(repair)}
+                                    onClick={() => setSelectedHistoryRepair(repair)}
                                 >
                                     {isSlaBreached(repair) && (
                                         <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-semibold text-xs uppercase tracking-wide px-3 py-1 rounded-bl-xl shadow-sm z-10 flex items-center gap-1">
@@ -307,16 +307,10 @@ const PendingRepairs = ({ setActiveTab }) => {
                                     {/* Actions */}
                                     <div className="flex flex-row md:flex-col items-center gap-2 w-full md:w-auto mt-4 md:mt-0 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedRepair(repair); }}
+                                            onClick={(e) => { e.stopPropagation(); setSelectedHistoryRepair(repair); }}
                                             className="flex-1 md:flex-initial w-full md:w-40 gsx-button-primary flex items-center justify-center gap-2 group/btn"
                                         >
-                                            Teşhis Yap <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedHistoryRepair(repair); }}
-                                            className="flex-1 md:flex-initial w-full md:w-40 bg-white border border-[#d2d2d7] text-gray-700 px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#f5f5f7] transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Eye size={16} /> Detay
+                                            Detayları Görüntüle <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                                         </button>
                                     </div>
 
@@ -360,7 +354,7 @@ const PendingRepairs = ({ setActiveTab }) => {
                                             key={repair.id}
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, repair.id)}
-                                            onClick={() => setSelectedRepair(repair)}
+                                            onClick={() => setSelectedHistoryRepair(repair)}
                                             className={`bg-white p-4 rounded-md border ${isSlaBreached(repair) ? 'border-red-300 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-gray-100'} shadow-sm hover:shadow-md hover:scale-[1.02] cursor-grab active:cursor-grabbing transition-all group relative`}
                                         >
                                             {isSlaBreached(repair) && (
@@ -425,6 +419,10 @@ const PendingRepairs = ({ setActiveTab }) => {
                     <RepairHistoryModal
                         repair={selectedHistoryRepair}
                         onClose={() => setSelectedHistoryRepair(null)}
+                        onDiagnose={(r) => {
+                            setSelectedHistoryRepair(null);
+                            setSelectedRepair(r);
+                        }}
                     />
                 )
             }

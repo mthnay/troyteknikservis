@@ -361,12 +361,11 @@ router.put('/repairs/:id', async (req, res) => {
             body: req.body
         }, null, 2));
 
-        const oldRepair = await Repair.findOne({ $or: [{ id: id }, { _id: mongoose.Types.ObjectId.isValid(id) ? id : null }] });
-        
-        let updatedRepair = await Repair.findOneAndUpdate({ id: id }, req.body, { new: true });
-        if (!updatedRepair) {
-            updatedRepair = await Repair.findOneAndUpdate({ _id: id }, req.body, { new: true });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+
+        const oldRepair = await Repair.findOne(filter);
+        let updatedRepair = await Repair.findOneAndUpdate(filter, req.body, { new: true });
 
         if (updatedRepair) {
             // Eğer durum değiştiyse otomatik e-posta gönder
@@ -387,10 +386,10 @@ router.put('/repairs/:id', async (req, res) => {
 router.delete('/repairs/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        let deleted = await Repair.findOneAndDelete({ id: id });
-        if (!deleted) {
-            deleted = await Repair.findOneAndDelete({ _id: id });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const deleted = await Repair.findOneAndDelete(filter);
         if (deleted) {
             await createLog(req, 'DELETE_REPAIR', 'REPAIR', `Servis kaydı silindi: ${deleted.serviceNo} - ${deleted.customerName}`);
         }
@@ -526,10 +525,10 @@ router.put('/users/:id', requireRole(['superadmin']), async (req, res) => {
 router.delete('/users/:id', requireRole(['superadmin']), async (req, res) => {
     try {
         const id = req.params.id;
-        let deleted = await User.findOneAndDelete({ id: id });
-        if (!deleted) {
-            deleted = await User.findOneAndDelete({ _id: id });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const deleted = await User.findOneAndDelete(filter);
         res.json({ message: 'User deleted', success: !!deleted });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -583,26 +582,25 @@ router.post('/inventory', requireRole(['superadmin', 'storemanager']), async (re
 router.put('/inventory/:id', requireRole(['superadmin', 'storemanager']), async (req, res) => {
     try {
         const id = req.params.id;
-        let updatedItem = await Inventory.findOneAndUpdate({ id: id }, req.body, { new: true });
-        if (!updatedItem) {
-            updatedItem = await Inventory.findOneAndUpdate({ _id: id }, req.body, { new: true });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const updatedItem = await Inventory.findOneAndUpdate(filter, req.body, { new: true });
         res.json(updatedItem);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-router.delete('/inventory/:id', requireRole(['superadmin']), async (req, res) => {
+router.delete('/inventory/:id', requireRole(['superadmin', 'storemanager']), async (req, res) => {
     try {
         const id = req.params.id;
         console.log(`[Inventory] DELETE request for id/_id: ${id}`);
         
-        let deleted = await Inventory.findOneAndDelete({ id: id });
-        if (!deleted) {
-            console.log(`[Inventory] No item found with id: ${id}, trying _id...`);
-            deleted = await Inventory.findOneAndDelete({ _id: id });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const deleted = await Inventory.findOneAndDelete(filter);
         
         if (deleted) {
             console.log(`[Inventory] SUCCESS: Deleted item: ${deleted.name} (${deleted.partNumber || deleted.id})`);
@@ -720,10 +718,10 @@ router.get('/technicians', async (req, res) => {
 router.put('/technicians/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        let updatedTech = await Technician.findOneAndUpdate({ id: id }, req.body, { new: true });
-        if (!updatedTech) {
-            updatedTech = await Technician.findOneAndUpdate({ _id: id }, req.body, { new: true });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const updatedTech = await Technician.findOneAndUpdate(filter, req.body, { new: true });
         res.json(updatedTech);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -733,10 +731,10 @@ router.put('/technicians/:id', async (req, res) => {
 router.delete('/technicians/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        let deleted = await Technician.findOneAndDelete({ id: id });
-        if (!deleted) {
-            deleted = await Technician.findOneAndDelete({ _id: id });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const deleted = await Technician.findOneAndDelete(filter);
         res.json({ message: 'Technician deleted', success: !!deleted });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -766,10 +764,10 @@ router.post('/service-points', async (req, res) => {
 router.put('/service-points/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        let updatedPoint = await ServicePoint.findOneAndUpdate({ id: id }, req.body, { new: true });
-        if (!updatedPoint) {
-            updatedPoint = await ServicePoint.findOneAndUpdate({ _id: id }, req.body, { new: true });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const updatedPoint = await ServicePoint.findOneAndUpdate(filter, req.body, { new: true });
         res.json(updatedPoint);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -779,10 +777,10 @@ router.put('/service-points/:id', async (req, res) => {
 router.delete('/service-points/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        let deleted = await ServicePoint.findOneAndDelete({ id: id });
-        if (!deleted) {
-            deleted = await ServicePoint.findOneAndDelete({ _id: id });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const deleted = await ServicePoint.findOneAndDelete(filter);
         res.json({ message: 'Service Point deleted', success: !!deleted });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -886,23 +884,23 @@ router.post('/customers', async (req, res) => {
 router.put('/customers/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        let updatedCustomer = await Customer.findOneAndUpdate({ id: id }, req.body, { new: true });
-        if (!updatedCustomer) {
-            updatedCustomer = await Customer.findOneAndUpdate({ _id: id }, req.body, { new: true });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const updatedCustomer = await Customer.findOneAndUpdate(filter, req.body, { new: true });
         res.json(updatedCustomer);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-router.delete('/customers/:id', requireRole(['superadmin']), async (req, res) => {
+router.delete('/customers/:id', requireRole(['superadmin', 'storemanager']), async (req, res) => {
     try {
         const id = req.params.id;
-        let deleted = await Customer.findOneAndDelete({ id: id });
-        if (!deleted) {
-            deleted = await Customer.findOneAndDelete({ _id: id });
-        }
+        const filter = { $or: [{ id: id }] };
+        if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
+        
+        const deleted = await Customer.findOneAndDelete(filter);
         res.json({ message: 'Müşteri silindi', success: !!deleted });
     } catch (err) {
         res.status(500).json({ message: err.message });

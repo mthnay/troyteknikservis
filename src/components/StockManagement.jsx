@@ -6,12 +6,11 @@ import MyPhoneIcon from './LocalIcons';
 import { hasPermission } from '../utils/permissions';
 
 const StockManagement = () => {
-    const { inventory, addInventoryItem, updateInventoryItem, removeInventoryItem, servicePoints, currentUser, showToast, transferInventorySerial } = useAppContext();
+    const { inventory, addInventoryItem, updateInventoryItem, removeInventoryItem, servicePoints, currentUser, showToast, transferInventorySerial, selectedStoreId, setSelectedStoreId } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
     // Using simple boolean or exact match for 'KGB'/'KBB'
     const [warehouseType, setWarehouseType] = useState('KGB'); 
-    const [storeFilter, setStoreFilter] = useState('all');
     const [showStoreDropdown, setShowStoreDropdown] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedPartDetails, setSelectedPartDetails] = useState(null);
@@ -31,7 +30,9 @@ const StockManagement = () => {
     const baseFilteredParts = inventory.filter(part => {
         const isKBB = part.warehouseType === 'KBB' || (part.type || '').toLowerCase().includes('kbb');
         const matchesWarehouse = warehouseType === 'KGB' ? !isKBB : isKBB;
-        const matchesStore = storeFilter === 'all' || String(part.storeId) === String(storeFilter);
+        // If view_all_stores is true, we respect selectedStoreId from context (0 means all)
+        // If false, inventory is already filtered in AppContext.
+        const matchesStore = selectedStoreId === 0 || String(part.storeId) === String(selectedStoreId);
         return matchesWarehouse && matchesStore;
     });
 
@@ -54,7 +55,7 @@ const StockManagement = () => {
 
     const handleAddPart = async (e) => {
         e.preventDefault();
-        const targetStoreId = newPart.storeId || currentUser.storeId;
+        const targetStoreId = newPart.storeId || (selectedStoreId !== 0 ? selectedStoreId : currentUser.storeId);
         const success = await addInventoryItem({ ...newPart, storeId: parseInt(targetStoreId) });
         if (success) {
             setShowAddModal(false);
@@ -65,10 +66,9 @@ const StockManagement = () => {
         }
     };
 
-    const updateStock = (id, change) => {
-        const item = inventory.find(i => i.id === id);
+    const updateStock = (item, change) => {
         if (item) {
-            updateInventoryItem(id, { quantity: Math.max(0, item.quantity + change) });
+            updateInventoryItem(item._id || item.id, { quantity: Math.max(0, item.quantity + change) });
         }
     };
 
@@ -96,29 +96,48 @@ const StockManagement = () => {
                             KBB (Eski)
                         </button>
                     </div>
+
                     {hasPermission(currentUser, 'view_all_stores') && (
                         <div className="relative">
                             <button 
                                 onClick={() => setShowStoreDropdown(!showStoreDropdown)}
-                                className={`h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-medium transition-all ${storeFilter !== 'all' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100/80 hover:bg-gray-200/80 text-gray-700'}`}
+                                className="h-9 px-4 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-all shadow-sm group"
                             >
-                                <Filter size={14} />
-                                {storeFilter !== 'all' ? servicePoints.find(s => String(s.id) === String(storeFilter))?.name : 'Tüm Mağazalar'}
+                                <Filter size={14} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                <span className="text-[13px] font-medium text-gray-700">
+                                    {selectedStoreId === 0 ? 'Tüm Mağazalar' : (servicePoints.find(s => String(s.id) === String(selectedStoreId))?.name || 'Mağaza')}
+                                </span>
+                                <ChevronDown size={14} className={`text-gray-400 transition-transform ${showStoreDropdown ? 'rotate-180' : ''}`} />
                             </button>
+                            
                             {showStoreDropdown && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setShowStoreDropdown(false)}></div>
-                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                        <button onClick={() => { setStoreFilter('all'); setShowStoreDropdown(false); }} className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-black/5 text-gray-700">Tüm Mağazalar</button>
-                                        <div className="h-px bg-gray-200/50 my-1"></div>
+                                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <button 
+                                            onClick={() => { setSelectedStoreId(0); setShowStoreDropdown(false); }}
+                                            className={`w-full px-4 py-2 text-left text-[13px] flex items-center justify-between hover:bg-gray-50 transition-colors ${selectedStoreId === 0 ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-600 font-medium'}`}
+                                        >
+                                            Tüm Mağazalar
+                                            {selectedStoreId === 0 && <Check size={14} />}
+                                        </button>
+                                        <div className="h-px bg-gray-100 my-1"></div>
                                         {servicePoints.map(s => (
-                                            <button key={s.id} onClick={() => { setStoreFilter(s.id); setShowStoreDropdown(false); }} className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-black/5 text-gray-700">{s.name}</button>
+                                            <button 
+                                                key={s.id}
+                                                onClick={() => { setSelectedStoreId(parseInt(s.id)); setShowStoreDropdown(false); }}
+                                                className={`w-full px-4 py-2 text-left text-[13px] flex items-center justify-between hover:bg-gray-50 transition-colors ${String(selectedStoreId) === String(s.id) ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-600 font-medium'}`}
+                                            >
+                                                {s.name}
+                                                {String(selectedStoreId) === String(s.id) && <Check size={14} />}
+                                            </button>
                                         ))}
                                     </div>
                                 </>
                             )}
                         </div>
                     )}
+                    
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 rounded-lg text-[13px] font-medium transition-all flex items-center gap-2 shadow-sm"
@@ -200,11 +219,11 @@ const StockManagement = () => {
                                                 <div className="flex flex-col">
                                                     <span className="font-medium text-[14px] text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{part.name}</span>
                                                     <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className="text-[12px] text-gray-500 font-mono">{part.id}</span>
+                                                        <span className="text-[12px] text-gray-500 font-mono">{part.id || part.partNumber}</span>
                                                         {hasPermission(currentUser, 'view_all_stores') && (
                                                             <>
                                                                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                                <span className="text-[11px] text-gray-500 bg-gray-100 font-medium px-1.5 rounded leading-tight border border-gray-200">
+                                                                <span className="text-[11px] text-blue-600 bg-blue-50 font-bold px-1.5 rounded leading-tight border border-blue-100 uppercase">
                                                                     {servicePoints.find(s => String(s.id) === String(part.storeId))?.name || 'Genel'}
                                                                 </span>
                                                             </>
@@ -253,11 +272,11 @@ const StockManagement = () => {
                                                     </>
                                                 )}
                                                 <div className="flex items-center bg-gray-50 rounded-md border border-gray-200 p-0.5" onClick={e=>e.stopPropagation()}>
-                                                    <button onClick={() => updateStock(part.id, -1)} className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded transition-all">
+                                                    <button onClick={() => updateStock(part, -1)} className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded transition-all">
                                                         <ArrowDownRight size={14} />
                                                     </button>
                                                     <div className="w-px h-4 bg-gray-200 mx-0.5"></div>
-                                                    <button onClick={() => updateStock(part.id, 1)} className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded transition-all">
+                                                    <button onClick={() => updateStock(part, 1)} className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded transition-all">
                                                         <ArrowUpRight size={14} />
                                                     </button>
                                                 </div>
@@ -447,7 +466,7 @@ const StockManagement = () => {
                                 <div className="relative">
                                     <select
                                         className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 appearance-none text-[14px] text-gray-700"
-                                        value={newPart.storeId || ''}
+                                        value={newPart.storeId || (selectedStoreId !== 0 ? selectedStoreId : '')}
                                         onChange={e => setNewPart({ ...newPart, storeId: e.target.value })}
                                         required
                                     >

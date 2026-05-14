@@ -31,7 +31,7 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
     const handleSaveCustomer = async (e) => {
         e.preventDefault();
         if (isEditing) {
-            await updateCustomer(formData.id, formData);
+            await updateCustomer(formData._id || formData.id, formData);
             if (selectedCustomer?.id === formData.id) {
                 setSelectedCustomer(prev => ({ ...prev, ...formData }));
             }
@@ -73,7 +73,7 @@ const Customers = ({ setActiveTab, setServiceInitialData }) => {
         );
 
         if (confirmed) {
-            const success = await removeCustomer(customer.id || customer._id);
+            const success = await removeCustomer(customer._id || customer.id);
             if (success !== false) {
                 if (selectedCustomer?.id === customer.id || selectedCustomer?._id === customer._id) {
                     setSelectedCustomer(null);

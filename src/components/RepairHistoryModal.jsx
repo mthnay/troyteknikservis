@@ -31,7 +31,7 @@ const REPAIR_TYPE_LABELS = {
     'returnbefore': 'Değiştirmeden Önce İade'
 };
 
-const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
+const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
     const { updateRepair, updateRepairStatus, removeRepair, repairs, servicePoints, currentUser, showToast, API_URL } = useAppContext();
     const repair = repairs.find(r => r.id === initialRepair.id) || initialRepair;
     
@@ -692,6 +692,14 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose }) => {
                     </div>
                     
                     <div className="flex flex-wrap gap-2">
+                        {onDiagnose && repair.status === 'Beklemede' && (
+                            <button 
+                                onClick={() => onDiagnose(repair)}
+                                className="px-6 py-2 bg-orange-500 text-white text-xs font-bold rounded-md hover:bg-orange-600 flex items-center gap-2 shadow-sm transition-all animate-pulse"
+                            >
+                                <Wrench size={14} /> Teşhis Yap
+                            </button>
+                        )}
                         <button onClick={handleWhatsApp} className="px-4 py-2 bg-[#25D366] text-white text-xs font-bold rounded-md hover:bg-[#128C7E] flex items-center gap-2 shadow-sm shadow-[#25D366]/20 transition-all">
                             <MessageCircle size={14} /> Müşteriye Yaz
                         </button>

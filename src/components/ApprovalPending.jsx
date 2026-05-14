@@ -115,7 +115,7 @@ const ApprovalPending = ({ setActiveTab }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {pendingApprovalList.length > 0 ? (
                     pendingApprovalList.map((repair) => (
-                        <div key={repair.id} className="group bg-white rounded-lg hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1.5 transition-all duration-500 flex flex-col overflow-hidden border border-gray-100 relative">
+                        <div key={repair.id} onClick={() => setSelectedHistoryRepair(repair)} className="group bg-white rounded-lg hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1.5 transition-all duration-500 flex flex-col overflow-hidden border border-gray-100 relative cursor-pointer p-4">
                             {/* Card Top - Icon/Image Area */}
                                 <div className="flex items-center gap-4 flex-1 w-full">
                                     <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-gray-50 border border-gray-100">
@@ -149,19 +149,19 @@ const ApprovalPending = ({ setActiveTab }) => {
 
                                 <div className="mt-auto grid grid-cols-2 gap-2">
                                     <button
-                                        onClick={() => handleApproval(repair, true)}
+                                        onClick={(e) => { e.stopPropagation(); handleApproval(repair, true); }}
                                         className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-md font-semibold text-[10px] transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-50 active:scale-95"
                                     >
                                         <Check size={12} strokeWidth={3} /> ONAY
                                     </button>
                                     <button
-                                        onClick={() => handleApproval(repair, false)}
+                                        onClick={(e) => { e.stopPropagation(); handleApproval(repair, false); }}
                                         className="bg-red-50 hover:bg-red-500 hover:text-white text-red-500 py-2 rounded-md font-semibold text-[10px] transition-all border border-red-100 flex items-center justify-center gap-1.5 active:scale-95"
                                     >
                                         <X size={12} strokeWidth={3} /> RED
                                     </button>
                                     <button
-                                        onClick={() => handleNotify(repair)}
+                                        onClick={(e) => { e.stopPropagation(); handleNotify(repair); }}
                                         className="col-span-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 py-2 rounded-md font-semibold text-[10px] transition-all border border-blue-100 flex items-center justify-center gap-1.5 active:scale-95"
                                     >
                                         <Send size={12} /> BİLDİR

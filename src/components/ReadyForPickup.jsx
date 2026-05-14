@@ -114,7 +114,7 @@ const ReadyForPickup = () => {
             {/* Liste Görünümü - Ana Sayfa Stili */}
             <div className="flex flex-col gap-4">
                 {readyRepairs.length > 0 ? readyRepairs.map(repair => (
-                    <div key={repair.id} className="group bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:border-green-200 transition-all flex flex-col md:flex-row items-center gap-6">
+                    <div key={repair.id} onClick={() => setSelectedDetailRepair(repair)} className="group bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:border-green-200 transition-all flex flex-col md:flex-row items-center gap-6 cursor-pointer">
                         {/* Device Info */}
                         <div className="flex items-center gap-4 flex-1 w-full">
                             <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-gray-50 border border-gray-100">
@@ -153,7 +153,7 @@ const ReadyForPickup = () => {
                                 <Eye size={18} />
                             </button>
                             <button
-                                onClick={() => handleOpenDelivery(repair)}
+                                onClick={(e) => { e.stopPropagation(); handleOpenDelivery(repair); }}
                                 className="h-10 px-4 rounded-md text-[11px] font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 text-white bg-gray-900 hover:bg-black"
                             >
                                 TESLİM ET <ArrowRight size={14} />

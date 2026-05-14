@@ -252,7 +252,7 @@ const Technicians = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {filteredRepairs.map((repair) => (
-                                        <tr key={repair._id || repair.id} className="hover:bg-indigo-50/30 transition-all group">
+                                        <tr key={repair._id || repair.id} onClick={() => setSelectedHistoryRepair(repair)} className="hover:bg-indigo-50/30 transition-all group cursor-pointer">
                                             <td className="px-10 py-6">
                                                 <span className="font-mono text-xs font-semibold text-indigo-600 group-hover:scale-110 inline-block transition-transform">#{repair.id}</span>
                                             </td>
@@ -291,7 +291,7 @@ const Technicians = () => {
                                                     </button>
                                                     {!repair.status?.includes('Tamam') && (
                                                         <button 
-                                                            onClick={() => handleStartJob(repair.id)}
+                                                            onClick={(e) => { e.stopPropagation(); handleStartJob(repair.id); }}
                                                             className="bg-gray-900 text-white px-5 py-2.5 rounded-md text-[10px] font-semibold tracking-widest uppercase hover:bg-black transition-all shadow-lg shadow-gray-200 flex items-center gap-2"
                                                         >
                                                             <Play size={10} fill="currentColor" /> Başlat
