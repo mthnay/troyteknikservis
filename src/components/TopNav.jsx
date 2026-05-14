@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X, Recycle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { hasPermission } from '../utils/permissions';
+import { hasPermission, ROLES } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
 import NotificationCenter from './NotificationCenter';
 import RepairHistoryModal from './RepairHistoryModal';
@@ -119,7 +119,13 @@ const TopNav = ({ activeTab, setActiveTab }) => {
 
                     {/* Categorized Navigation */}
                     <div className="flex items-center gap-1">
-                        {CATEGORIES.map(category => {
+                        {CATEGORIES.filter(category => {
+                            if (category.id === 'yonetim') {
+                                const role = currentUser?.role?.toLowerCase();
+                                return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin';
+                            }
+                            return true;
+                        }).map(category => {
                             const isCategoryActive = category.items.some(item => item.id === activeTab);
                             const isHovered = hoveredCategory === category.id;
 

@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import {
     X, CheckCircle, Clock, AlertTriangle, Check,
     Save, Play, Pause, RotateCcw, Box, Wrench, FileText, ChevronRight, Activity, Zap, AlertCircle, Users,
-    Camera, Plus, Trash2, ArrowRight
+    Camera, Plus, Trash2, ArrowRight, ShieldCheck, Microscope, Info
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { appPrompt, appAlert } from '../utils/alert';
@@ -19,19 +19,15 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
     const [returnReason, setReturnReason] = useState('');
     const [customReturnReason, setCustomReturnReason] = useState('');
     const [uploading, setUploading] = useState(false);
-
-    // Local state for KBB/KGB serial inputs to prevent focus loss on each keystroke
     const [localSerials, setLocalSerials] = useState({});
-    
-    // Quotation States
     const [showQuoteModal, setShowQuoteModal] = useState(false);
     const [quoteItems, setQuoteItems] = useState([{ name: '', price: '' }]);
     const [quoteNotes, setQuoteNotes] = useState('');
 
-    const fileInputRef = React.useRef(null);
+    const fileInputRef = useRef(null);
 
     const RETURN_REASONS = [
-        "Arıza Tekrarlanamadı (No Trouble Found)",
+        "Arıza Tekrarlanamadı (NTF)",
         "Müşteri Teklifi Reddetti",
         "Ekonomik Onarım Mümkün Değil (BER)",
         "Yetkisiz Müdahale Tespit Edildi",
@@ -40,679 +36,371 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
     ];
 
     const DEFAULT_STEPS = [
-        { id: 1, label: 'Cihazın dış kozmetik kontrolü yapıldı', checked: false },
-        { id: 2, label: 'Güvenlik vidaları ve Vida Sökümü', checked: false },
-        { id: 3, label: 'Ekran flex kabloları ayrıldı', checked: false },
-        { id: 4, label: 'Batarya bağlantısı kesildi', checked: false },
-        { id: 5, label: 'Yeni parça montajı ve testleri', checked: false },
+        { id: 1, label: 'Kozmetik ve Fonksiyonel Ön Kontrol', checked: false },
+        { id: 2, label: 'Güvenlik Vidaları ve Vida Sökümü', checked: false },
+        { id: 3, label: 'Flex Kabloları ve Batarya İzolasyonu', checked: false },
+        { id: 4, label: 'Arızalı Parça Sökümü ve KBB Kaydı', checked: false },
+        { id: 5, label: 'Yeni Parça Montajı ve KGB Eşleşmesi', checked: false },
         { id: 6, label: 'PSA Yenileme ve Sıvı Koruma Uygulama', checked: false },
-        { id: 7, label: 'Cihaz kapatıldı ve vidalandı', checked: false },
-        { id: 8, label: 'Son fonksiyon ve kalite testleri', checked: false },
+        { id: 7, label: 'Cihaz Kapama ve Tork Ayarlı Vidalama', checked: false },
+        { id: 8, label: 'Kalite Kontrol (QC) Testleri Tamamlandı', checked: false },
     ];
 
-    const [steps, setSteps] = useState(() => {
-        const found = repairs.find(r => r.id === repairId);
-        // Eğer kayıtlı steps varsa ve boş değilse onu kullan, yoksa varsayılanları getir.
-        if (found?.steps && found.steps.length > 0) {
-            return found.steps.map(s => ({
-                ...s,
-                checked: s.checked !== undefined ? s.checked : (s.completed || false)
-            }));
-        }
-        return DEFAULT_STEPS;
-    });
+    const [steps, setSteps] = useState([]);
 
     useEffect(() => {
         const found = repairs.find(r => r.id === repairId || r._id === repairId);
         if (found) {
             setRepair(found);
-            // Initialize local serials from DB only when parts change externally
-            // (not when we update them ourselves)
-            setLocalSerials(prev => {
-                const next = { ...prev };
-                (found.parts || []).forEach((p, idx) => {
-                    const key = `${idx}`;
-                    // Only set if not currently being edited (i.e., key doesn't exist yet)
-                    if (next[`${key}_kbb`] === undefined) next[`${key}_kbb`] = p.kbbSerial || '';
-                    if (next[`${key}_kgb`] === undefined) next[`${key}_kgb`] = p.kgbSerial || '';
-                });
-                return next;
+            if (found.steps && found.steps.length > 0) {
+                setSteps(found.steps.map(s => ({ ...s, checked: s.checked ?? s.completed ?? false })));
+            } else {
+                setSteps(DEFAULT_STEPS);
+            }
+            
+            const serials = {};
+            (found.parts || []).forEach((p, idx) => {
+                serials[`${idx}_kbb`] = p.kbbSerial || '';
+                serials[`${idx}_kgb`] = p.kgbSerial || '';
             });
+            setLocalSerials(serials);
         }
     }, [repairId, repairs]);
 
     useEffect(() => {
         let interval;
         if (isTimerRunning) {
-            interval = setInterval(() => {
-                setTimer(prev => prev + 1);
-            }, 1000);
+            interval = setInterval(() => setTimer(prev => prev + 1), 1000);
         }
         return () => clearInterval(interval);
     }, [isTimerRunning]);
 
     const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
     const toggleStep = (id) => {
-        if (!isTimerRunning) {
-            if (repair.technician) {
-                setIsTimerRunning(true);
-                showToast('Onarım süresi otomatik başlatıldı.', 'info');
-            } else {
-                appAlert('Lütfen önce kendinizi veya bir teknisyeni seçerek onarımı başlatın.', 'warning');
-                return;
-            }
+        if (!isTimerRunning && repair.technician) {
+            setIsTimerRunning(true);
+            showToast('Onarım süreci otomatik başlatıldı.', 'info');
         }
-        const newSteps = steps.map(step => step.id === id ? { ...step, checked: !step.checked } : step);
+        if (!repair.technician) {
+            appAlert('Lütfen önce bir teknisyen seçerek onarımı başlatın.', 'warning');
+            return;
+        }
+        const newSteps = steps.map(s => s.id === id ? { ...s, checked: !s.checked } : s);
         setSteps(newSteps);
         updateRepair(repairId, { steps: newSteps });
     };
 
-    const handleReturn = () => {
-        if (!returnReason) return;
-        const duration = formatTime(timer);
-        const finalReason = returnReason === 'Diğer' ? customReturnReason : returnReason;
-
-        updateRepair(repairId, {
-            status: 'İade Hazır',
-            repairClosingNote: `İŞLEMSİZ İADE: ${finalReason}\n\n[Süre: ${duration}]`,
-            repairDuration: duration,
-            historyNote: `Cihaz iade edildi: ${finalReason}`
-        });
-
-        completeJob(currentUser?.id || 'T1');
-        onClose();
-        if (setActiveTab) setActiveTab('ready-pickup');
-    };
-
-    const handleAddPhoto = () => fileInputRef.current?.click();
-
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        setUploading(true);
-        try {
-            const data = await uploadMedia(file);
-            if (data && data.url) {
-                const currentAfterImages = repair.afterImages || [];
-                const success = await updateRepair(repairId, {
-                    afterImages: [...currentAfterImages, data.url]
-                });
-                if (success) showToast('Onarım sonu fotoğrafı eklendi.', 'success');
-            }
-        } catch (error) {
-            console.error(error);
-            showToast('Fotoğraf yüklenemedi.', 'error');
-        } finally {
-            setUploading(false);
-            e.target.value = null;
-        }
-    };
-
-    const removePhoto = async (index) => {
-        const newList = [...(repair.afterImages || [])];
-        newList.splice(index, 1);
-        await updateRepair(repairId, { afterImages: newList });
-    };
-
     const handleComplete = async () => {
-        if (!steps.every(s => s.checked) || !repairClosingNote.trim()) {
-            appAlert('Lütfen tüm adımları tamamlayın ve onarım raporunu yazın.', 'warning');
+        if (!steps.every(s => s.checked)) {
+            appAlert('Lütfen tüm onarım adımlarını tamamlayın.', 'warning');
+            return;
+        }
+        if (!repairClosingNote.trim()) {
+            appAlert('Lütfen onarım raporunu/notlarını doldurun.', 'warning');
             return;
         }
 
-        // Check local serials too (user may not have tabbed out yet)
-        // Only block if KGB serial is genuinely missing — needsOrder alone should NOT block
-        // if the user has already typed the serial in the input.
         const incompletePart = repair.parts?.find((p, idx) => {
-            const kgb = (localSerials[`${idx}_kgb`] !== undefined ? localSerials[`${idx}_kgb`] : p.kgbSerial) || '';
+            const kgb = localSerials[`${idx}_kgb`] || p.kgbSerial || '';
             return kgb.trim() === '';
         });
+
         if (incompletePart) {
-            appAlert(`Lütfen ${incompletePart.description} için KGB seri nosunu giriniz.`, 'info');
+            appAlert(`${incompletePart.description} için KGB seri numarası zorunludur.`, 'error');
             return;
         }
 
-        // Flush any pending local serial changes before completing
-        if (repair.parts && repair.parts.length > 0) {
-            const flushedParts = repair.parts.map((p, idx) => {
-                const kgb = localSerials[`${idx}_kgb`] ?? p.kgbSerial ?? '';
-                const kbb = localSerials[`${idx}_kbb`] ?? p.kbbSerial ?? '';
-                const newPart = { ...p, kgbSerial: kgb, kbbSerial: kbb };
-                if (kgb && kbb) newPart.status = 'Installed';
-                return newPart;
-            });
-            await updateRepair(repairId, { parts: flushedParts });
-        }
-
         const duration = formatTime(timer);
-        
-        // --- CRITICAL: Subtract parts from inventory before finishing ---
-        if (repair.parts && repair.parts.length > 0) {
-            for (const part of repair.parts) {
-                // Determine the correct part ID (inventoryId is usually the custom ID or _id)
-                const partId = part.inventoryId || part.id;
-                if (partId) {
-                    await usePart(partId, 1);
-                }
-            }
-        }
-
         const success = await updateRepair(repairId, {
             status: 'Cihaz Hazır',
             repairClosingNote: `${repairClosingNote}\n\n[Süre: ${duration}]`,
             repairDuration: duration,
-            historyNote: `Onarım başarıyla tamamlandı ve kullanılan parçalar stoktan düşüldü.`
+            historyNote: `Onarım tamamlandı. (${duration})`
         });
 
         if (success) {
-            completeJob(currentUser?.id || 'T1');
-            
-            // WhatsApp Bildirimi Sor
-            const { isConfirmed } = await Swal.fire({
-                title: 'Onarım Tamamlandı!',
-                text: 'Müşteriye WhatsApp üzerinden bilgi vermek ister misiniz?',
-                icon: 'success',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Bildir',
-                cancelButtonText: 'Kapat',
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280'
-            });
-
-            if (isConfirmed && repair.customerPhone) {
-                const message = `Merhaba ${repair.customer}, ${repair.device} cihazınızın onarımı tamamlanmıştır. Cihazınızı servisimizden teslim alabilirsiniz.`;
-                sendWhatsApp(repair.customerPhone, message);
-            }
-
+            completeJob(currentUser?.id);
             onClose();
             if (setActiveTab) setActiveTab('ready-pickup');
-            showToast('Onarım tamamlandı ve stoklar güncellendi.', 'success');
-        }
-    };
-
-    const handleSendQuote = async () => {
-        const totalAmount = quoteItems.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
-        
-        if (totalAmount <= 0) {
-            appAlert('Lütfen geçerli bir teklif tutarı giriniz.', 'warning');
-            return;
-        }
-
-        const quoteDetails = {
-            items: quoteItems,
-            totalAmount: totalAmount,
-            notes: quoteNotes,
-            date: new Date().toLocaleString('tr-TR')
-        };
-
-        const success = await updateRepair(repairId, {
-            status: 'Müşteri Onayı Bekliyor',
-            quoteAmount: totalAmount.toString(),
-            quotationDetails: quoteDetails,
-            diagnosisNotes: quoteNotes,
-            historyNote: `Müşteriye ek onarım teklifi sunuldu: ₺${totalAmount}`
-        });
-
-        if (success) {
-            if (repair.customerPhone || repair.phone) {
-                const phone = repair.customerPhone || repair.phone;
-                const link = `${window.location.origin}/?track=${repair.id}`;
-                const message = `⚠️ *SERVİS ONAYI GEREKİYOR* ⚠️\n\nMerhaba ${repair.customer},\n\n#{repair.id} kayıt numaralı cihazınızın detaylı incelemesi sırasında ek işlem gerektiren bir durum tespit edilmiştir:\n\n*Durum:* ${quoteNotes || 'Parça değişimi / Ek onarım'}\n💰 *Ek Tutar:* ${totalAmount} TL\n\nİşleme devam edebilmemiz için müşteri portalımız üzerinden teklifi onaylamanızı/reddetmenizi rica ederiz:\n🔗 ${link}`;
-                sendWhatsApp(phone, message);
-            }
-
-            appAlert('Fiyat teklifi müşteriye başarıyla iletildi ve cihaz bekleme moduna alındı.', 'success');
-            onClose();
-            if (setActiveTab) setActiveTab('approval-pending');
+            showToast('Onarım başarıyla sonuçlandırıldı.', 'success');
         }
     };
 
     if (!repair) return null;
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content w-full max-w-7xl h-[92vh] flex flex-col lg:flex-row relative overflow-y-auto lg:overflow-hidden">
+        <div className="fixed inset-0 z-[100] bg-[#f5f5f7] flex flex-col animate-fade-in">
+            {/* GSX Top Bar */}
+            <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
+                <div className="flex items-center gap-4">
+                    <div className="bg-[#1d1d1f] text-white p-2 rounded-lg">
+                        <Wrench size={20} />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Servis Atölyesi</span>
+                            <ChevronRight size={10} className="text-gray-300" />
+                            <span className="text-[10px] font-bold text-[#0071e3] uppercase tracking-widest">Aktif Onarım</span>
+                        </div>
+                        <h2 className="text-sm font-bold text-[#1d1d1f]">#{repair.id} • {repair.device}</h2>
+                    </div>
+                </div>
 
-                {/* Sol Panel - Onarım Adımları */}
-                <div className="w-full lg:w-1/3 bg-gray-50/80 backdrop-blur-xl border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col shrink-0 lg:shrink lg:h-full">
-                    <div className="p-8 border-b border-gray-100">
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="bg-white text-gray-900 px-3 py-1 rounded-md text-xs font-mono font-bold border border-gray-100">{repair.id}</span>
-                            <span className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-bold uppercase">MAĞAZA İÇİ</span>
-                        </div>
-                        <h2 className="text-2xl font-semibold text-gray-900 leading-tight mb-2 tracking-tight">{repair.device}</h2>
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100">
-                                <span className="font-bold uppercase">S/N: {repair.serial || repair.serialNumber || 'YOK'}</span>
+                <div className="flex items-center gap-6">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">İşlem Süresi</span>
+                        <span className={`text-xl font-mono font-black ${isTimerRunning ? 'text-[#0071e3]' : 'text-gray-300'}`}>{formatTime(timer)}</span>
+                    </div>
+                    <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isTimerRunning ? 'bg-red-500 text-white' : 'bg-[#0071e3] text-white'}`}>
+                        {isTimerRunning ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                    </button>
+                    <div className="h-8 w-px bg-gray-200"></div>
+                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-[#1d1d1f] transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 flex overflow-hidden">
+                {/* Left Panel: Service Info & Steps */}
+                <div className="w-[400px] border-r border-gray-200 bg-white flex flex-col shrink-0 overflow-y-auto">
+                    <div className="p-6 border-b border-gray-50 bg-[#fbfbfd]">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 overflow-hidden shadow-sm">
+                                <img src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} className="w-full h-full object-cover" />
                             </div>
-                        </div>
-                        <div className="text-sm text-gray-500 font-medium flex items-center justify-between gap-2">
-                            {repair.technician ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase border border-emerald-100 flex items-center gap-1">
-                                        <Activity size={10} /> {repair.technician} Onarıyor
-                                    </span>
-                                    <button 
-                                        onClick={() => updateRepair(repairId, { technician: null })}
-                                        className="text-[10px] text-gray-400 hover:text-red-500 font-bold underline transition-colors"
-                                    >
-                                        Değiştir
-                                    </button>
+                            <div>
+                                <h3 className="font-bold text-[#1d1d1f]">{repair.customer}</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">{repair.serial}</p>
+                                <div className="mt-2 flex gap-2">
+                                    <span className="px-2 py-0.5 bg-blue-50 text-[#0071e3] text-[9px] font-bold rounded uppercase border border-blue-100">Mağaza İçi</span>
+                                    {repair.technician && <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[9px] font-bold rounded uppercase border border-green-100">👨‍🔧 {repair.technician}</span>}
                                 </div>
-                            ) : (
-                                <span className="text-gray-400">👤 {repair.customer}</span>
-                            )}
-                        </div>
-                        {(repair.tcNo || repair.customerAddress) && (
-                            <div className="mt-4 p-3 bg-white/50 rounded-md border border-gray-100 space-y-2">
-                                {repair.tcNo && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[9px] font-semibold text-gray-400 text-xs uppercase tracking-wide">TC / VKN</span>
-                                        <span className="text-[10px] font-mono font-bold text-gray-600">{repair.tcNo}</span>
-                                    </div>
-                                )}
-                                {repair.customerAddress && (
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[9px] font-semibold text-gray-400 text-xs uppercase tracking-wide">Adres</span>
-                                        <span className="text-[10px] font-medium text-gray-500 leading-tight line-clamp-2">{repair.customerAddress}</span>
-                                    </div>
-                                )}
                             </div>
-                        )}
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                        <div className="space-y-3">
-                            {steps.map((step, index) => (
-                                <label key={step.id} className={`flex items-start gap-4 p-5 rounded-lg border cursor-pointer transition-all ${step.checked ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border-gray-100 hover:border-blue-200'}`}>
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${step.checked ? 'bg-white text-blue-600 border-white' : 'border-gray-200'}`}>
-                                        <CheckCircle size={14} strokeWidth={4} />
-                                    </div>
-                                    <input type="checkbox" checked={step.checked} onChange={() => toggleStep(step.id)} className="hidden" />
-                                    <div className="flex flex-col">
-                                        <span className={`text-[9px] font-semibold uppercase opacity-60 ${step.checked ? 'text-blue-50' : 'text-gray-400'}`}>ADIM {index + 1}</span>
-                                        <span className="text-sm font-bold">{step.label}</span>
-                                    </div>
-                                </label>
-                            ))}
+                        </div>
+                        <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                <Info size={10} /> Müşteri Şikayeti
+                            </h4>
+                            <p className="text-[11px] font-medium text-gray-600 leading-relaxed italic">"{repair.issue}"</p>
                         </div>
                     </div>
 
-                    {/* Parça & KGB Takibi */}
-                    {repair.parts && repair.parts.length > 0 && (
-                        <div className="p-6 border-t border-gray-100 bg-white">
-                            <h4 className="text-[10px] font-semibold uppercase text-gray-400 mb-4 flex items-center gap-2">
-                                <Box size={14} className="text-indigo-500" />
-                                Parça & KGB Durumu
-                            </h4>
-                            <div className="space-y-2">
-                                {repair.parts.map((p, i) => (
-                                    <div key={i} className="flex flex-col p-3 bg-gray-50 rounded-md border border-gray-100">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-[11px] font-bold text-gray-700 truncate">{p.description}</span>
-                                            {p.kgbSerial ? (
-                                                <span className="text-[9px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-semibold uppercase">GİRİLDİ</span>
-                                            ) : (
-                                                <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold uppercase">EKSİK</span>
-                                            )}
+                    <div className="p-6 space-y-2">
+                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Onarım Akışı Checklist</h4>
+                        {steps.map((step, idx) => (
+                            <div 
+                                key={step.id} onClick={() => toggleStep(step.id)}
+                                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-4 ${step.checked ? 'bg-[#0071e3] border-[#0071e3] text-white shadow-lg shadow-[#0071e3]/10' : 'bg-white border-gray-100 hover:border-[#0071e3]/30'}`}
+                            >
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors ${step.checked ? 'bg-white text-[#0071e3] border-white' : 'border-gray-200 text-transparent'}`}>
+                                    <Check size={14} strokeWidth={4} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className={`text-[8px] font-bold uppercase ${step.checked ? 'text-blue-100' : 'text-gray-400'}`}>Adım {idx + 1}</span>
+                                    <span className="text-[11px] font-bold tracking-tight">{step.label}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main Content: Workbench */}
+                <div className="flex-1 overflow-y-auto p-10 bg-[#f5f5f7]">
+                    {!repair.technician ? (
+                        <div className="h-full flex items-center justify-center">
+                            <div className="w-full max-w-md bg-white p-8 rounded-[32px] shadow-2xl border border-white text-center">
+                                <div className="w-20 h-20 bg-[#f5f5f7] text-[#0071e3] rounded-[24px] flex items-center justify-center mx-auto mb-6">
+                                    <Users size={40} />
+                                </div>
+                                <h2 className="text-2xl font-bold text-[#1d1d1f] mb-2">Workbench Erişimi</h2>
+                                <p className="text-sm text-gray-400 font-medium mb-8">İşlemi başlatan teknisyeni seçiniz.</p>
+                                <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2">
+                                    {technicians.map(tech => (
+                                        <button 
+                                            key={tech.id} 
+                                            onClick={() => updateRepair(repairId, { technician: tech.name, status: 'Onarımda', historyNote: `${tech.name} onarımı başlattı.` })}
+                                            className="w-full p-4 bg-white border border-gray-100 rounded-2xl flex items-center justify-between hover:border-[#0071e3] hover:bg-[#0071e3]/5 transition-all group active:scale-[0.98]"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-2xl">{tech.avatar || '👨‍🔧'}</span>
+                                                <span className="font-bold text-[#1d1d1f]">{tech.name}</span>
+                                            </div>
+                                            <ChevronRight size={18} className="text-gray-300 group-hover:text-[#0071e3]" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="max-w-4xl mx-auto space-y-8">
+                            {/* Apple Parts Pairing Section */}
+                            {repair.parts && repair.parts.length > 0 && (
+                                <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm p-8">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 bg-[#f5f5f7] rounded-xl text-[#0071e3]">
+                                                <Box size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-[#1d1d1f]">Apple Parça Eşleştirme (KBB/KGB)</h3>
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">Orijinal Parça Entegrasyonu</p>
+                                            </div>
                                         </div>
-                                        <span className="text-[9px] font-mono text-gray-400 italic">{p.kgbSerial || 'Bekleniyor...'}</span>
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-bold border border-green-100">
+                                            <ShieldCheck size={14} /> GÜVENLİ AKTARIM
+                                        </div>
                                     </div>
-                                ))}
+
+                                    <div className="space-y-4">
+                                        {repair.parts.map((part, idx) => (
+                                            <div key={idx} className="p-6 bg-[#fbfbfd] rounded-2xl border border-gray-100">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <span className="text-[11px] font-black text-[#1d1d1f] uppercase">{part.description}</span>
+                                                    <span className="text-[10px] font-mono text-gray-400 font-bold">P/N: {part.partNumber}</span>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-6">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">KBB (Eski Seri)</label>
+                                                        <input 
+                                                            type="text" placeholder="SERİ NO OKUTUN"
+                                                            className="w-full h-12 px-4 bg-white border border-gray-200 rounded-xl text-xs font-mono font-bold focus:border-[#0071e3] outline-none transition-all uppercase"
+                                                            value={localSerials[`${idx}_kbb`] || ''}
+                                                            onChange={(e) => setLocalSerials({...localSerials, [`${idx}_kbb`]: e.target.value.toUpperCase()})}
+                                                            onBlur={() => updateRepair(repairId, { parts: repair.parts.map((p, i) => i === idx ? {...p, kbbSerial: localSerials[`${idx}_kbb`]} : p) })}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-5">
+                                                        <ArrowRight size={20} className="text-[#0071e3]/30" />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">KGB (Yeni Seri)</label>
+                                                        <input 
+                                                            type="text" placeholder="YENİ SERİ NO"
+                                                            className="w-full h-12 px-4 bg-white border border-gray-200 rounded-xl text-xs font-mono font-bold focus:border-[#0071e3] outline-none transition-all uppercase"
+                                                            value={localSerials[`${idx}_kgb`] || ''}
+                                                            onChange={(e) => setLocalSerials({...localSerials, [`${idx}_kgb`]: e.target.value.toUpperCase()})}
+                                                            onBlur={() => updateRepair(repairId, { parts: repair.parts.map((p, i) => i === idx ? {...p, kgbSerial: localSerials[`${idx}_kgb`]} : p) })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Repair Report & Media */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm p-8 flex flex-col">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <FileText size={20} className="text-[#0071e3]" />
+                                        <h3 className="font-bold text-[#1d1d1f]">Onarım Raporu</h3>
+                                    </div>
+                                    <textarea
+                                        className="flex-1 min-h-[200px] w-full bg-[#fbfbfd] border border-gray-100 rounded-2xl p-6 text-sm font-medium focus:bg-white focus:border-[#0071e3] transition-all outline-none resize-none"
+                                        placeholder="Teknik müdahale detaylarını, yapılan testleri ve varsa ek notları buraya giriniz..."
+                                        value={repairClosingNote}
+                                        onChange={e => setRepairClosingNote(e.target.value)}
+                                    ></textarea>
+                                </div>
+
+                                <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm p-8">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <Camera size={20} className="text-[#0071e3]" />
+                                            <h3 className="font-bold text-[#1d1d1f]">Görsel Kanıt (QC)</h3>
+                                        </div>
+                                        <button onClick={() => fileInputRef.current?.click()} className="p-2 bg-[#f5f5f7] rounded-xl hover:bg-gray-200 transition-all">
+                                            <Plus size={18} />
+                                        </button>
+                                    </div>
+                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" capture="environment" onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setUploading(true);
+                                            const res = await uploadMedia(file);
+                                            if (res?.url) updateRepair(repairId, { afterImages: [...(repair.afterImages || []), res.url] });
+                                            setUploading(false);
+                                        }
+                                    }} />
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {repair.afterImages?.map((url, idx) => (
+                                            <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100 group">
+                                                <img src={url} className="w-full h-full object-cover" />
+                                                <button onClick={() => updateRepair(repairId, { afterImages: repair.afterImages.filter((_, i) => i !== idx) })} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(!repair.afterImages || repair.afterImages.length === 0) && (
+                                            <div className="aspect-square rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 text-gray-300">
+                                                <Camera size={24} />
+                                                <span className="text-[10px] font-bold">GÖRSEL YOK</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Orta Panel */}
-                <div className="flex-1 flex flex-col relative bg-white/50 backdrop-blur-md">
-                    <div className="h-24 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-10">
-                        <div className="flex items-center gap-6">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide flex items-center gap-1"><Clock size={10} /> İŞLEM SÜRESİ</span>
-                                <span className={`text-4xl font-mono font-bold ${isTimerRunning ? 'text-gray-900' : 'text-gray-300'}`}>{formatTime(timer)}</span>
-                            </div>
-                            <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isTimerRunning ? 'bg-red-500 text-white' : 'bg-green-500 text-white shadow-lg'}`}>
-                                {isTimerRunning ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 p-10 overflow-y-auto flex flex-col items-center justify-center">
-                        {!repair.technician ? (
-                            <div className="w-full max-w-md bg-white rounded-lg p-8 shadow-2xl border border-gray-100 text-center animate-in fade-in zoom-in duration-500">
-                                <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-[28px] flex items-center justify-center mx-auto mb-6 shadow-indigo-100 shadow-xl">
-                                    <Users size={40} />
-                                </div>
-                                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Onarımı Kim Yapıyor?</h2>
-                                <p className="text-xs text-gray-400 font-bold text-xs uppercase tracking-wide mb-8">Süreyi başlatmak için isminizi seçiniz</p>
-                                
-                                <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mb-8">
-                                    {/* Kendim Yapıyorum Shortcut */}
-                                    {currentUser && (
-                                        <button 
-                                            onClick={() => {
-                                                updateRepair(repairId, { 
-                                                    technician: currentUser.name, 
-                                                    technicianId: currentUser.id || currentUser._id,
-                                                    status: 'İşlemde', 
-                                                    historyNote: `${currentUser.name} onarımı başlattı.` 
-                                                });
-                                                setIsTimerRunning(true);
-                                            }}
-                                            className="w-full p-3 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-md border-2 border-indigo-200 text-sm font-semibold transition-all flex items-center justify-between group active:scale-95 shadow-lg shadow-indigo-100"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xl">✨</span>
-                                                <span>Kendim Yapıyorum ({currentUser.name})</span>
-                                            </div>
-                                            <ChevronRight size={18} className="text-indigo-400 group-hover:text-white" />
-                                        </button>
-                                    )}
-
-                                    <div className="pt-2 pb-1 text-[9px] font-semibold text-gray-400 text-left px-2 text-xs uppercase tracking-wide">Diğer Teknisyenler</div>
-                                    
-                                    {technicians.filter(t => t.name !== currentUser?.name).map(tech => (
-                                        <button 
-                                            key={tech.id} 
-                                            onClick={() => {
-                                                updateRepair(repairId, { 
-                                                    technician: tech.name, 
-                                                    technicianId: tech.id || tech._id,
-                                                    status: 'İşlemde', 
-                                                    historyNote: `${tech.name} onarımı başlattı.` 
-                                                });
-                                                setIsTimerRunning(true);
-                                            }}
-                                            className="w-full p-3 bg-gray-50 hover:bg-indigo-600 hover:text-white rounded-md border border-gray-100 text-sm font-semibold transition-all flex items-center justify-between group active:scale-95"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xl">{tech.avatar || '👨‍🔧'}</span>
-                                                <span>{tech.name}</span>
-                                            </div>
-                                            <ChevronRight size={18} className="text-gray-300 group-hover:text-white" />
-                                        </button>
-                                    ))}
-                                </div>
-                                
-                                <button onClick={onClose} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Vazgeç ve Kapat</button>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="relative mb-6 group">
-                                    <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-10 rounded-full group-hover:opacity-20 transition-all duration-700"></div>
-                                    <img 
-                                        src={getSafeRepairImageUrl(repair.image, repair.productGroup, repair.device, API_URL)} 
-                                        className="w-56 h-56 object-cover rounded-lg shadow-2xl border-4 border-white transition-transform group-hover:scale-105" 
-                                        alt="Device" 
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop';
-                                        }}
-                                    />
-                                </div>
-                                <h1 className="text-2xl font-semibold text-gray-900 mb-2">{repair.device}</h1>
-                                <p className="text-sm text-gray-500 font-medium mb-10 max-w-md text-center">{repair.issue}</p>
-
-                                {/* Apple KGB/KBB Pairing Automation */}
-                                {repair.parts && repair.parts.length > 0 && (
-                                    <div className="w-full max-w-xl mt-auto animate-in fade-in slide-in-from-bottom-6 duration-700">
-                                        <div className="bg-white border-2 border-indigo-100 rounded-[36px] p-6 shadow-2xl shadow-indigo-100/50">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2.5 bg-indigo-600 text-white rounded-md shadow-lg shadow-indigo-200">
-                                                        <RotateCcw size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-tight">Apple Parça Eşleştirme</h4>
-                                                        <p className="text-[10px] text-gray-400 font-bold text-xs uppercase tracking-wide">KBB (Eski) → KGB (Yeni)</p>
-                                                    </div>
-                                                </div>
-                                                <div className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-semibold border border-indigo-100">
-                                                    OTOMASYON AKTİF
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-4">
-                                                {repair.parts.map((part, idx) => (
-                                                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col gap-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                                                                <h5 className="text-[11px] font-semibold text-gray-800 uppercase">{part.description}</h5>
-                                                            </div>
-                                                            <span className="text-[9px] font-mono text-gray-400">P/N: {part.partNumber}</span>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-3">
-                                                            {/* KBB Input - uses localSerials to prevent focus loss on each keystroke */}
-                                                            <div className="relative">
-                                                                <input 
-                                                                    type="text"
-                                                                    placeholder="KBB (Arızalı Seri)"
-                                                                    className={`w-full h-10 px-4 bg-white border ${(localSerials[`${idx}_kbb`] || part.kbbSerial) ? 'border-green-200 bg-green-50/30' : 'border-gray-200'} rounded-md text-[10px] font-semibold font-mono focus:border-indigo-500 outline-none transition-all uppercase`}
-                                                                    value={localSerials[`${idx}_kbb`] ?? (part.kbbSerial || '')}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value.toUpperCase().replace(/\s/g, '');
-                                                                        setLocalSerials(prev => ({ ...prev, [`${idx}_kbb`]: val }));
-                                                                    }}
-                                                                    onBlur={() => {
-                                                                        const val = localSerials[`${idx}_kbb`] ?? (part.kbbSerial || '');
-                                                                        const updatedParts = repair.parts.map(p => {
-                                                                            if (p.inventoryId === part.inventoryId) {
-                                                                                const newPart = { ...p, kbbSerial: val };
-                                                                                if (newPart.kgbSerial && newPart.kbbSerial) newPart.status = 'Installed';
-                                                                                return newPart;
-                                                                            }
-                                                                            return p;
-                                                                        });
-                                                                        updateRepair(repairId, { parts: updatedParts });
-                                                                    }}
-                                                                />
-                                                                {(localSerials[`${idx}_kbb`] || part.kbbSerial) && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
-                                                            </div>
-
-                                                            <div className="flex justify-center">
-                                                                <ArrowRight size={16} className={(localSerials[`${idx}_kgb`] || part.kgbSerial) && (localSerials[`${idx}_kbb`] || part.kbbSerial) ? 'text-green-500' : 'text-indigo-300'} />
-                                                            </div>
-
-                                                            {/* KGB Input - uses localSerials to prevent focus loss on each keystroke */}
-                                                            <div className="relative">
-                                                                <input 
-                                                                    type="text"
-                                                                    placeholder="KGB (Yeni Seri)"
-                                                                    className={`w-full h-10 px-4 bg-white border ${(localSerials[`${idx}_kgb`] || part.kgbSerial) ? 'border-green-200 bg-green-50/30' : 'border-gray-200'} rounded-md text-[10px] font-semibold font-mono focus:border-indigo-500 outline-none transition-all uppercase`}
-                                                                    value={localSerials[`${idx}_kgb`] ?? (part.kgbSerial || '')}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value.toUpperCase().replace(/\s/g, '');
-                                                                        setLocalSerials(prev => ({ ...prev, [`${idx}_kgb`]: val }));
-                                                                    }}
-                                                                    onBlur={() => {
-                                                                        const val = localSerials[`${idx}_kgb`] ?? (part.kgbSerial || '');
-                                                                        const updatedParts = repair.parts.map(p => {
-                                                                            if (p.inventoryId === part.inventoryId) {
-                                                                                const newPart = { ...p, kgbSerial: val };
-                                                                                if (newPart.kgbSerial && newPart.kbbSerial) newPart.status = 'Installed';
-                                                                                return newPart;
-                                                                            }
-                                                                            return p;
-                                                                        });
-                                                                        updateRepair(repairId, { parts: updatedParts });
-                                                                    }}
-                                                                />
-                                                                {(localSerials[`${idx}_kgb`] || part.kgbSerial) && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    <div className="p-6 bg-white border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-white/80 backdrop-blur-xl">
-                        <div className="grid grid-cols-3 gap-2">
-                            <button onClick={onClose} className="px-4 py-3.5 text-gray-500 font-bold hover:bg-gray-100 rounded-md transition-all text-[11px] uppercase tracking-wider">Kapat</button>
-                            <button onClick={() => setShowReturnModal(true)} className="px-4 py-3.5 bg-red-50 text-red-600 border border-red-100 font-semibold rounded-md flex flex-col items-center justify-center gap-1 transition-all text-[9px] uppercase">
-                                <RotateCcw size={14} /> İade Et
-                            </button>
-                            <button onClick={() => setShowQuoteModal(true)} className="px-4 py-3.5 bg-orange-50 text-orange-600 border border-orange-100 font-semibold rounded-md flex flex-col items-center justify-center gap-1 transition-all shadow-sm active:scale-95 text-[9px] uppercase">
-                                <Activity size={14} /> Teklif Ver
-                            </button>
-                        </div>
-                        <button 
-                            onClick={handleComplete} 
-                            disabled={!steps.every(s => s.checked)}
-                            className="w-full py-4 bg-gray-900 text-white font-semibold rounded-lg shadow-xl hover:bg-black transition-all disabled:opacity-30 flex items-center justify-center gap-3 text-sm tracking-tight"
-                        >
-                            ONARIMI TAMAMLA <ChevronRight size={18} strokeWidth={3} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Sağ Panel */}
-                <div className="w-full lg:w-1/4 bg-white border-t lg:border-t-0 lg:border-l border-gray-100 flex flex-col p-8 shrink-0 lg:shrink lg:h-full overflow-y-auto">
-                    <h3 className="text-[9px] font-semibold uppercase text-gray-400 mb-2 flex items-center gap-2"><FileText size={14} /> Teşhis Notları</h3>
-                    <p className="text-xs font-semibold text-gray-500 mb-8 border-b border-gray-50 pb-8">{repair.diagnosisNotes || 'Not girilmemiş.'}</p>
-                    
-                    <textarea
-                        className="h-32 w-full bg-gray-50 border border-gray-200 rounded-md p-5 outline-none focus:bg-white text-xs font-bold resize-none mb-6"
-                        placeholder="Onarım raporunu buraya yazınız..."
-                        value={repairClosingNote}
-                        onChange={e => setRepairClosingNote(e.target.value)}
-                    ></textarea>
-
-                    {/* Onarım Sonu Fotoğrafları */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-[9px] font-semibold uppercase text-gray-400 flex items-center gap-2">
-                                <Camera size={14} className="text-emerald-500" /> Onarım Sonrası (Görsel)
-                            </h4>
-                            <button 
-                                onClick={handleAddPhoto}
-                                disabled={uploading}
-                                className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-100"
-                            >
-                                {uploading ? <Clock size={14} className="animate-spin" /> : <Plus size={14} />}
-                            </button>
-                        </div>
-
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg, image/png" capture="environment" onChange={handleFileChange} />
-
-                        <div className="grid grid-cols-2 gap-3">
-                            {repair.afterImages?.map((url, idx) => (
-                                <div key={idx} className="relative aspect-square rounded-md overflow-hidden group border border-gray-100 shadow-sm animate-in zoom-in-95">
-                                    <img src={getSafeRepairImageUrl(url, repair.productGroup, repair.device, API_URL)} className="w-full h-full object-cover" alt="After" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <button onClick={() => removePhoto(idx)} className="p-1.5 bg-red-500 text-white rounded-lg"><Trash2 size={12} /></button>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!repair.afterImages || repair.afterImages.length === 0) && (
-                                <button 
-                                    onClick={handleAddPhoto}
-                                    className="aspect-square rounded-md border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 text-gray-300 hover:border-emerald-200 hover:text-emerald-500 transition-all"
-                                >
-                                    <Camera size={20} />
-                                    <span className="text-[8px] font-semibold uppercase">FOTO EKLE</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                {/* Right Action Bar */}
+                <div className="w-20 border-l border-gray-200 bg-white flex flex-col items-center py-8 gap-6 shrink-0">
+                    <button onClick={() => setShowQuoteModal(true)} className="p-3 bg-orange-50 text-orange-600 rounded-2xl hover:bg-orange-600 hover:text-white transition-all shadow-sm" title="Teklif Gönder">
+                        <Zap size={24} />
+                    </button>
+                    <button onClick={() => setShowReturnModal(true)} className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm" title="İadesiz Gönder">
+                        <RotateCcw size={24} />
+                    </button>
+                    <div className="flex-1"></div>
+                    <button 
+                        onClick={handleComplete}
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl ${steps.every(s => s.checked) ? 'bg-[#0071e3] text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`}
+                    >
+                        <Check size={28} strokeWidth={3} />
+                    </button>
                 </div>
             </div>
 
             {/* Quote Modal */}
             {showQuoteModal && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-8 animate-in fade-in">
-                    <div className="bg-white p-8 rounded-[36px] w-full max-w-2xl shadow-2xl flex flex-col max-h-full opacity-100">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-md flex items-center justify-center">
-                                <FileText size={24} />
+                <div className="fixed inset-0 z-[110] bg-[#1d1d1f]/60 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
+                                    <Zap size={24} />
+                                </div>
+                                <h3 className="text-xl font-bold text-[#1d1d1f]">Yeni Fiyat Teklifi</h3>
                             </div>
-                            <div>
-                                <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">Yeni Fiyat Teklifi Gönder</h3>
-                                <p className="text-[11px] font-bold text-gray-400 text-xs uppercase tracking-wide mt-1">Müşteri portalı üzerinden bilgilendirilir</p>
-                            </div>
+                            <button onClick={() => setShowQuoteModal(false)} className="p-2 text-gray-400 hover:text-[#1d1d1f]">
+                                <X size={24} />
+                            </button>
                         </div>
-
-                        <div className="flex-1 overflow-y-auto mb-6 pr-2 space-y-4 custom-scrollbar min-h-[300px]">
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-semibold uppercase text-gray-400">Teklif Kalemleri</label>
-                                {quoteItems.map((item, index) => (
-                                    <div key={index} className="flex gap-3 items-center">
-                                        <input 
-                                            className="flex-1 p-4 bg-gray-50 border border-gray-100 rounded-md text-sm font-bold focus:border-orange-300 outline-none"
-                                            placeholder="Örn: Anakart Onarımı, Yeni Ekran..."
-                                            value={item.name}
-                                            onChange={(e) => {
-                                                const newItems = [...quoteItems];
-                                                newItems[index].name = e.target.value;
-                                                setQuoteItems(newItems);
-                                            }}
-                                        />
-                                        <div className="relative w-40">
-                                            <input 
-                                                type="number"
-                                                className="w-full p-4 pl-8 bg-gray-50 border border-gray-100 rounded-md text-sm font-semibold focus:border-orange-300 outline-none font-mono"
-                                                placeholder="0.00"
-                                                value={item.price}
-                                                onChange={(e) => {
-                                                    const newItems = [...quoteItems];
-                                                    newItems[index].price = e.target.value;
-                                                    setQuoteItems(newItems);
-                                                }}
-                                            />
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₺</span>
-                                        </div>
-                                        <button 
-                                            onClick={() => setQuoteItems(quoteItems.filter((_, i) => i !== index))}
-                                            className="w-12 h-12 bg-red-50 text-red-500 rounded-md flex items-center justify-center hover:bg-red-100 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                            <div className="space-y-4">
+                                {quoteItems.map((item, idx) => (
+                                    <div key={idx} className="flex gap-4">
+                                        <input className="flex-1 h-12 px-4 bg-[#f5f5f7] rounded-xl text-sm font-bold outline-none" placeholder="İşlem/Parça Adı" value={item.name} onChange={e => setQuoteItems(quoteItems.map((q, i) => i === idx ? {...q, name: e.target.value} : q))} />
+                                        <input type="number" className="w-32 h-12 px-4 bg-[#f5f5f7] rounded-xl text-sm font-bold outline-none" placeholder="Fiyat" value={item.price} onChange={e => setQuoteItems(quoteItems.map((q, i) => i === idx ? {...q, price: e.target.value} : q))} />
                                     </div>
                                 ))}
-                                <button 
-                                    onClick={() => setQuoteItems([...quoteItems, { name: '', price: '' }])}
-                                    className="w-full p-3 border-2 border-dashed border-orange-200 text-orange-500 rounded-md text-xs font-semibold text-xs uppercase tracking-wide hover:bg-orange-50 transition-colors"
-                                >
-                                    + Kalem Ekle
-                                </button>
+                                <button onClick={() => setQuoteItems([...quoteItems, {name: '', price: ''}])} className="text-xs font-bold text-[#0071e3]">+ YENİ KALEM EKLE</button>
                             </div>
-
-                            <div className="space-y-2 mt-4">
-                                <label className="text-[10px] font-semibold uppercase text-gray-400">Müşteriye İletilecek Teknik Not (Açıklama)</label>
-                                <textarea
-                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-md text-sm font-medium focus:border-orange-300 outline-none resize-none h-24"
-                                    placeholder="Müşteriye durumun nedenini açıklayınız (Örn: Cihazda sıvı teması tespit edildi, ek müdahale gerekiyor...)"
-                                    value={quoteNotes}
-                                    onChange={(e) => setQuoteNotes(e.target.value)}
-                                ></textarea>
-                            </div>
+                            <textarea className="w-full h-32 bg-[#f5f5f7] rounded-2xl p-6 text-sm outline-none resize-none" placeholder="Müşteriye teknik açıklama..." value={quoteNotes} onChange={e => setQuoteNotes(e.target.value)}></textarea>
                         </div>
-
-                        <div className="bg-orange-50 p-6 rounded-lg mb-6 flex justify-between items-center border border-orange-100">
-                            <span className="text-sm font-semibold text-orange-900 uppercase">Toplam Teklif Tutarı</span>
-                            <span className="text-3xl font-semibold text-orange-900 font-mono">
-                                ₺{quoteItems.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0).toLocaleString('tr-TR')}
-                            </span>
-                        </div>
-
-                        <div className="flex gap-4">
-                            <button onClick={() => setShowQuoteModal(false)} className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-md transition-all">İptal</button>
-                            <button onClick={handleSendQuote} className="flex-[2] py-4 px-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-md shadow-xl shadow-orange-200 flex items-center justify-center gap-2 transition-all">
-                                Teklifi Gönder & Beklemeye Al
-                            </button>
+                        <div className="p-8 bg-gray-50 flex items-center justify-between">
+                            <div className="text-2xl font-black text-[#1d1d1f]">₺{quoteItems.reduce((a, b) => a + (Number(b.price) || 0), 0).toLocaleString('tr-TR')}</div>
+                            <button onClick={() => { updateRepair(repairId, { status: 'Müşteri Onayı Bekliyor', quoteAmount: quoteItems.reduce((a, b) => a + (Number(b.price) || 0), 0).toString() }); onClose(); }} className="px-8 py-4 bg-[#0071e3] text-white font-bold rounded-2xl shadow-xl shadow-[#0071e3]/20">TEKLİFİ GÖNDER</button>
                         </div>
                     </div>
                 </div>
@@ -720,20 +408,21 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
 
             {/* Return Modal */}
             {showReturnModal && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-8 animate-in fade-in">
-                    <div className="bg-white p-8 rounded-lg w-full max-w-lg shadow-2xl">
-                        <h3 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2"><AlertCircle className="text-red-500" /> İade Sebebi</h3>
+                <div className="fixed inset-0 z-[110] bg-[#1d1d1f]/60 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+                    <div className="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl">
+                        <h3 className="text-xl font-bold text-[#1d1d1f] mb-6 flex items-center gap-2">
+                            <AlertCircle className="text-red-500" /> İade Gerekçesi
+                        </h3>
                         <div className="space-y-3 mb-8">
                             {RETURN_REASONS.map(reason => (
-                                <label key={reason} className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer transition-all ${returnReason === reason ? 'bg-red-50 border-red-200 text-red-700 font-bold' : 'border-gray-100 hover:bg-gray-50'}`}>
-                                    <input type="radio" name="returnReason" value={reason} checked={returnReason === reason} onChange={(e) => setReturnReason(e.target.value)} className="accent-red-600" />
+                                <button key={reason} onClick={() => setReturnReason(reason)} className={`w-full p-4 rounded-xl border text-left text-sm font-bold transition-all ${returnReason === reason ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-gray-100'}`}>
                                     {reason}
-                                </label>
+                                </button>
                             ))}
                         </div>
                         <div className="flex gap-4">
-                            <button onClick={() => setShowReturnModal(false)} className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-md">Vazgeç</button>
-                            <button onClick={handleReturn} className="flex-1 py-4 bg-red-600 text-white font-bold rounded-md shadow-xl shadow-red-200">İade Et</button>
+                            <button onClick={() => setShowReturnModal(false)} className="flex-1 py-4 text-gray-400 font-bold">İptal</button>
+                            <button onClick={() => { updateRepair(repairId, { status: 'İade Hazır', historyNote: `Cihaz iade edildi: ${returnReason}` }); onClose(); }} className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl">İADE ET</button>
                         </div>
                     </div>
                 </div>
