@@ -113,7 +113,9 @@ const DEVICE_DATABASE = [
 
 
 const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
-    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast, serviceTerms } = useAppContext();
+    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast, serviceTerms, currentUser, servicePoints } = useAppContext();
+    const hasAllStores = currentUser?.role === 'admin' || currentUser?.role === ROLES?.SUPER_ADMIN || hasPermission(currentUser, 'view_all_stores');
+
     const [step, setStep] = useState(1);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [showKioskModal, setShowKioskModal] = useState(false);
@@ -164,7 +166,9 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         beforeImages: [],
         afterImages: [],
         mediaFiles: [],
-        notes: ''
+        notes: '',
+        storeId: currentUser?.storeId || '',
+        createdBy: currentUser?.name || ''
     });
     const sigCanvas = useRef(null);
 
@@ -176,6 +180,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
             if (!formData.warrantyStatus) { showToast('Lütfen Garanti Durumu seçiniz.', 'error'); return; }
             if (!formData.customerName) { showToast('Lütfen Müşteri Adı giriniz.', 'error'); return; }
             if (!formData.customerPhone) { showToast('Lütfen Müşteri Telefonu giriniz.', 'error'); return; }
+            if (hasAllStores && !formData.storeId) { showToast('Lütfen kaydın bağlı olacağı Mağazayı seçiniz.', 'error'); return; }
             if (!formData.findMyOff) { showToast('Lütfen "Cihazımı Bul" özelliğinin kapalı olduğunu teyit ediniz.', 'error'); return; }
 
             // Geçiş: Form geçerliyse doğrudan full-screen Kiosk Modal aç.
@@ -214,9 +219,11 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                 tcNo: formData.customerTC,
                 issue: formData.issueDescription,
                 status: formData.serviceType !== 'repair' ? 'Cihaz Hazır' : 'Beklemede',
-                date: new Date().toLocaleDateString('tr-TR'),
+                date: new Date().toLocaleDateString('tr-TR') + ' ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
                 image: mainImage,
-                customerSignature: signatureData
+                customerSignature: signatureData,
+                storeId: formData.storeId || currentUser?.storeId,
+                createdBy: currentUser?.name || 'Bilinmeyen Kullanıcı'
             });
 
             const repairId = newRepair?.id || newRepair?._id;
@@ -582,6 +589,25 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                 )}
                                             </div>
                                         </div>
+
+                                        {hasAllStores && (
+                                            <div className="group relative animate-in slide-in-from-top-2">
+                                                <label className="text-[10px] font-semibold text-blue-600 text-xs uppercase tracking-wide mb-2 block ml-1">Kayıt Yapılacak Mağaza *</label>
+                                                <div className="relative">
+                                                    <select
+                                                        className="w-full pl-12 pr-4 py-4 rounded-md bg-blue-50/30 border border-blue-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900 appearance-none"
+                                                        value={formData.storeId}
+                                                        onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                                                    >
+                                                        <option value="">Mağaza Seçiniz...</option>
+                                                        {servicePoints.map(sp => (
+                                                            <option key={sp.id} value={sp.id}>{sp.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 transition-colors"><Box size={20} /></div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Sağ Sütun: IMEI Alanları */}

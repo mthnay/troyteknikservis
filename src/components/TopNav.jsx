@@ -39,10 +39,9 @@ const TopNav = ({ activeTab, setActiveTab }) => {
         },
         {
             id: 'stok_rapor',
-            label: 'Stok & Rapor',
+            label: 'Envanter',
             items: [
-                { id: 'stock', icon: Package, label: 'Stok Yönetimi' },
-                { id: 'reports', icon: BarChart2, label: 'Raporlar' }
+                { id: 'stock', icon: Package, label: 'Stok Yönetimi' }
             ]
         },
         {
@@ -51,6 +50,7 @@ const TopNav = ({ activeTab, setActiveTab }) => {
             items: [
                 { id: 'technicians', icon: Users, label: 'Teknisyenler' },
                 { id: 'store-operations', icon: Home, label: 'Operasyon Şeması' },
+                { id: 'reports', icon: BarChart2, label: 'Raporlar' },
                 ...(hasPermission(currentUser, 'manage_settings') ? [{ id: 'settings', icon: Settings, label: 'Sistem Ayarları' }] : [])
             ]
         }

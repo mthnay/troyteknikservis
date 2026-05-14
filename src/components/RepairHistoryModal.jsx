@@ -3,7 +3,7 @@ import {
     X, CheckCircle, Clock, Truck, MessageCircle, Wrench, Phone, User,
     Calendar, ArrowRight, Printer, FileText, Shield, Eye, Package,
     ChevronRight, Save, Pencil, PlusCircle, Send, Receipt, Hash, ShieldCheck,
-    AlertCircle, FileInput, Fingerprint, Coins, Camera, Info, Image, Bell, Trash2
+    AlertCircle, FileInput, Fingerprint, Coins, Camera, Info, Image, Bell, Trash2, MapPin, Award
 } from 'lucide-react';
 import ServiceFormPrint from './ServiceFormPrint';
 import DeliveryFormPrint from './DeliveryFormPrint';
@@ -345,6 +345,11 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
                                     {repair.productGroup && (
                                         <span className="text-[9px] font-semibold uppercase text-white bg-gray-900 px-2 py-1 rounded shadow-sm">{repair.productGroup}</span>
                                     )}
+                                    {repair.storeId && (
+                                        <span className="text-[9px] font-semibold uppercase text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                            <MapPin size={10} /> {servicePoints.find(sp => String(sp.id) === String(repair.storeId))?.name || 'Mağaza Bilgisi'}
+                                        </span>
+                                    )}
                                     {isEditing ? (
                                         <input value={editForm.device} onChange={e => setEditForm({...editForm, device: e.target.value})} className="text-xl font-semibold text-gray-900 border-b-2 border-apple-blue outline-none bg-transparent"/>
                                     ) : (
@@ -354,6 +359,11 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
                                 <p className="text-xs text-gray-500 font-medium flex items-center gap-2 mt-1">
                                     <User size={12} className="text-gray-400"/> {repair.customer} ({repair.customerPhone})
                                 </p>
+                                {repair.createdBy && (
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight flex items-center gap-2 mt-1.5 pl-0.5">
+                                        <Award size={12} className="text-blue-500" /> Kayıt Açan: <span className="text-gray-600">{repair.createdBy}</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
 
