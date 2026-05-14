@@ -67,26 +67,56 @@ const Dashboard = () => {
 
 
     const stats = useMemo(() => {
-        const totalEarnings = earnings.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-        const activeTechs = technicians.filter(t => t.status === 'busy').length;
+        const today = new Date();
+        const todayStr = today.toLocaleDateString('tr-TR');
+        
+        // Today's Earnings
+        const dailyEarnings = (earnings || [])
+            .filter(e => {
+                if (!e.date) return false;
+                const eDate = new Date(e.date).toLocaleDateString('tr-TR');
+                return eDate === todayStr;
+            })
+            .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+        
+        // Yesterday's Earnings (for trend)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toLocaleDateString('tr-TR');
+        const yesterdayEarnings = (earnings || [])
+            .filter(e => {
+                if (!e.date) return false;
+                const eDate = new Date(e.date).toLocaleDateString('tr-TR');
+                return eDate === yesterdayStr;
+            })
+            .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+
+        const revenueTrend = dailyEarnings >= yesterdayEarnings ? 'up' : 'down';
+        const revenueTrendVal = yesterdayEarnings > 0 
+            ? `${Math.round(Math.abs((dailyEarnings - yesterdayEarnings) / yesterdayEarnings) * 100)}%` 
+            : (dailyEarnings > 0 ? '100%' : '0%');
+
+        const activeTechs = (technicians || []).filter(t => t.status === 'busy').length;
         
         return {
-            pending: repairs.filter(r => r.status === 'Beklemede').length,
-            inProgress: repairs.filter(r => r.status === 'İşlemde').length,
-            completed: repairs.filter(r => r.status === 'Tamamlandı').length,
-            criticalSla: alerts.filter(a => a.type === 'critical').length,
-            totalRevenue: new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalEarnings),
-            techUtilization: Math.round((activeTechs / (technicians.length || 1)) * 100)
+            activeRepairs: (repairs || []).filter(r => r.status === 'Beklemede' || r.status === 'İşlemde').length,
+            completedToday: (repairs || []).filter(r => {
+                if (r.status !== 'Tamamlandı' || !r.completedAt) return false;
+                return new Date(r.completedAt).toLocaleDateString('tr-TR') === todayStr;
+            }).length,
+            criticalSla: (repairs || []).filter(r => r.isUrgent && r.status !== 'Tamamlandı').length,
+            dailyRevenue: new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(dailyEarnings),
+            revenueTrend,
+            revenueTrendVal,
+            techUtilization: Math.round((activeTechs / (technicians?.length || 1)) * 100)
         };
-    }, [repairs, alerts, earnings, technicians]);
-
-    // storeStatusData was removed
+    }, [repairs, earnings, technicians]);
 
     const storePerformance = useMemo(() => {
         if (!hasPermission(currentUser, 'view_all_stores')) return [];
-        return servicePoints.map(sp => {
-            const storeRepairs = repairs.filter(r => String(r.storeId) === String(sp.id));
-            const storeEarnings = earnings.filter(e => String(e.storeId) === String(sp.id));
+        return (servicePoints || []).map(sp => {
+            const storeRepairs = (repairs || []).filter(r => String(r.storeId) === String(sp.id));
+            const storeEarnings = (earnings || []).filter(e => String(e.storeId) === String(sp.id));
             const totalE = storeEarnings.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
             return {
                 name: sp.name,
@@ -152,29 +182,27 @@ const Dashboard = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
-                    title="BEKLEYEN İŞLEMLER" 
-                    value={stats.pending} 
-                    icon={Clock}
-                    trend="up"
-                    trendValue="12% artış"
+                    title="AKTİF ONARIMLAR" 
+                    value={stats.activeRepairs} 
+                    icon={Activity}
+                    subtitle="Bekleyen ve işlemde olanlar"
                 />
                 <StatCard 
                     title="GÜNLÜK HASILAT" 
-                    value={stats.totalRevenue} 
+                    value={stats.dailyRevenue} 
                     icon={Wallet}
+                    trend={stats.revenueTrend}
+                    trendValue={`${stats.revenueTrendVal} değişim`}
                 />
                 <StatCard 
                     title="TEKNİSYEN DOLULUĞU" 
                     value={`%${stats.techUtilization}`} 
                     icon={Zap}
-                    trend="down"
-                    trendValue="5% azalış"
                 />
                 <StatCard 
-                    title="KRİTİK SLA" 
-                    value={stats.criticalSla} 
-                    icon={ShieldAlert}
-                    colorClass="text-[#e30000]"
+                    title="BUGÜN TAMAMLANAN" 
+                    value={stats.completedToday} 
+                    icon={CheckCircle}
                 />
             </div>
 
