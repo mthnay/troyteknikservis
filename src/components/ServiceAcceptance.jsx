@@ -358,6 +358,13 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
             if (clearInitialData) clearInitialData();
         }
     }, [initialData]);
+ 
+    // Sync storeId with currentUser's storeId if not already set
+    React.useEffect(() => {
+        if (currentUser && currentUser.storeId && !formData.storeId) {
+            setFormData(prev => ({ ...prev, storeId: currentUser.storeId }));
+        }
+    }, [currentUser, formData.storeId]);
 
     // Customer Matching
     const matchingCustomer = React.useMemo(() => {

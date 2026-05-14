@@ -111,7 +111,18 @@ export const AppProvider = ({ children }) => {
         }
     });
 
-    const [selectedStoreId, setSelectedStoreId] = useState(0);
+    const [selectedStoreId, setSelectedStoreId] = useState(() => {
+        try {
+            const saved = sessionStorage.getItem('currentUser');
+            if (saved && saved !== 'undefined' && saved !== 'null') {
+                const user = JSON.parse(saved);
+                return user.storeId || 0;
+            }
+        } catch (e) {
+            console.error("Store init error:", e);
+        }
+        return 0;
+    });
     const [repairs, setRepairs] = useState([]);
     const [inventory, setInventory] = useState([]);
     const [technicians, setTechnicians] = useState([]);
@@ -300,6 +311,9 @@ export const AppProvider = ({ children }) => {
             if (res.ok) {
                 const data = await res.json();
                 setCurrentUser(data.user);
+                if (data.user && data.user.storeId) {
+                    setSelectedStoreId(data.user.storeId);
+                }
                 sessionStorage.setItem('token', data.token);
                 return true;
             }
