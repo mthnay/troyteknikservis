@@ -10,7 +10,12 @@ import { appPrompt, appAlert } from '../utils/alert';
 import { getSafeRepairImageUrl } from '../utils/productImages';
 
 const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
-    const { repairs, updateRepair, completeJob, currentUser, inventory, updateInventoryItem, usePart, showToast, technicians, sendWhatsApp, uploadMedia, API_URL } = useAppContext();
+    const { 
+        repairs, updateRepair, completeJob, currentUser, inventory, 
+        updateInventoryItem, usePart, processStockMovement, showToast, 
+        technicians, sendWhatsApp, uploadMedia, API_URL 
+    } = useAppContext();
+
     const [repair, setRepair] = useState(null);
     const [repairClosingNote, setRepairClosingNote] = useState('');
     const [timer, setTimer] = useState(0);
@@ -96,6 +101,16 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
         updateRepair(repairId, { steps: newSteps });
     };
 
+    const getUpdatedParts = useCallback(() => {
+        if (!repair || !repair.parts) return [];
+        return repair.parts.map((p, idx) => ({
+            ...p,
+            kgbSerial: localSerials[`${idx}_kgb`] || p.kgbSerial || '',
+            kbbSerial: localSerials[`${idx}_kbb`] || p.kbbSerial || '',
+            storeId: repair.storeId
+        }));
+    }, [repair, localSerials]);
+
     const handleComplete = async () => {
         if (!steps.every(s => s.checked)) {
             appAlert('Lütfen tüm onarım adımlarını tamamlayın.', 'warning');
@@ -106,10 +121,8 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
             return;
         }
 
-        const incompletePart = repair.parts?.find((p, idx) => {
-            const kgb = localSerials[`${idx}_kgb`] || p.kgbSerial || '';
-            return kgb.trim() === '';
-        });
+        const updatedParts = getUpdatedParts();
+        const incompletePart = updatedParts.find(p => !p.kgbSerial?.trim());
 
         if (incompletePart) {
             appAlert(`${incompletePart.description} için KGB seri numarası zorunludur.`, 'error');
@@ -117,18 +130,28 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
         }
 
         const duration = formatTime(timer);
+        
+        showToast('Stok hareketleri işleniyor...', 'info');
+        const stockSuccess = await processStockMovement(repairId, updatedParts);
+        
+        if (!stockSuccess) {
+            appAlert('Stok hareketleri işlenirken bir hata oluştu. Lütfen bağlantınızı kontrol edin.', 'error');
+            return;
+        }
+
         const success = await updateRepair(repairId, {
             status: 'Cihaz Hazır',
+            parts: updatedParts,
             repairClosingNote: `${repairClosingNote}\n\n[Süre: ${duration}]`,
             repairDuration: duration,
-            historyNote: `Onarım tamamlandı. (${duration})`
+            historyNote: `Onarım tamamlandı ve stok hareketleri işlendi. (${duration})`
         });
 
         if (success) {
             completeJob(currentUser?.id);
             onClose();
             if (setActiveTab) setActiveTab('ready-pickup');
-            showToast('Onarım başarıyla sonuçlandırıldı.', 'success');
+            showToast('Onarım başarıyla sonuçlandırıldı ve stoklar güncellendi.', 'success');
         }
     };
 
@@ -299,104 +322,121 @@ const TechnicianWorkspace = ({ repairId, onClose, setActiveTab }) => {
                             {/* Repair Report & Media */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm p-8 flex flex-col">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <FileText size={20} className="text-[#0071e3]" />
-                                        <h3 className="font-bold text-[#1d1d1f]">Onarım Raporu</h3>
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-[#f5f5f7] rounded-xl text-[#0071e3]">
+                                            <FileText size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-[#1d1d1f]">Onarım Notları</h3>
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">Teknisyen Raporu</p>
+                                        </div>
                                     </div>
-                                    <textarea
-                                        className="flex-1 min-h-[200px] w-full bg-[#fbfbfd] border border-gray-100 rounded-2xl p-6 text-sm font-medium focus:bg-white focus:border-[#0071e3] transition-all outline-none resize-none"
-                                        placeholder="Teknik müdahale detaylarını, yapılan testleri ve varsa ek notları buraya giriniz..."
+                                    <textarea 
+                                        className="flex-1 w-full p-6 bg-[#fbfbfd] border border-gray-100 rounded-2xl text-sm font-medium focus:border-[#0071e3] outline-none transition-all resize-none min-h-[200px]"
+                                        placeholder="Yapılan işlemler, parça değişim detayları ve nihai durumu yazınız..."
                                         value={repairClosingNote}
-                                        onChange={e => setRepairClosingNote(e.target.value)}
-                                    ></textarea>
+                                        onChange={(e) => setRepairClosingNote(e.target.value)}
+                                    />
                                 </div>
 
                                 <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm p-8">
                                     <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center gap-3">
-                                            <Camera size={20} className="text-[#0071e3]" />
-                                            <h3 className="font-bold text-[#1d1d1f]">Görsel Kanıt (QC)</h3>
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 bg-[#f5f5f7] rounded-xl text-[#0071e3]">
+                                                <Camera size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-[#1d1d1f]">Görsel Kanıtlar</h3>
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">Maks. 5 Fotoğraf</p>
+                                            </div>
                                         </div>
-                                        <button onClick={() => fileInputRef.current?.click()} className="p-2 bg-[#f5f5f7] rounded-xl hover:bg-gray-200 transition-all">
-                                            <Plus size={18} />
+                                        <button onClick={() => fileInputRef.current.click()} disabled={uploading} className="p-2.5 bg-[#0071e3] text-white rounded-xl hover:bg-[#0077ed] transition-all shadow-lg shadow-[#0071e3]/20">
+                                            <Plus size={20} />
                                         </button>
-                                    </div>
-                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" capture="environment" onChange={async (e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
+                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" multiple onChange={async (e) => {
+                                            const files = Array.from(e.target.files);
+                                            if (files.length === 0) return;
                                             setUploading(true);
-                                            const res = await uploadMedia(file);
-                                            if (res?.url) updateRepair(repairId, { afterImages: [...(repair.afterImages || []), res.url] });
-                                            setUploading(false);
-                                        }
-                                    }} />
-                                    
+                                            try {
+                                                const uploadedUrls = [];
+                                                for (const file of files) {
+                                                    const res = await uploadMedia(file);
+                                                    uploadedUrls.push(res.url);
+                                                }
+                                                const newImages = [...(repair.repairImages || []), ...uploadedUrls];
+                                                await updateRepair(repairId, { repairImages: newImages });
+                                                showToast(`${files.length} fotoğraf başarıyla yüklendi.`, 'success');
+                                            } catch (err) {
+                                                appAlert(err.message, 'error');
+                                            } finally {
+                                                setUploading(false);
+                                            }
+                                        }} />
+                                    </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        {repair.afterImages?.map((url, idx) => (
-                                            <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100 group">
-                                                <img src={url} className="w-full h-full object-cover" />
-                                                <button onClick={() => updateRepair(repairId, { afterImages: repair.afterImages.filter((_, i) => i !== idx) })} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Trash2 size={12} />
-                                                </button>
+                                        {(repair.repairImages || []).map((url, i) => (
+                                            <div key={i} className="relative group aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                                                <img src={`${API_URL}/uploads/${url}`} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button onClick={async () => {
+                                                        const newImages = repair.repairImages.filter((_, idx) => idx !== i);
+                                                        await updateRepair(repairId, { repairImages: newImages });
+                                                    }} className="p-2 bg-red-500 text-white rounded-lg"><Trash2 size={16} /></button>
+                                                </div>
                                             </div>
                                         ))}
-                                        {(!repair.afterImages || repair.afterImages.length === 0) && (
-                                            <div className="aspect-square rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 text-gray-300">
-                                                <Camera size={24} />
-                                                <span className="text-[10px] font-bold">GÖRSEL YOK</span>
+                                        {(!repair.repairImages || repair.repairImages.length === 0) && (
+                                            <div className="col-span-2 py-10 flex flex-col items-center justify-center text-gray-300 border-2 border-dashed border-gray-100 rounded-2xl">
+                                                <Camera size={32} className="mb-2 opacity-20" />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">Fotoğraf Eklenmemiş</span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-4 pt-8">
+                                <button onClick={() => setShowReturnModal(true)} className="flex-1 py-5 bg-white border border-gray-200 text-red-500 font-bold rounded-[24px] hover:bg-red-50 hover:border-red-100 transition-all flex items-center justify-center gap-2">
+                                    <RotateCcw size={20} /> İADE İŞLEMİ
+                                </button>
+                                <button onClick={() => setShowQuoteModal(true)} className="flex-1 py-5 bg-white border border-gray-200 text-[#0071e3] font-bold rounded-[24px] hover:bg-blue-50 hover:border-blue-100 transition-all flex items-center justify-center gap-2">
+                                    <Plus size={20} /> EK TEKLİF OLUŞTUR
+                                </button>
+                                <button onClick={handleComplete} className="flex-[2] py-5 bg-[#0071e3] text-white font-bold rounded-[24px] shadow-2xl shadow-[#0071e3]/30 hover:bg-[#0077ed] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-lg">
+                                    <CheckCircle size={24} /> ONARIMI TAMAMLA
+                                </button>
+                            </div>
                         </div>
                     )}
-                </div>
-
-                {/* Right Action Bar */}
-                <div className="w-20 border-l border-gray-200 bg-white flex flex-col items-center py-8 gap-6 shrink-0">
-                    <button onClick={() => setShowQuoteModal(true)} className="p-3 bg-orange-50 text-orange-600 rounded-2xl hover:bg-orange-600 hover:text-white transition-all shadow-sm" title="Teklif Gönder">
-                        <Zap size={24} />
-                    </button>
-                    <button onClick={() => setShowReturnModal(true)} className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm" title="İadesiz Gönder">
-                        <RotateCcw size={24} />
-                    </button>
-                    <div className="flex-1"></div>
-                    <button 
-                        onClick={handleComplete}
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl ${steps.every(s => s.checked) ? 'bg-[#0071e3] text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`}
-                    >
-                        <Check size={28} strokeWidth={3} />
-                    </button>
                 </div>
             </div>
 
             {/* Quote Modal */}
             {showQuoteModal && (
                 <div className="fixed inset-0 z-[110] bg-[#1d1d1f]/60 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
-                    <div className="bg-white w-full max-w-2xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col animate-scale-in">
                         <div className="p-8 border-b border-gray-100 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
-                                    <Zap size={24} />
+                                <div className="p-3 bg-blue-50 text-[#0071e3] rounded-2xl">
+                                    <Plus size={24} />
                                 </div>
-                                <h3 className="text-xl font-bold text-[#1d1d1f]">Yeni Fiyat Teklifi</h3>
+                                <div>
+                                    <h3 className="text-xl font-bold text-[#1d1d1f]">Ek Parça / İşçilik Teklifi</h3>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mt-1">Müşteri Onayına Gönderilecek</p>
+                                </div>
                             </div>
-                            <button onClick={() => setShowQuoteModal(false)} className="p-2 text-gray-400 hover:text-[#1d1d1f]">
-                                <X size={24} />
-                            </button>
+                            <button onClick={() => setShowQuoteModal(false)} className="p-2 text-gray-400 hover:text-[#1d1d1f]"><X size={24} /></button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-8 space-y-6">
-                            <div className="space-y-4">
-                                {quoteItems.map((item, idx) => (
-                                    <div key={idx} className="flex gap-4">
-                                        <input className="flex-1 h-12 px-4 bg-[#f5f5f7] rounded-xl text-sm font-bold outline-none" placeholder="İşlem/Parça Adı" value={item.name} onChange={e => setQuoteItems(quoteItems.map((q, i) => i === idx ? {...q, name: e.target.value} : q))} />
-                                        <input type="number" className="w-32 h-12 px-4 bg-[#f5f5f7] rounded-xl text-sm font-bold outline-none" placeholder="Fiyat" value={item.price} onChange={e => setQuoteItems(quoteItems.map((q, i) => i === idx ? {...q, price: e.target.value} : q))} />
-                                    </div>
-                                ))}
-                                <button onClick={() => setQuoteItems([...quoteItems, {name: '', price: ''}])} className="text-xs font-bold text-[#0071e3]">+ YENİ KALEM EKLE</button>
-                            </div>
-                            <textarea className="w-full h-32 bg-[#f5f5f7] rounded-2xl p-6 text-sm outline-none resize-none" placeholder="Müşteriye teknik açıklama..." value={quoteNotes} onChange={e => setQuoteNotes(e.target.value)}></textarea>
+                        <div className="p-8 space-y-4 max-h-[400px] overflow-y-auto">
+                            {quoteItems.map((item, idx) => (
+                                <div key={idx} className="flex gap-4">
+                                    <input type="text" placeholder="Parça veya İşçilik Adı" className="flex-[3] p-4 bg-[#f5f5f7] border-transparent rounded-xl text-sm font-bold focus:bg-white focus:border-[#0071e3] outline-none transition-all" value={item.name} onChange={(e) => setQuoteItems(quoteItems.map((it, i) => i === idx ? {...it, name: e.target.value} : it))} />
+                                    <input type="number" placeholder="Tutar (₺)" className="flex-1 p-4 bg-[#f5f5f7] border-transparent rounded-xl text-sm font-bold focus:bg-white focus:border-[#0071e3] outline-none transition-all" value={item.price} onChange={(e) => setQuoteItems(quoteItems.map((it, i) => i === idx ? {...it, price: e.target.value} : it))} />
+                                    <button onClick={() => setQuoteItems(quoteItems.filter((_, i) => i !== idx))} className="p-4 text-red-400 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={20} /></button>
+                                </div>
+                            ))}
+                            <button onClick={() => setQuoteItems([...quoteItems, { name: '', price: '' }])} className="w-full py-4 border-2 border-dashed border-gray-100 rounded-xl text-gray-400 font-bold hover:border-[#0071e3] hover:text-[#0071e3] transition-all">+ YENİ SATIR EKLE</button>
                         </div>
                         <div className="p-8 bg-gray-50 flex items-center justify-between">
                             <div className="text-2xl font-black text-[#1d1d1f]">₺{quoteItems.reduce((a, b) => a + (Number(b.price) || 0), 0).toLocaleString('tr-TR')}</div>

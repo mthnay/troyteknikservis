@@ -667,6 +667,81 @@ export const AppProvider = ({ children }) => {
         } catch (error) { console.error("Error using part:", error); return false; }
     };
 
+    const processStockMovement = async (repairId, parts) => {
+        if (!parts || parts.length === 0) return true;
+        
+        try {
+            // Backend endpoint to process stock movement in one go
+            // This is safer than multiple manual updates to prevent race conditions
+            const res = await apiFetch(`${API_URL}/inventory/process-movement`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repairId, parts })
+            });
+
+            if (res.ok) {
+                // Refresh inventory from server to get accurate state
+                const invRes = await apiFetch(`${API_URL}/inventory`);
+                if (invRes.ok) setInventory(await invRes.json());
+                return true;
+            } else {
+                // Fallback: If endpoint doesn't exist, we'll need to do it manually (for backward compatibility)
+                console.warn("process-movement endpoint not found, falling back to manual updates.");
+                
+                for (const part of parts) {
+                    const storeId = part.storeId || currentUser?.storeId || 0;
+                    
+                    // 1. KGB'den Düş
+                    const kgbItem = inventory.find(i => 
+                        i.partNumber === part.partNumber && 
+                        (String(i.storeId) === String(storeId)) &&
+                        (i.warehouseType === 'KGB' || !i.warehouseType)
+                    );
+
+                    if (kgbItem) {
+                        const newQuantity = Math.max(0, kgbItem.quantity - 1);
+                        const newSerials = (kgbItem.kgbSerials || []).filter(s => s !== part.kgbSerial);
+                        await updateInventoryItem(kgbItem._id || kgbItem.id, { 
+                            quantity: newQuantity,
+                            kgbSerials: newSerials 
+                        });
+                    }
+
+                    // 2. KBB'ye Gir
+                    const kbbItem = inventory.find(i => 
+                        i.partNumber === part.partNumber && 
+                        (String(i.storeId) === String(storeId)) &&
+                        i.warehouseType === 'KBB'
+                    );
+
+                    if (kbbItem) {
+                        const newQuantity = (kbbItem.quantity || 0) + 1;
+                        const newSerials = [...(kbbItem.kbbSerials || []), part.kbbSerial].filter(Boolean);
+                        await updateInventoryItem(kbbItem._id || kbbItem.id, { 
+                            quantity: newQuantity,
+                            kbbSerials: newSerials
+                        });
+                    } else {
+                        // Create new KBB record
+                        await addInventoryItem({
+                            name: part.description || part.name,
+                            partNumber: part.partNumber,
+                            quantity: 1,
+                            kbbSerials: [part.kbbSerial].filter(Boolean),
+                            warehouseType: 'KBB',
+                            storeId: storeId,
+                            category: part.category || 'Diğer'
+                        });
+                    }
+                }
+                return true;
+            }
+        } catch (error) {
+            console.error("Error processing stock movement:", error);
+            return false;
+        }
+    };
+
     const transferInventorySerial = async (sourceItemId, targetStoreId, serialNumbers, serialType) => {
         try {
             const res = await apiFetch(`${API_URL}/inventory/transfer-serial`, {
@@ -844,7 +919,7 @@ export const AppProvider = ({ children }) => {
             allEarnings: earnings,
             login, logout, addUser, updateUser, removeUser, addRepair, removeRepair, updateRepair, updateRepairStatus,
             addTechnician, updateTechnician, removeTechnician, assignTechnician, completeJob, addServicePoint, updateServicePoint, removeServicePoint,
-            addCustomer, updateCustomer, removeCustomer, addInventoryItem, updateInventoryItem, removeInventoryItem, usePart, transferInventorySerial, addEarning,
+            addCustomer, updateCustomer, removeCustomer, addInventoryItem, updateInventoryItem, removeInventoryItem, usePart, processStockMovement, transferInventorySerial, addEarning,
             emailSettings, setEmailSettings: (s) => { setEmailSettings(s); saveSettings('emailSettings', s); },
             companyProfile, setCompanyProfile: (p) => { setCompanyProfile(p); saveSettings('companyProfile', p); },
             notificationSettings, setNotificationSettings: (s) => { setNotificationSettings(s); saveSettings('notificationSettings', s); },
