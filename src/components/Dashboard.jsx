@@ -359,7 +359,7 @@ const Dashboard = () => {
                     <div className="gsx-card p-5">
                         <div className="mb-4">
                             <h3 className="font-semibold text-[13px] text-[#1d1d1f]">
-                                Device Distribution
+                                Cihaz Dağılımı
                             </h3>
                         </div>
 
@@ -386,7 +386,7 @@ const Dashboard = () => {
                     {/* Low Stock */}
                     <div className="gsx-card p-5">
                         <h3 className="font-semibold text-[13px] text-[#1d1d1f] mb-4">
-                            Low Stock Alerts
+                            Kritik Stok Uyarıları
                         </h3>
                         <div className="space-y-4">
                             {lowStockItems.length > 0 ? lowStockItems.map(item => (
@@ -404,7 +404,7 @@ const Dashboard = () => {
                                 </div>
                             )) : (
                                 <div className="text-[12px] text-gray-500">
-                                    All stock levels are optimal.
+                                    Tüm stok seviyeleri optimal durumda.
                                 </div>
                             )}
                         </div>
