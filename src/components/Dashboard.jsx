@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Clock, AlertCircle, CheckCircle, Package, Activity, TrendingUp, PieChart, ArrowUpRight, ArrowDownRight, MoreHorizontal, Wallet, Users, Zap, LayoutDashboard, Store, X, ChevronRight, ShieldAlert } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle, Package, Activity, TrendingUp, PieChart, ArrowUpRight, ArrowDownRight, MoreHorizontal, Wallet, Users, Zap, LayoutDashboard, Store, X, ChevronRight, ShieldAlert, Wrench } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { hasPermission } from '../utils/permissions';
+import { hasPermission, ROLES } from '../utils/permissions';
 
 const StatCard = ({ title, value, subtitle, icon: Icon, colorClass, trend, trendValue }) => (
     <div className="gsx-card p-5 relative group flex flex-col justify-between min-h-[120px]">
