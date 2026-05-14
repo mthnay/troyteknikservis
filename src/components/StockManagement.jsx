@@ -6,7 +6,7 @@ import {
     Check, AlertTriangle, Layers, MapPin, MoreHorizontal
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { hasPermission } from '../utils/permissions';
+import { hasPermission, ROLES } from '../utils/permissions';
 import { appConfirm, appPrompt } from '../utils/alert';
 import MyPhoneIcon from './LocalIcons';
 
@@ -16,6 +16,12 @@ const StockManagement = () => {
         servicePoints, currentUser, showToast, selectedStoreId, setSelectedStoreId,
         repairs, updateRepair
     } = useAppContext();
+
+    // Role-based access
+    const isManager = (() => {
+        const role = currentUser?.role?.toLowerCase();
+        return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin';
+    })();
 
     // Unified Tab State: 'inventory' or 'kbb'
     const [activeMainTab, setActiveMainTab] = useState('inventory');
@@ -759,9 +765,43 @@ const StockManagement = () => {
                                     </p>
                                     <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
                                         {selectedPartDetails.kgbSerials.map((serial, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2">
+                                            <div key={idx} className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 group/serial">
                                                 <span className="text-[10px] font-bold text-blue-400 w-5 text-center">{idx + 1}</span>
-                                                <span className="font-mono text-sm font-bold text-blue-800 tracking-wider">{serial}</span>
+                                                <span className="font-mono text-sm font-bold text-blue-800 tracking-wider flex-1">{serial}</span>
+                                                {isManager && (
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover/serial:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={async () => {
+                                                                const newSerial = await appPrompt('Yeni seri numarasını girin:', serial);
+                                                                if (newSerial && newSerial !== serial) {
+                                                                    const newSerials = [...selectedPartDetails.kgbSerials];
+                                                                    newSerials[idx] = newSerial;
+                                                                    await updateInventoryItem(selectedPartDetails._id || selectedPartDetails.id, { kgbSerials: newSerials });
+                                                                    setSelectedPartDetails(prev => ({ ...prev, kgbSerials: newSerials }));
+                                                                    showToast('Seri numarası güncellendi', 'success');
+                                                                }
+                                                            }}
+                                                            className="p-1 text-blue-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                                                            title="Düzenle"
+                                                        >
+                                                            <Edit3 size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (await appConfirm(`"${serial}" seri numarası silinsin mi?`)) {
+                                                                    const newSerials = selectedPartDetails.kgbSerials.filter((_, i) => i !== idx);
+                                                                    await updateInventoryItem(selectedPartDetails._id || selectedPartDetails.id, { kgbSerials: newSerials });
+                                                                    setSelectedPartDetails(prev => ({ ...prev, kgbSerials: newSerials }));
+                                                                    showToast('Seri numarası silindi', 'success');
+                                                                }
+                                                            }}
+                                                            className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                            title="Sil"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -784,18 +824,20 @@ const StockManagement = () => {
                             >
                                 Kapat
                             </button>
-                            <button
-                                onClick={async () => {
-                                    if (await appConfirm(`"${selectedPartDetails.name}" silinsin mi?`)) {
-                                        await removeInventoryItem(selectedPartDetails._id || selectedPartDetails.id);
-                                        showToast('Parça silindi', 'success');
-                                        setSelectedPartDetails(null);
-                                    }
-                                }}
-                                className="px-5 py-3 rounded-xl bg-red-50 border border-red-100 text-red-600 font-bold text-sm hover:bg-red-100 transition-colors flex items-center gap-2"
-                            >
-                                <Trash2 size={16} /> Sil
-                            </button>
+                            {isManager && (
+                                <button
+                                    onClick={async () => {
+                                        if (await appConfirm(`"${selectedPartDetails.name}" silinsin mi?`)) {
+                                            await removeInventoryItem(selectedPartDetails._id || selectedPartDetails.id);
+                                            showToast('Parça silindi', 'success');
+                                            setSelectedPartDetails(null);
+                                        }
+                                    }}
+                                    className="px-5 py-3 rounded-xl bg-red-50 border border-red-100 text-red-600 font-bold text-sm hover:bg-red-100 transition-colors flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} /> Sil
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
