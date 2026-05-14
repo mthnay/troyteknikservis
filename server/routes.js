@@ -1054,7 +1054,7 @@ router.post('/ai/diagnose', async (req, res) => {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
             Sen bir Apple Yetkili Servis teknisyen asistanısın. 
@@ -1099,7 +1099,7 @@ router.post('/ai/enhance-message', async (req, res) => {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
             Aşağıdaki teknik notu, müşteri ${customerName} için, ${deviceModel} cihazı hakkında nazik, profesyonel ve kurumsal bir bilgilendirme mesajına dönüştür. 
