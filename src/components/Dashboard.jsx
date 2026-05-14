@@ -115,7 +115,7 @@ const Dashboard = () => {
     // Single source of truth for manager-level access - role-string only to avoid async flicker
     const canViewPerformance = useMemo(() => {
         const role = currentUser?.role?.toLowerCase();
-        return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin';
+        return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin' || role === ROLES.YONETICI;
     }, [currentUser?.role]);
 
     const storePerformance = useMemo(() => {

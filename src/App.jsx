@@ -45,10 +45,23 @@ function App() {
 
   // Kullanıcı giriş yaptığında veya değiştiğinde, seçili mağazayı güncelle
   useEffect(() => {
-    if (currentUser?.storeId && selectedStoreId === 0) {
-      setSelectedStoreId(currentUser.storeId);
+    if (!currentUser) return;
+    
+    // Eğer kullanıcı SuperAdmin veya Yönetici ise ve henüz bir mağaza seçilmemişse (veya 0 ise)
+    if ((currentUser.role?.toLowerCase() === 'superadmin' || currentUser.role?.toLowerCase() === 'admin' || currentUser.role?.toLowerCase() === 'yonetici') && selectedStoreId === 0) {
+        // Türü Merkez olan mağazayı bul
+        const merkez = servicePoints.find(sp => sp.type === 'Merkez' || sp.name?.toLowerCase().includes('merkez'));
+        if (merkez) {
+            setSelectedStoreId(merkez.id);
+        } else if (currentUser.storeId) {
+            setSelectedStoreId(currentUser.storeId);
+        }
+    } 
+    // Normal kullanıcılar için (veya adminler için merkez bulunamazsa) kendi mağazasını seç
+    else if (currentUser.storeId && selectedStoreId === 0) {
+        setSelectedStoreId(currentUser.storeId);
     }
-  }, [currentUser]);
+  }, [currentUser, servicePoints]);
   const [serviceInitialData, setServiceInitialData] = useState(null);
   const [trackingMode, setTrackingMode] = useState(false);
 
