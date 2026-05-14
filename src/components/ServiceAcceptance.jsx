@@ -563,9 +563,6 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                             </div>
                                         </div>
 
-                                            </div>
-                                        </div>
-
                                         <div className="group relative" ref={suggestionsRef}>
                                             <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Cihaz Modeli</label>
                                             <div className="relative">
