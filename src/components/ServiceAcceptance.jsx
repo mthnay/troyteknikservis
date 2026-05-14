@@ -133,12 +133,17 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [deviceSuggestions, setDeviceSuggestions] = useState([]);
     const suggestionsRef = useRef(null);
+    const [showStoreSelect, setShowStoreSelect] = useState(false);
+    const storeSelectRef = useRef(null);
 
-    // Click outside to close suggestions
+    // Click outside to close suggestions and store select
     React.useEffect(() => {
         const handleClickOutside = (event) => {
             if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
                 setShowSuggestions(false);
+            }
+            if (storeSelectRef.current && !storeSelectRef.current.contains(event.target)) {
+                setShowStoreSelect(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -482,19 +487,45 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                 </div>
                 <div className="flex items-center gap-4">
                     {hasAllStores && (
-                        <div className="flex items-center gap-2 bg-blue-50/50 border border-blue-100 rounded-md px-3 py-1.5 shadow-sm animate-in slide-in-from-right-2">
-                            <MapPin size={14} className="text-blue-600" />
-                            <select
-                                className="bg-transparent text-[11px] font-bold text-blue-700 outline-none appearance-none cursor-pointer pr-4"
-                                value={formData.storeId}
-                                onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                        <div className="relative" ref={storeSelectRef}>
+                            <button 
+                                onClick={() => setShowStoreSelect(!showStoreSelect)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all shadow-sm
+                                    ${showStoreSelect ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200' : 'bg-blue-50/50 border-blue-100 text-blue-700 hover:bg-blue-100'}
+                                `}
                             >
-                                <option value="">Mağaza Seçiniz...</option>
-                                {servicePoints.map(sp => (
-                                    <option key={sp.id} value={sp.id}>{sp.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDown size={12} className="text-blue-400 -ml-3 pointer-events-none" />
+                                <MapPin size={14} className={showStoreSelect ? 'text-white' : 'text-blue-600'} />
+                                <span className="text-[11px] font-bold uppercase tracking-tight">
+                                    {servicePoints.find(sp => String(sp.id) === String(formData.storeId))?.name || 'Mağaza Seçiniz'}
+                                </span>
+                                <ChevronDown size={12} className={`transition-transform ${showStoreSelect ? 'rotate-180' : 'opacity-50'}`} />
+                            </button>
+
+                            {showStoreSelect && (
+                                <div className="absolute top-full right-0 mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 shadow-2xl rounded-xl p-1.5 w-64 z-[60] animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-3 py-2 border-b border-gray-50 mb-1">
+                                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Mağaza Seçimi</span>
+                                    </div>
+                                    <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                        {servicePoints.map(sp => (
+                                            <button
+                                                key={sp.id}
+                                                onClick={() => {
+                                                    setFormData({ ...formData, storeId: sp.id });
+                                                    setShowStoreSelect(false);
+                                                }}
+                                                className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-3 transition-all
+                                                    ${String(formData.storeId) === String(sp.id) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                                                `}
+                                            >
+                                                <div className={`w-2 h-2 rounded-full ${String(formData.storeId) === String(sp.id) ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                                {sp.name}
+                                                {String(formData.storeId) === String(sp.id) && <Check size={12} className="ml-auto text-blue-500" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                     <div className="flex items-center gap-2 bg-white p-1 rounded-md border border-gray-200 shadow-sm">
