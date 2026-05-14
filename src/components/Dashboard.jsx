@@ -112,10 +112,13 @@ const Dashboard = () => {
         };
     }, [repairs, earnings, technicians]);
 
-    const storePerformance = useMemo(() => {
+    // Single source of truth for manager-level access - role-string only to avoid async flicker
+    const canViewPerformance = useMemo(() => {
         const role = currentUser?.role?.toLowerCase();
-        const canViewPerformance = role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin' || hasPermission(currentUser, 'view_all_stores');
-        
+        return role === ROLES.SUPER_ADMIN || role === ROLES.STORE_MANAGER || role === 'admin';
+    }, [currentUser?.role]);
+
+    const storePerformance = useMemo(() => {
         if (!canViewPerformance) return [];
         return (servicePoints || []).map(sp => {
             const storeRepairs = (repairs || []).filter(r => String(r.storeId) === String(sp.id));
@@ -269,7 +272,7 @@ const Dashboard = () => {
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Admin Store Comparison OR Recent Activity */}
-                    {(currentUser?.role?.toLowerCase() === ROLES.SUPER_ADMIN || currentUser?.role?.toLowerCase() === ROLES.STORE_MANAGER || currentUser?.role?.toLowerCase() === 'admin' || hasPermission(currentUser, 'view_all_stores')) ? (
+                    {canViewPerformance ? (
                         <div className="gsx-card overflow-hidden flex flex-col h-full min-h-[560px]">
                             <div className="px-6 py-5 border-b border-gray-50 flex justify-between items-center bg-white z-20">
                                 <h3 className="font-bold text-sm text-gray-900 uppercase tracking-widest">Mağaza Performansları</h3>
