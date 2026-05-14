@@ -563,6 +563,9 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                             </div>
                                         </div>
 
+                                            </div>
+                                        </div>
+
                                         <div className="group relative" ref={suggestionsRef}>
                                             <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide mb-2 block ml-1">Cihaz Modeli</label>
                                             <div className="relative">
@@ -590,25 +593,6 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                                 )}
                                             </div>
                                         </div>
-
-                                        {hasAllStores && (
-                                            <div className="group relative animate-in slide-in-from-top-2">
-                                                <label className="text-[10px] font-semibold text-blue-600 text-xs uppercase tracking-wide mb-2 block ml-1">Kayıt Yapılacak Mağaza *</label>
-                                                <div className="relative">
-                                                    <select
-                                                        className="w-full pl-12 pr-4 py-4 rounded-md bg-blue-50/30 border border-blue-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900 appearance-none"
-                                                        value={formData.storeId}
-                                                        onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
-                                                    >
-                                                        <option value="">Mağaza Seçiniz...</option>
-                                                        {servicePoints.map(sp => (
-                                                            <option key={sp.id} value={sp.id}>{sp.name}</option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 transition-colors"><Box size={20} /></div>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
 
                                     {/* Sağ Sütun: IMEI Alanları */}
@@ -729,6 +713,24 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                 <div className="lg:col-span-4 space-y-6">
                     <div className="gsx-card p-6 sticky top-32">
+                        {hasAllStores && (
+                            <div className="group relative animate-in slide-in-from-top-2 mb-8 pb-8 border-b border-gray-100">
+                                <label className="text-[10px] font-semibold text-blue-600 text-xs uppercase tracking-wide mb-2 block ml-1">Kayıt Yapılacak Mağaza *</label>
+                                <div className="relative">
+                                    <select
+                                        className="w-full pl-12 pr-4 py-4 rounded-md bg-blue-50/30 border border-blue-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900 appearance-none"
+                                        value={formData.storeId}
+                                        onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                                    >
+                                        <option value="">Mağaza Seçiniz...</option>
+                                        {servicePoints.map(sp => (
+                                            <option key={sp.id} value={sp.id}>{sp.name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 transition-colors"><Box size={20} /></div>
+                                </div>
+                            </div>
+                        )}
                         <h3 className="font-semibold text-gray-900 mb-8 flex items-center gap-3"><div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-500"><User size={20} strokeWidth={2.5} /></div>Müşteri Bilgileri</h3>
                         <div className="space-y-5">
                             <div className="space-y-2">
