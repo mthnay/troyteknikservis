@@ -65,7 +65,7 @@ app.use(helmet({
 // Rate Limit aktif edildi (DDoS ve Brute Force koruması)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 dakika
-    max: 1000, // Her IP için 15 dakikada maksimum istek
+    max: 10000, // Geliştirme ortamında HMR sorunlarını önlemek için artırıldı
     message: 'Çok fazla istek gönderildi, lütfen biraz bekleyin.'
 });
 app.use('/api/', limiter);
