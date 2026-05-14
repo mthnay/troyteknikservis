@@ -359,12 +359,16 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
         }
     }, [initialData]);
  
-    // Sync storeId with currentUser's storeId if not already set
+    // Kullanıcının bağlı olduğu mağazayı varsayılan seç
     React.useEffect(() => {
-        if (currentUser && currentUser.storeId && !formData.storeId) {
+        if (currentUser?.storeId && !hasAllStores) {
+            // view_all_stores yetkisi yoksa her zaman kendi mağazası olmalı
+            setFormData(prev => ({ ...prev, storeId: currentUser.storeId }));
+        } else if (currentUser?.storeId && !formData.storeId) {
+            // view_all_stores yetkisi varsa ama storeId boşsa, kendi mağazasını ata
             setFormData(prev => ({ ...prev, storeId: currentUser.storeId }));
         }
-    }, [currentUser, formData.storeId]);
+    }, [currentUser?.storeId]);
 
     // Customer Matching
     const matchingCustomer = React.useMemo(() => {
