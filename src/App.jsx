@@ -17,6 +17,7 @@ import Login from './components/Login';
 import CustomerPortal from './components/CustomerPortal';
 import TrackingInput from './components/TrackingInput';
 import MarketingAutomation from './components/MarketingAutomation';
+import StockManagement from './components/StockManagement';
 import { useAppContext } from './context/AppContext';
 import { hasPermission } from './utils/permissions';
 
@@ -61,7 +62,8 @@ function App() {
           {activeTab === 'approval-pending' && <ApprovalPending setActiveTab={setActiveTab} />}
           {activeTab === 'customers' && <Customers setActiveTab={setActiveTab} setServiceInitialData={setServiceInitialData} />}
           {activeTab === 'marketing' && <MarketingAutomation />}
-          {activeTab === 'stock' && <KBBManagement />}
+          {activeTab === 'stock' && <StockManagement />}
+          {activeTab === 'kbb' && <KBBManagement />}
           {activeTab === 'in-store' && <RepairCenter type="in-store" setActiveTab={setActiveTab} />}
           {activeTab === 'ready-pickup' && <ReadyForPickup />}
           {activeTab === 'archive' && <Archive />}
@@ -70,7 +72,7 @@ function App() {
           {activeTab === 'technicians' && <Technicians />}
           {activeTab === 'store-operations' && <StoreOperations />}
           {activeTab === 'settings' && hasPermission(currentUser, 'manage_settings') && <Settings />}
-          {activeTab !== 'dashboard' && activeTab !== 'service' && activeTab !== 'in-store' && activeTab !== 'ready-pickup' && activeTab !== 'archive' && activeTab !== 'apple-center' && activeTab !== 'pending-repairs' && activeTab !== 'approval-pending' && activeTab !== 'stock' && activeTab !== 'reports' && activeTab !== 'technicians' && activeTab !== 'store-operations' && activeTab !== 'settings' && activeTab !== 'customers' && activeTab !== 'marketing' && (
+          {activeTab !== 'dashboard' && activeTab !== 'service' && activeTab !== 'in-store' && activeTab !== 'ready-pickup' && activeTab !== 'archive' && activeTab !== 'apple-center' && activeTab !== 'pending-repairs' && activeTab !== 'approval-pending' && activeTab !== 'stock' && activeTab !== 'kbb' && activeTab !== 'reports' && activeTab !== 'technicians' && activeTab !== 'store-operations' && activeTab !== 'settings' && activeTab !== 'customers' && activeTab !== 'marketing' && (
             <div className="flex flex-col items-center justify-center h-[70vh] text-center">
               <h2 className="text-2xl font-bold text-gray-400 mb-2">Sayfa Yapım Aşamasında</h2>
               <p className="text-gray-500">Bu modül henüz aktifleştirilmedi.</p>
