@@ -34,6 +34,7 @@ import ServiceFormPrint from './ServiceFormPrint';
 import Toast from './Toast'; // Import Toast
 import { useAppContext } from '../context/AppContext';
 import { appConfirm } from '../utils/alert';
+import { hasPermission, ROLES } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
 import { getProductImage } from '../utils/productImages';
 
