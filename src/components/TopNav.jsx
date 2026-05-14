@@ -41,8 +41,7 @@ const TopNav = ({ activeTab, setActiveTab }) => {
             id: 'stok_rapor',
             label: 'Stok & Rapor',
             items: [
-                { id: 'stock', icon: Package, label: 'Genel Stok Yönetimi' },
-                { id: 'kbb', icon: Recycle, label: 'Apple İade / KBB' },
+                { id: 'stock', icon: Package, label: 'Stok Yönetimi' },
                 { id: 'reports', icon: BarChart2, label: 'Raporlar' }
             ]
         },
