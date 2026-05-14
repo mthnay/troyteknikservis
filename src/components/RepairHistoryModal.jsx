@@ -345,6 +345,11 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
                                     {repair.productGroup && (
                                         <span className="text-[9px] font-semibold uppercase text-white bg-gray-900 px-2 py-1 rounded shadow-sm">{repair.productGroup}</span>
                                     )}
+                                    {repair.serviceType && (
+                                        <span className={`text-[9px] font-semibold uppercase px-2 py-1 rounded shadow-sm ${repair.serviceType === 'exchange' ? 'bg-orange-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                                            {repair.serviceType === 'exchange' ? 'Değişim' : 'Onarım'}
+                                        </span>
+                                    )}
                                     {repair.storeId && (
                                         <span className="text-[9px] font-semibold uppercase text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded shadow-sm flex items-center gap-1">
                                             <MapPin size={10} /> {servicePoints.find(sp => String(sp.id) === String(repair.storeId))?.name || 'Mağaza Bilgisi'}
