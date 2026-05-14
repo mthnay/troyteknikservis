@@ -478,13 +478,31 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                         <p className="text-gray-500 mt-1 font-medium">Cihaz ve müşteri bilgilerini eksiksiz doldurun.</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white p-1 rounded-md border border-gray-200 shadow-sm">
-                    {[1, 2].map(s => (
-                        <div key={s} onClick={() => setStep(s)} className={`px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${step === s ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === s ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-500'}`}>{s}</span>
-                            <span className="hidden sm:inline">{s === 1 ? 'BİLGİLER' : 'İMZA'}</span>
+                <div className="flex items-center gap-4">
+                    {hasAllStores && (
+                        <div className="flex items-center gap-2 bg-blue-50/50 border border-blue-100 rounded-md px-3 py-1.5 shadow-sm animate-in slide-in-from-right-2">
+                            <MapPin size={14} className="text-blue-600" />
+                            <select
+                                className="bg-transparent text-[11px] font-bold text-blue-700 outline-none appearance-none cursor-pointer pr-4"
+                                value={formData.storeId}
+                                onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                            >
+                                <option value="">Mağaza Seçiniz...</option>
+                                {servicePoints.map(sp => (
+                                    <option key={sp.id} value={sp.id}>{sp.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown size={12} className="text-blue-400 -ml-3 pointer-events-none" />
                         </div>
-                    ))}
+                    )}
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-md border border-gray-200 shadow-sm">
+                        {[1, 2].map(s => (
+                            <div key={s} onClick={() => setStep(s)} className={`px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${step === s ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}>
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === s ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-500'}`}>{s}</span>
+                                <span className="hidden sm:inline">{s === 1 ? 'BİLGİLER' : 'İMZA'}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -710,24 +728,6 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
 
                 <div className="lg:col-span-4 space-y-6">
                     <div className="gsx-card p-6 sticky top-32">
-                        {hasAllStores && (
-                            <div className="group relative animate-in slide-in-from-top-2 mb-8 pb-8 border-b border-gray-100">
-                                <label className="text-[10px] font-semibold text-blue-600 text-xs uppercase tracking-wide mb-2 block ml-1">Kayıt Yapılacak Mağaza *</label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full pl-12 pr-4 py-4 rounded-md bg-blue-50/30 border border-blue-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg text-gray-900 appearance-none"
-                                        value={formData.storeId}
-                                        onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
-                                    >
-                                        <option value="">Mağaza Seçiniz...</option>
-                                        {servicePoints.map(sp => (
-                                            <option key={sp.id} value={sp.id}>{sp.name}</option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 transition-colors"><Box size={20} /></div>
-                                </div>
-                            </div>
-                        )}
                         <h3 className="font-semibold text-gray-900 mb-8 flex items-center gap-3"><div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-500"><User size={20} strokeWidth={2.5} /></div>Müşteri Bilgileri</h3>
                         <div className="space-y-5">
                             <div className="space-y-2">
