@@ -28,7 +28,8 @@ import {
     Zap,
     Box,
     Phone,
-    Fingerprint
+    Fingerprint,
+    MapPin
 } from 'lucide-react';
 import ServiceFormPrint from './ServiceFormPrint';
 import Toast from './Toast'; // Import Toast
