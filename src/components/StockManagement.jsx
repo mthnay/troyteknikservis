@@ -312,22 +312,8 @@ const StockManagement = () => {
                                             </td>
                                         )}
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-4">
-                                                <button 
-                                                    onClick={async () => {
-                                                        if (item.quantity > 0) {
-                                                            await updateInventoryItem(item._id || item.id, { quantity: item.quantity - 1 });
-                                                        }
-                                                    }}
-                                                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-all"
-                                                >-</button>
+                                            <div className="flex items-center justify-center">
                                                 <span className={`text-[15px] font-bold w-12 text-center ${item.quantity < item.minLevel ? 'text-red-500 animate-pulse' : 'text-gray-900'}`}>{item.quantity}</span>
-                                                <button 
-                                                    onClick={async () => {
-                                                        await updateInventoryItem(item._id || item.id, { quantity: item.quantity + 1 });
-                                                    }}
-                                                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-all"
-                                                >+</button>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -684,6 +670,131 @@ const StockManagement = () => {
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <CheckCircle size={20} /> Kaydı Tamamla
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Part Detail Modal */}
+            {selectedPartDetails && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedPartDetails(null)}>
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+                    <div
+                        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                    <Package size={22} />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">{selectedPartDetails.name}</h2>
+                                    <span className="text-[11px] font-mono font-bold text-gray-400 uppercase bg-gray-100 px-2 py-0.5 rounded">
+                                        {selectedPartDetails.partNumber || 'Kod Yok'}
+                                    </span>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedPartDetails(null)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-5">
+                            {/* Stats Row */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Stok Adedi</p>
+                                    <p className={`text-2xl font-black ${selectedPartDetails.quantity < selectedPartDetails.minLevel ? 'text-red-500' : 'text-gray-900'}`}>
+                                        {selectedPartDetails.quantity}
+                                    </p>
+                                    {selectedPartDetails.quantity < selectedPartDetails.minLevel && (
+                                        <span className="text-[9px] font-bold text-red-500 uppercase">Kritik Seviye</span>
+                                    )}
+                                </div>
+                                <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Min. Seviye</p>
+                                    <p className="text-2xl font-black text-gray-900">{selectedPartDetails.minLevel ?? '-'}</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ambar</p>
+                                    <p className={`text-sm font-black mt-1 ${selectedPartDetails.warehouseType === 'KBB' ? 'text-indigo-600' : 'text-blue-600'}`}>
+                                        {selectedPartDetails.warehouseType || 'KGB'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Info Row */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                    <Tag size={16} className="text-gray-400 shrink-0" />
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Kategori</p>
+                                        <p className="text-sm font-bold text-gray-800">{selectedPartDetails.category || '-'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                    <MapPin size={16} className="text-gray-400 shrink-0" />
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Mağaza</p>
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {servicePoints.find(s => String(s.id) === String(selectedPartDetails.storeId))?.name || 'Genel'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* KGB Serials */}
+                            {selectedPartDetails.kgbSerials && selectedPartDetails.kgbSerials.length > 0 && (
+                                <div>
+                                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Layers size={14} className="text-blue-500" />
+                                        KGB Seri Numaraları
+                                        <span className="ml-auto bg-blue-100 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                            {selectedPartDetails.kgbSerials.length} adet
+                                        </span>
+                                    </p>
+                                    <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
+                                        {selectedPartDetails.kgbSerials.map((serial, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2">
+                                                <span className="text-[10px] font-bold text-blue-400 w-5 text-center">{idx + 1}</span>
+                                                <span className="font-mono text-sm font-bold text-blue-800 tracking-wider">{serial}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {(!selectedPartDetails.kgbSerials || selectedPartDetails.kgbSerials.length === 0) && (
+                                <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-dashed border-gray-200 text-gray-400">
+                                    <Layers size={18} className="opacity-40" />
+                                    <p className="text-sm font-medium">Bu parçaya ait KGB seri numarası bulunmuyor.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 pb-6 flex gap-3">
+                            <button
+                                onClick={() => setSelectedPartDetails(null)}
+                                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors"
+                            >
+                                Kapat
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (await appConfirm(`"${selectedPartDetails.name}" silinsin mi?`)) {
+                                        await removeInventoryItem(selectedPartDetails._id || selectedPartDetails.id);
+                                        showToast('Parça silindi', 'success');
+                                        setSelectedPartDetails(null);
+                                    }
+                                }}
+                                className="px-5 py-3 rounded-xl bg-red-50 border border-red-100 text-red-600 font-bold text-sm hover:bg-red-100 transition-colors flex items-center gap-2"
+                            >
+                                <Trash2 size={16} /> Sil
                             </button>
                         </div>
                     </div>
