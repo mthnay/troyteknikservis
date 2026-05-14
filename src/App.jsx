@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapPin, ChevronDown, Check } from 'lucide-react';
 import TopNav from './components/TopNav';
 import Dashboard from './components/Dashboard';
 import ServiceAcceptance from './components/ServiceAcceptance';
@@ -28,6 +29,19 @@ function App() {
   useEffect(() => {
     sessionStorage.setItem('oss_active_tab', activeTab);
   }, [activeTab]);
+
+  const [showStoreSelect, setShowStoreSelect] = useState(false);
+  const storeSelectRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (storeSelectRef.current && !storeSelectRef.current.contains(event.target)) {
+        setShowStoreSelect(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const [serviceInitialData, setServiceInitialData] = useState(null);
   const [trackingMode, setTrackingMode] = useState(false);
 
@@ -82,21 +96,55 @@ function App() {
 
       {/* Bottom Store Selector Navbar */}
       {hasPermission(currentUser, 'view_all_stores') && (
-        <div className="fixed bottom-0 left-0 w-full h-9 bg-white/80 backdrop-blur-md border-t border-black/5 flex items-center justify-between px-6 z-50 shadow-[0_-4px_24px_-6px_rgba(0,0,0,0.04)]">
+        <div className="fixed bottom-0 left-0 w-full h-9 bg-white/90 backdrop-blur-md border-t border-black/5 flex items-center justify-between px-6 z-50 shadow-[0_-4px_24px_-6px_rgba(0,0,0,0.04)]">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Aktif Mağaza:</span>
-              <div className="relative flex items-center bg-gray-50/80 rounded px-2 h-6 border border-transparent hover:border-gray-200 focus-within:border-apple-blue focus-within:ring-1 focus-within:ring-apple-blue transition-colors">
-                  <select
-                      value={selectedStoreId}
-                      onChange={(e) => setSelectedStoreId(Number(e.target.value))}
-                      className="bg-transparent text-[11px] text-gray-700 font-semibold outline-none appearance-none cursor-pointer pr-4 w-full min-w-[180px]"
+              <div className="relative" ref={storeSelectRef}>
+                  <button 
+                      onClick={() => setShowStoreSelect(!showStoreSelect)}
+                      className={`flex items-center gap-2 px-2 h-6 rounded border transition-all
+                          ${showStoreSelect ? 'bg-blue-600 border-blue-600 text-white' : 'bg-gray-50 border-gray-100 text-gray-700 hover:bg-gray-100'}
+                      `}
                   >
-                      <option value={0}>Tüm Mağazalar</option>
-                      {servicePoints.map(point => (
-                          <option key={point.id} value={point.id}>{point.name}</option>
-                      ))}
-                  </select>
-                  <svg className="absolute right-1.5 pointer-events-none text-gray-400" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      <MapPin size={10} className={showStoreSelect ? 'text-white' : 'text-blue-500'} />
+                      <span className="text-[11px] font-bold">
+                          {selectedStoreId === 0 ? 'Tüm Mağazalar' : servicePoints.find(p => p.id === selectedStoreId)?.name || 'Mağaza Seç'}
+                      </span>
+                      <ChevronDown size={10} className={`transition-transform ${showStoreSelect ? 'rotate-180' : 'opacity-50'}`} />
+                  </button>
+
+                  {showStoreSelect && (
+                      <div className="absolute bottom-full left-0 mb-2 bg-white/95 backdrop-blur-xl border border-gray-100 shadow-2xl rounded-xl p-1 w-64 z-[100] animate-in fade-in slide-in-from-bottom-2">
+                          <div className="px-3 py-2 border-b border-gray-50 mb-1">
+                              <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Mağaza Değiştir</span>
+                          </div>
+                          <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                              <button
+                                  onClick={() => { setSelectedStoreId(0); setShowStoreSelect(false); }}
+                                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-3 transition-all
+                                      ${selectedStoreId === 0 ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                                  `}
+                              >
+                                  <div className={`w-2 h-2 rounded-full ${selectedStoreId === 0 ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                  Tüm Mağazalar
+                                  {selectedStoreId === 0 && <Check size={12} className="ml-auto text-blue-500" />}
+                              </button>
+                              {servicePoints.map(point => (
+                                  <button
+                                      key={point.id}
+                                      onClick={() => { setSelectedStoreId(point.id); setShowStoreSelect(false); }}
+                                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-3 transition-all
+                                          ${selectedStoreId === point.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                                      `}
+                                  >
+                                      <div className={`w-2 h-2 rounded-full ${selectedStoreId === point.id ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                      {point.name}
+                                      {selectedStoreId === point.id && <Check size={12} className="ml-auto text-blue-500" />}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+                  )}
               </div>
             </div>
             <div className="text-[10px] font-medium text-gray-400 tracking-tight">
