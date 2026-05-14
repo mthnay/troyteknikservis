@@ -141,6 +141,9 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                                             if (category.id === 'dashboard') {
                                                 setActiveTab('dashboard');
                                                 setHoveredCategory(null);
+                                            } else if (category.items.length === 1) {
+                                                setActiveTab(category.items[0].id);
+                                                setHoveredCategory(null);
                                             }
                                         }}
                                         className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5
