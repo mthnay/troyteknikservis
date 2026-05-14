@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext';
 import Swal from 'sweetalert2';
 import ConfirmationModal from './ConfirmationModal';
 import MyPhoneIcon from './LocalIcons';
+import { isSuperAdmin, isYonetici } from '../utils/permissions';
 
 const Settings = () => {
     const {
@@ -1213,9 +1214,18 @@ const Settings = () => {
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
                                         value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
                                     >
-                                        {roles.map(role => (
-                                            <option key={role.name} value={role.name}>{role.displayName}</option>
-                                        ))}
+                                        {roles
+                                            .filter(role => {
+                                                // Yönetici, SuperAdmin hesabı oluşturamaz
+                                                if (isYonetici(currentUser)) {
+                                                    return role.name.toLowerCase() !== 'superadmin' && role.name.toLowerCase() !== 'admin';
+                                                }
+                                                return true;
+                                            })
+                                            .map(role => (
+                                                <option key={role.name} value={role.name}>{role.displayName}</option>
+                                            ))
+                                        }
                                     </select>
                                     <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16} />
                                 </div>
@@ -1274,7 +1284,9 @@ const Settings = () => {
                                                     <label className="text-[10px] font-semibold text-gray-400 text-xs uppercase tracking-wide pl-1">Yetki & Mağaza</label>
                                                     <div className="flex flex-col gap-1">
                                                         <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.role} onChange={e => setEditUserData({ ...editUserData, role: e.target.value })}>
-                                                            <option value="SuperAdmin">SÜPER ADMIN</option>
+                                                            {!isYonetici(currentUser) && <option value="SuperAdmin">SÜPER ADMIN</option>}
+                                                            {isYonetici(currentUser) && editUserData.role?.toLowerCase() === 'superadmin' && <option value="SuperAdmin">SÜPER ADMIN</option>}
+                                                            <option value="Yonetici">YÖNETİCİ</option>
                                                             <option value="StoreManager">MAĞAZA YÖNETİCİSİ</option>
                                                             <option value="Reception">BANKO / KARŞILAMA</option>
                                                             <option value="Technician">TEKNİSYEN</option>
@@ -1316,17 +1328,26 @@ const Settings = () => {
                                                 </div>
 
                                                 <div className="shrink-0 flex items-center gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-gray-50 w-full md:w-auto justify-end">
-                                                    <button 
-                                                        onClick={() => { 
-                                                            const userId = u._id || u.id;
-                                                            setEditingUserId(userId); 
-                                                            setEditUserData({ ...u }); 
-                                                        }} 
-                                                        className="flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all text-[10px] font-semibold text-xs uppercase tracking-wide border border-transparent hover:border-indigo-100"
-                                                    >
-                                                        <Save size={14} /> DÜZENLE
-                                                    </button>
-                                                    {u.id !== currentUser?.id && u._id !== currentUser?._id && (
+                                                    {/* Yönetici, SuperAdmin hesaplarını düzenleyemez */}
+                                                    {!(isYonetici(currentUser) && isSuperAdmin(u)) && (
+                                                        <button 
+                                                            onClick={() => { 
+                                                                const userId = u._id || u.id;
+                                                                setEditingUserId(userId); 
+                                                                setEditUserData({ ...u }); 
+                                                            }} 
+                                                            className="flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all text-[10px] font-semibold text-xs uppercase tracking-wide border border-transparent hover:border-indigo-100"
+                                                        >
+                                                            <Save size={14} /> DÜZENLE
+                                                        </button>
+                                                    )}
+                                                    {isYonetici(currentUser) && isSuperAdmin(u) && (
+                                                        <span className="text-[9px] text-orange-400 font-bold px-3 py-1.5 bg-orange-50 rounded-md border border-orange-100">
+                                                            SÜPER ADMİN
+                                                        </span>
+                                                    )}
+                                                    {/* Yönetici, SuperAdmin hesaplarını silemez */}
+                                                    {u.id !== currentUser?.id && u._id !== currentUser?._id && !(isYonetici(currentUser) && isSuperAdmin(u)) && (
                                                         <button 
                                                             onClick={async () => {
                                                                 const userId = u._id || u.id;

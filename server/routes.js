@@ -138,7 +138,7 @@ router.get('/roles', async (req, res) => {
     }
 });
 
-router.post('/roles', requireRole(['superadmin']), async (req, res) => {
+router.post('/roles', requireRole(['superadmin', 'yonetici']), async (req, res) => {
     try {
         const { name, displayName, permissions } = req.body;
         const roleExists = await Role.findOne({ name });
@@ -152,7 +152,7 @@ router.post('/roles', requireRole(['superadmin']), async (req, res) => {
     }
 });
 
-router.put('/roles/:id', requireRole(['superadmin']), async (req, res) => {
+router.put('/roles/:id', requireRole(['superadmin', 'yonetici']), async (req, res) => {
     try {
         const { displayName, permissions } = req.body;
         const role = await Role.findById(req.params.id);
@@ -168,7 +168,7 @@ router.put('/roles/:id', requireRole(['superadmin']), async (req, res) => {
     }
 });
 
-router.delete('/roles/:id', requireRole(['superadmin']), async (req, res) => {
+router.delete('/roles/:id', requireRole(['superadmin', 'yonetici']), async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
         if (!role) return res.status(404).json({ message: 'Rol bulunamadı' });
@@ -469,10 +469,16 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/users', requireRole(['superadmin']), upload.single('avatar'), async (req, res) => {
+router.post('/users', requireRole(['superadmin', 'yonetici']), upload.single('avatar'), async (req, res) => {
     try {
         const userData = req.body;
-        // Şifreyi hashleyelim
+        const requestorRole = req.user?.role?.toLowerCase();
+
+        // Yönetici, SuperAdmin hesabı oluşturamaz
+        if (requestorRole === 'yonetici' && (userData.role?.toLowerCase() === 'superadmin' || userData.role?.toLowerCase() === 'admin')) {
+            return res.status(403).json({ message: 'Yönetici rolü, SuperAdmin hesabı oluşturamaz.' });
+        }
+
         if (userData.password) {
             userData.password = bcrypt.hashSync(userData.password, 10);
         }
@@ -484,50 +490,71 @@ router.post('/users', requireRole(['superadmin']), upload.single('avatar'), asyn
     }
 });
 
-router.put('/users/:id', requireRole(['superadmin']), async (req, res) => {
+router.put('/users/:id', requireRole(['superadmin', 'yonetici']), async (req, res) => {
     try {
         const id = req.params.id;
-        console.log(`[UserUpdate] Request for ID: ${id}`);
-        console.log(`[UserUpdate] Body:`, JSON.stringify(req.body, null, 2));
+        const requestorRole = req.user?.role?.toLowerCase();
 
+        // Yönetici, SuperAdmin hesaplarını düzenleyemez
+        if (requestorRole === 'yonetici') {
+            const targetUser = await User.findOne({ $or: [
+                ...(mongoose.Types.ObjectId.isValid(id) ? [{ _id: id }] : []),
+                { id: id }
+            ]});
+            if (targetUser && (targetUser.role?.toLowerCase() === 'superadmin' || targetUser.role?.toLowerCase() === 'admin')) {
+                return res.status(403).json({ message: 'Yönetici rolü, SuperAdmin hesabını düzenleyemez.' });
+            }
+            // Yönetici, bir hesabı SuperAdmin yapamaz
+            if (req.body.role?.toLowerCase() === 'superadmin' || req.body.role?.toLowerCase() === 'admin') {
+                return res.status(403).json({ message: 'Yönetici rolü, başka bir hesabı SuperAdmin yapamaz.' });
+            }
+        }
+
+        console.log(`[UserUpdate] Request for ID: ${id}`);
         const updateData = { ...req.body };
-        // Şifre sadece doluysa hashle, yoksa sil (mevcut şifre korunsun)
         if (updateData.password && updateData.password.trim() !== "") {
             updateData.password = bcrypt.hashSync(updateData.password, 10);
         } else {
             delete updateData.password;
         }
 
-        // Önce ObjectID (_id) ile, sonra custom id ile dene
         let updatedUser = null;
         if (mongoose.Types.ObjectId.isValid(id)) {
             updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
         }
-        
         if (!updatedUser) {
             updatedUser = await User.findOneAndUpdate({ id: id }, updateData, { new: true });
         }
 
         if (updatedUser) {
-            console.log(`[UserUpdate] SUCCESS: Updated user ${updatedUser.name}`);
             const { password: _, ...userWithoutPassword } = updatedUser._doc || updatedUser;
             res.json(userWithoutPassword);
         } else {
-            console.warn(`[UserUpdate] FAILED: User not found for ID: ${id}`);
             res.status(404).json({ message: 'Kullanıcı bulunamadı.' });
         }
     } catch (err) {
-        console.error(`[UserUpdate] ERROR:`, err.message);
         res.status(400).json({ message: err.message });
     }
 });
 
-router.delete('/users/:id', requireRole(['superadmin']), async (req, res) => {
+router.delete('/users/:id', requireRole(['superadmin', 'yonetici']), async (req, res) => {
     try {
         const id = req.params.id;
+        const requestorRole = req.user?.role?.toLowerCase();
+
+        // Yönetici, SuperAdmin hesaplarını silemez
+        if (requestorRole === 'yonetici') {
+            const targetUser = await User.findOne({ $or: [
+                ...(mongoose.Types.ObjectId.isValid(id) ? [{ _id: id }] : []),
+                { id: id }
+            ]});
+            if (targetUser && (targetUser.role?.toLowerCase() === 'superadmin' || targetUser.role?.toLowerCase() === 'admin')) {
+                return res.status(403).json({ message: 'Yönetici rolü, SuperAdmin hesabını silemez.' });
+            }
+        }
+
         const filter = { $or: [{ id: id }] };
         if (mongoose.Types.ObjectId.isValid(id)) filter.$or.push({ _id: id });
-        
         const deleted = await User.findOneAndDelete(filter);
         res.json({ message: 'User deleted', success: !!deleted });
     } catch (err) {

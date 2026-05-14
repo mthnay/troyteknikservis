@@ -2,6 +2,7 @@
 
 export const ROLES = {
     SUPER_ADMIN: 'superadmin',
+    YONETICI: 'yonetici',
     STORE_MANAGER: 'storemanager',
     RECEPTION: 'reception',
     TECHNICIAN: 'technician',
@@ -21,6 +22,18 @@ const ROLE_PERMISSIONS = {
         'manage_users', 
         'view_dashboard', 
         'manage_stock', 
+        'edit_repairs',
+        'delete_repairs',
+        'view_earnings',
+        'view_kbb',
+        'view_technicians'
+    ],
+    [ROLES.YONETICI]: [
+        'view_all_stores',
+        'manage_settings',
+        'manage_users',
+        'view_dashboard',
+        'manage_stock',
         'edit_repairs',
         'delete_repairs',
         'view_earnings',
@@ -52,13 +65,29 @@ const ROLE_PERMISSIONS = {
     ]
 };
 
+export const isSuperAdmin = (user) => {
+    if (!user || !user.role) return false;
+    const r = user.role.toLowerCase();
+    return r === 'superadmin' || r === 'admin';
+};
+
+export const isYonetici = (user) => {
+    if (!user || !user.role) return false;
+    return user.role.toLowerCase() === 'yonetici';
+};
+
+export const canManageSuperAdmins = (currentUser) => {
+    return isSuperAdmin(currentUser) && !isYonetici(currentUser);
+};
+
 export const hasPermission = (user, permission) => {
     if (!user || !user.role) return false;
     
-    // Map older 'Admin' and 'Teknisyen' roles for backward compatibility
+    // Map roles for compatibility (case-insensitive normalization)
     let userRole = user.role;
     if (userRole.toLowerCase() === 'admin') userRole = ROLES.SUPER_ADMIN;
     if (userRole.toLowerCase() === 'teknisyen') userRole = ROLES.TECHNICIAN;
+    if (userRole.toLowerCase() === 'yonetici') userRole = ROLES.YONETICI;
 
     // First check dynamic roles
     const dynamicRole = dynamicRoles.find(r => r.name.toLowerCase() === userRole.toLowerCase() || r.displayName.toLowerCase() === userRole.toLowerCase());
