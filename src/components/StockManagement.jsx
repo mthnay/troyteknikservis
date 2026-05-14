@@ -18,6 +18,11 @@ const StockManagement = () => {
     const [selectedSerialsToTransfer, setSelectedSerialsToTransfer] = useState([]);
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [newPart, setNewPart] = useState({ name: '', id: '', category: 'iPhone', type: 'Ekran', quantity: 0, minLevel: 5, price: 0, location: '', warehouseType: 'KGB' });
+    
+    // Quick Stock Entry Form State
+    const [quickEntry, setQuickEntry] = useState({ partId: '', quantity: 0, storeId: selectedStoreId || (currentUser?.storeId || '') });
+    const [quickSearch, setQuickSearch] = useState('');
+    const [showQuickResults, setShowQuickResults] = useState(false);
 
     const categories = [
         { id: 'all', label: 'Tümü' },
@@ -147,36 +152,127 @@ const StockManagement = () => {
                 </div>
             </div>
 
-            {/* Quick Stock Entry Section */}
+            {/* Stock Entry Area */}
             {hasPermission(currentUser, 'manage_stock') && (
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-6 shadow-xl shadow-blue-200/50 text-white">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                        <div className="flex items-center gap-4 flex-shrink-0">
-                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/20">
-                                <Plus size={24} className="text-white" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold">Hızlı Stok Girişi</h3>
-                                <p className="text-sm text-blue-100">Envantere hızlıca adet ekleyin.</p>
-                            </div>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+                    <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Box size={18} className="text-blue-600" />
+                            <h3 className="text-[14px] font-bold text-gray-900 uppercase tracking-tight">Hızlı Stok Kabul / Girişi</h3>
                         </div>
-                        
-                        <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-4 gap-3">
-                            <div className="md:col-span-2 relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors" size={16} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Parça ara veya P/N tara..."
-                                    className="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-4 py-2.5 text-sm placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all text-white"
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                        <span className="text-[11px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-widest">Yeni Mal Kabul</span>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div className="md:col-span-1 relative">
+                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Parça Seçin / Arayın</label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="P/N veya Parça Adı..."
+                                        className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all"
+                                        value={quickSearch}
+                                        onChange={(e) => {
+                                            setQuickSearch(e.target.value);
+                                            setShowQuickResults(true);
+                                        }}
+                                        onFocus={() => setShowQuickResults(true)}
+                                    />
+                                    {showQuickResults && quickSearch.length > 0 && (
+                                        <>
+                                            <div className="fixed inset-0 z-[60]" onClick={() => setShowQuickResults(false)}></div>
+                                            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[70] max-h-60 overflow-y-auto">
+                                                {inventory
+                                                    .filter(i => (i.name?.toLowerCase().includes(quickSearch.toLowerCase()) || i.partNumber?.toLowerCase().includes(quickSearch.toLowerCase())))
+                                                    .slice(0, 10)
+                                                    .map(item => (
+                                                        <button 
+                                                            key={item._id || item.id}
+                                                            onClick={() => {
+                                                                setQuickEntry({ ...quickEntry, partId: item._id || item.id });
+                                                                setQuickSearch(item.name);
+                                                                setShowQuickResults(false);
+                                                            }}
+                                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between border-b border-gray-50 last:border-0"
+                                                        >
+                                                            <div>
+                                                                <p className="text-[13px] font-bold text-gray-900">{item.name}</p>
+                                                                <p className="text-[11px] text-gray-500 font-mono">{item.partNumber || item.id}</p>
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                                                {servicePoints.find(s => String(s.id) === String(item.storeId))?.name}
+                                                            </span>
+                                                        </button>
+                                                    ))
+                                                }
+                                                {inventory.filter(i => (i.name?.toLowerCase().includes(quickSearch.toLowerCase()) || i.partNumber?.toLowerCase().includes(quickSearch.toLowerCase()))).length === 0 && (
+                                                    <div className="px-4 py-6 text-center">
+                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2">Parça Bulunamadı</p>
+                                                        <button 
+                                                            onClick={() => { setShowAddModal(true); setShowQuickResults(false); }}
+                                                            className="text-xs text-blue-600 font-bold hover:underline"
+                                                        >
+                                                            + Yeni Kart Oluştur
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={() => setShowAddModal(true)}
-                                    className="flex-1 bg-white text-blue-600 hover:bg-blue-50 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm"
+                            
+                            <div className="md:col-span-1">
+                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Hedef Mağaza</label>
+                                <select 
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all appearance-none"
+                                    value={quickEntry.storeId}
+                                    onChange={(e) => setQuickEntry({ ...quickEntry, storeId: e.target.value })}
                                 >
-                                    Yeni Kart Oluştur
+                                    <option value="" disabled>Mağaza Seçin...</option>
+                                    {servicePoints.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-1">
+                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Miktar</label>
+                                <div className="flex items-center">
+                                    <input 
+                                        type="number" 
+                                        min="1"
+                                        placeholder="0"
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:border-blue-500 transition-all"
+                                        value={quickEntry.quantity || ''}
+                                        onChange={(e) => setQuickEntry({ ...quickEntry, quantity: parseInt(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-1">
+                                <button 
+                                    onClick={async () => {
+                                        if (!quickEntry.partId || quickEntry.quantity <= 0) {
+                                            showToast('Lütfen parça ve miktar seçin', 'warning');
+                                            return;
+                                        }
+                                        const part = inventory.find(i => (i._id || i.id) === quickEntry.partId);
+                                        if (part) {
+                                            const success = await updateInventoryItem(quickEntry.partId, { quantity: part.quantity + quickEntry.quantity });
+                                            if (success) {
+                                                showToast(`${quickSearch} stoğuna ${quickEntry.quantity} adet eklendi`, 'success');
+                                                setQuickEntry({ ...quickEntry, partId: '', quantity: 0 });
+                                                setQuickSearch('');
+                                            } else {
+                                                showToast('Hata oluştu', 'error');
+                                            }
+                                        }
+                                    }}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <Check size={18} /> Stok Kabul Et
                                 </button>
                             </div>
                         </div>
