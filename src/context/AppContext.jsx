@@ -16,7 +16,7 @@ export const AppProvider = ({ children }) => {
     const apiFetch = async (url, options = {}) => {
         // Çıkış yapılıyorsa veya token yoksa (ve login/public değilse) istekleri durdur veya sessizce geç
         if (window.isLoggingOut) {
-            return new Response(JSON.stringify({ success: true, silent: true, data: [] }), { 
+            return new Response(JSON.stringify([]), { 
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -26,7 +26,7 @@ export const AppProvider = ({ children }) => {
         
         // Token yoksa ve korumalı bir route ise sunucuya gitmeden durdur (çıkış aşamasında olabiliriz)
         if (!token && !url.includes('/login') && !url.includes('/forgot-password') && !url.includes('/track')) {
-            return new Response(JSON.stringify({ success: true, silent: true, data: [] }), { 
+            return new Response(JSON.stringify([]), { 
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -53,7 +53,7 @@ export const AppProvider = ({ children }) => {
             return res;
         } catch (error) {
             if (window.isLoggingOut) {
-                return new Response(JSON.stringify({ success: true, silent: true }), { status: 200 });
+                return new Response(JSON.stringify([]), { status: 200 });
             }
             throw error;
         }
@@ -278,19 +278,32 @@ export const AppProvider = ({ children }) => {
                 ]);
                 if (repairsRes.ok) {
                     const data = await repairsRes.json();
-                    // Verileri normalize et (serialNumber -> serial, deviceModel -> device)
-                    const normalizedData = data.map(r => ({
-                        ...r,
-                        serial: r.serial || r.serialNumber || '',
-                        device: r.device || r.deviceModel || '',
-                        tcNo: r.tcNo || r.customerTC || '',
-                        customerAddress: r.customerAddress || r.address || ''
-                    }));
-                    setRepairs(normalizedData);
+                    if (Array.isArray(data)) {
+                        // Verileri normalize et (serialNumber -> serial, deviceModel -> device)
+                        const normalizedData = data.map(r => ({
+                            ...r,
+                            serial: r.serial || r.serialNumber || '',
+                            device: r.device || r.deviceModel || '',
+                            tcNo: r.tcNo || r.customerTC || '',
+                            customerAddress: r.customerAddress || r.address || ''
+                        }));
+                        setRepairs(normalizedData);
+                    } else {
+                        setRepairs([]);
+                    }
                 }
-                if (inventoryRes.ok) setInventory(await inventoryRes.json());
-                if (techniciansRes.ok) setTechnicians(await techniciansRes.json());
-                if (earningsRes.ok) setEarnings(await earningsRes.json());
+                if (inventoryRes.ok) {
+                    const invData = await inventoryRes.json();
+                    setInventory(Array.isArray(invData) ? invData : []);
+                }
+                if (techniciansRes.ok) {
+                    const techData = await techniciansRes.json();
+                    setTechnicians(Array.isArray(techData) ? techData : []);
+                }
+                if (earningsRes.ok) {
+                    const earnData = await earningsRes.json();
+                    setEarnings(Array.isArray(earnData) ? earnData : []);
+                }
                 if (settingsRes.ok) {
                     const settings = await settingsRes.json();
                     if (settings) setEmailSettings(settings);
@@ -316,7 +329,10 @@ export const AppProvider = ({ children }) => {
                     setRoles(fetchedRoles);
                     setGlobalRoles(fetchedRoles);
                 }
-                if (customersRes.ok) setCustomers(await customersRes.json());
+                if (customersRes.ok) {
+                    const custData = await customersRes.json();
+                    setCustomers(Array.isArray(custData) ? custData : []);
+                }
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -972,7 +988,7 @@ export const AppProvider = ({ children }) => {
     }, [servicePoints, currentUser, isAdmin, isStaff]);
 
     const filterByStore = React.useCallback((list, storeIdKey = 'storeId') => {
-        if (!currentUser) return [];
+        if (!currentUser || !Array.isArray(list)) return [];
         const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
         if ((isAdmin || hasViewAllPerm) && !isStaff) {
             return selectedStoreId === 0 ? list : list.filter(item => String(item[storeIdKey]) === String(selectedStoreId));
