@@ -233,7 +233,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
             originalRepair: repair,
             targetView: 'ready-pickup',
             repairType: 'direct-return',
-            notes: returnReason === 'Arıza Raporuyla (DOA) iade' 
+            notes: returnReason.includes('DOA') 
                 ? `DOA RAPORU: ${customReturnReason || 'Detay girilmedi.'}`
                 : finalReason + (customReturnReason ? ` - Not: ${customReturnReason}` : ''),
             parts: [] // Parçalar iade edildiği için boşaltıyoruz
@@ -702,7 +702,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                             </div>
                         </div>
 
-                        <div className="space-y-2 mb-8 mt-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-2 mb-8 mt-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                             {RETURN_REASONS.map(reason => (
                                 <label key={reason} className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer transition-all ${returnReason === reason ? 'bg-red-50 border-red-200 text-red-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
                                     <input
@@ -731,16 +731,25 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                 <span className="text-sm font-bold">Diğer</span>
                             </label>
 
-                            {(returnReason === 'Diğer' || returnReason === 'Arıza Tekrarlanamadı (No Trouble Found)' || returnReason === 'Arıza Raporuyla (DOA) iade') && (
-                                <div className="animate-in slide-in-from-top-2">
+                            {(returnReason === 'Diğer' || returnReason === 'Arıza Tekrarlanamadı (No Trouble Found)' || returnReason.includes('DOA')) && (
+                                <div className="animate-in slide-in-from-top-2 p-1">
+                                    <div className="flex items-center gap-2 mb-2 ml-1">
+                                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                            {returnReason.includes('DOA') ? 'RESMİ DOA RAPOR METNİ (ZORUNLU)' : 'DETAYLI AÇIKLAMA'}
+                                        </span>
+                                    </div>
                                     <textarea
-                                        placeholder={returnReason === 'Diğer' ? "İade sebebini detaylıca yazınız..." : returnReason === 'Arıza Raporuyla (DOA) iade' ? "DOA Rapor detaylarını giriniz..." : "Yapılan testleri ve gözlemleri detaylıca yazınız..."}
-                                        className={`w-full p-4 bg-gray-50 border ${returnReason === 'Diğer' ? 'border-red-200' : 'border-blue-200'} rounded-md mt-4 outline-none focus:bg-white transition-all font-medium text-sm resize-none shadow-inner`}
-                                        rows="4"
+                                        placeholder={returnReason === 'Diğer' ? "İade sebebini detaylıca yazınız..." : returnReason.includes('DOA') ? "Cihazdaki arızayı ve DOA gerekçesini teknik detaylarla buraya yazınız..." : "Yapılan testleri ve gözlemleri detaylıca yazınız..."}
+                                        className={`w-full p-4 bg-gray-50 border-2 ${returnReason.includes('DOA') ? (customReturnReason.length > 10 ? 'border-green-200 focus:border-green-400' : 'border-red-200 focus:border-red-400') : 'border-blue-100 focus:border-blue-400'} rounded-2xl mt-1 outline-none focus:bg-white transition-all font-medium text-sm resize-none shadow-inner min-h-[120px]`}
                                         value={customReturnReason}
                                         onChange={(e) => setCustomReturnReason(e.target.value)}
                                     ></textarea>
-                                    <p className="text-[10px] text-gray-400 mt-2 ml-1">Bu açıklama servis formunda ve kayıt detaylarında görüntülenecektir.</p>
+                                    <p className="text-[10px] text-gray-400 mt-2 ml-1 leading-relaxed">
+                                        {returnReason.includes('DOA') 
+                                            ? "Bu rapor servis formunda 'Resmi Arıza Raporu' başlığıyla kırmızı çerçeve içinde basılacaktır." 
+                                            : "Bu açıklama servis formunda ve kayıt detaylarında görüntülenecektir."}
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -748,14 +757,20 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                         <div className="flex gap-4">
                             <button
                                 onClick={() => setShowReturnModal(false)}
-                                className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-md transition-all"
+                                className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-all"
                             >
                                 Vazgeç
                             </button>
                             <button
                                 onClick={handleDirectReturn}
-                                className="flex-1 py-4 bg-red-600 text-white font-bold rounded-md hover:bg-red-700 shadow-xl shadow-red-200 transition-all active:scale-95"
+                                disabled={returnReason.includes('DOA') && customReturnReason.trim().length < 10}
+                                className={`flex-[1.5] py-4 text-white font-bold rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                                    returnReason.includes('DOA') && customReturnReason.trim().length < 10
+                                    ? 'bg-gray-300 shadow-none cursor-not-allowed'
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-200'
+                                }`}
                             >
+                                <CheckCircle size={20} />
                                 İade Kararını Kaydet
                             </button>
                         </div>

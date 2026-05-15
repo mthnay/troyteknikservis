@@ -254,6 +254,23 @@ const ServiceFormPrint = ({ formData, repairId, onClose }) => {
                                     <div className="absolute bottom-4 right-4 text-4xl text-gray-200 font-serif rotate-180">"</div>
                                 </div>
 
+                                {formData.notes && formData.notes.toUpperCase().includes('DOA RAPORU:') && (
+                                    <div className="mb-8 p-6 bg-red-50 border-2 border-red-200 rounded-xl relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-2 bg-red-600 text-white text-[8px] font-black uppercase tracking-tighter rounded-bl-lg shadow-sm">RESMİ DOA RAPORU</div>
+                                        <h4 className="text-xs font-black text-red-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></div>
+                                            Teknik İnceleme ve DOA Onayı
+                                        </h4>
+                                        <p className="text-sm font-bold text-red-900 leading-relaxed italic">
+                                            "{formData.notes.replace(/DOA RAPORU:/i, '').trim()}"
+                                        </p>
+                                        <div className="mt-4 pt-4 border-t border-red-100 flex justify-between items-center text-[9px] font-bold text-red-400 uppercase tracking-widest">
+                                            <span>Yetkili Servis Teknik Onayı</span>
+                                            <span>Troy Servis Merkezi</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
                                     <h4 className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide mb-4 pl-1">Teknik Gözlemler</h4>
                                     <div className="flex flex-wrap gap-2.5">

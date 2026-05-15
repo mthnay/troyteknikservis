@@ -14,25 +14,49 @@ export const AppProvider = ({ children }) => {
             : '/api');
 
     const apiFetch = async (url, options = {}) => {
-        // Çıkış yapılıyorsa istekleri durdur
-        if (window.isLoggingOut) return new Response(JSON.stringify({ success: false, message: 'Logging out...' }), { status: 200 });
+        // Çıkış yapılıyorsa veya token yoksa (ve login/public değilse) istekleri durdur veya sessizce geç
+        if (window.isLoggingOut) {
+            return new Response(JSON.stringify({ success: true, silent: true, data: [] }), { 
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         const token = sessionStorage.getItem('token');
+        
+        // Token yoksa ve korumalı bir route ise sunucuya gitmeden durdur (çıkış aşamasında olabiliriz)
+        if (!token && !url.includes('/login') && !url.includes('/forgot-password') && !url.includes('/track')) {
+            return new Response(JSON.stringify({ success: true, silent: true, data: [] }), { 
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const headers = {
             ...options.headers,
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
-        const res = await fetch(url, { ...options, headers });
-        if (res.status === 401 && !url.includes('/login') && !url.includes('/forgot-password')) {
-            const tokenInSession = sessionStorage.getItem('token');
-            if (tokenInSession && !window.isLoggingOut) {
-                sessionStorage.clear();
-                setCurrentUser(null);
-                window.location.href = '/';
-                throw new Error('Oturum süresi doldu, lütfen tekrar giriş yapın.');
+
+        try {
+            const res = await fetch(url, { ...options, headers });
+            
+            if (res.status === 401 && !url.includes('/login') && !url.includes('/forgot-password')) {
+                const currentToken = sessionStorage.getItem('token');
+                if (currentToken && !window.isLoggingOut) {
+                    sessionStorage.clear();
+                    setCurrentUser(null);
+                    window.location.href = '/';
+                    // Hata fırlatmak yerine sadece durdurabiliriz veya yönlendirme yeterli
+                    return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), { status: 401 });
+                }
             }
+            return res;
+        } catch (error) {
+            if (window.isLoggingOut) {
+                return new Response(JSON.stringify({ success: true, silent: true }), { status: 200 });
+            }
+            throw error;
         }
-        return res;
     };
 
     const [servicePoints, setServicePoints] = useState([]);
@@ -356,10 +380,15 @@ export const AppProvider = ({ children }) => {
     };
 
     const logout = () => {
-        window.isLoggingOut = true;
-        sessionStorage.clear();
-        setCurrentUser(null);
-        window.location.href = '/';
+        try {
+            window.isLoggingOut = true;
+            sessionStorage.clear();
+            setCurrentUser(null);
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Logout error:", error);
+            window.location.href = '/';
+        }
     };
 
     const addUser = async (user) => {

@@ -278,11 +278,11 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
             let text = repair.diagnosisNotes;
             if (repair.quoteAmount) text += `\n>> Teklif Tutarı: ${repair.quoteAmount} ₺`;
             
-            const isDOA = text.startsWith('DOA RAPORU:');
+            const isDOA = text.toUpperCase().includes('DOA RAPORU:');
             
             stream.push({ 
                 status: isDOA ? 'Arıza Raporu (DOA)' : 'Arıza Tanı Raporu', 
-                text: isDOA ? text.replace('DOA RAPORU: ', '') : text, 
+                text: isDOA ? text.replace(/DOA RAPORU:/i, '').trim() : text, 
                 date: diagDate, 
                 streamType: isDOA ? 'doa' : 'report', 
                 user: 'Arıza Tespit' 
