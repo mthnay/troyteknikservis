@@ -1313,7 +1313,7 @@ const Settings = () => {
                                                             <option value="StoreManager">MAĞAZA YÖNETİCİSİ</option>
                                                             <option value="Reception">BANKO / KARŞILAMA</option>
                                                             <option value="Technician">TEKNİSYEN</option>
-                                                            <option value="Accountant">MUHASEBE</option>
+                                                            <option value="Logistic">LOJİSTİK</option>
                                                         </select>
                                                         <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.storeId} onChange={e => setEditUserData({ ...editUserData, storeId: Number(e.target.value) })}>
                                                             <option value="0">GENEL MERKEZ</option>

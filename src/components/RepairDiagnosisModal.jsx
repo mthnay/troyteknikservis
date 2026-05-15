@@ -26,6 +26,7 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
 
     const RETURN_REASONS = [
         "Arıza Tekrarlanamadı (No Trouble Found)",
+        "Arıza Raporuyla (DOA) iade",
         "Müşteri Teklifi Reddetti",
         "Ekonomik Onarım Mümkün Değil (BER)",
         "Yetkisiz Müdahale Tespit Edildi",
@@ -232,7 +233,9 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
             originalRepair: repair,
             targetView: 'ready-pickup',
             repairType: 'direct-return',
-            notes: finalReason + (customReturnReason ? ` - Not: ${customReturnReason}` : ''),
+            notes: returnReason === 'Arıza Raporuyla (DOA) iade' 
+                ? `DOA RAPORU: ${customReturnReason || 'Detay girilmedi.'}`
+                : finalReason + (customReturnReason ? ` - Not: ${customReturnReason}` : ''),
             parts: [] // Parçalar iade edildiği için boşaltıyoruz
         });
         onClose();
@@ -728,10 +731,10 @@ const RepairDiagnosisModal = ({ repair, onClose, onSave }) => {
                                 <span className="text-sm font-bold">Diğer</span>
                             </label>
 
-                            {(returnReason === 'Diğer' || returnReason === 'Arıza Tekrarlanamadı (No Trouble Found)') && (
+                            {(returnReason === 'Diğer' || returnReason === 'Arıza Tekrarlanamadı (No Trouble Found)' || returnReason === 'Arıza Raporuyla (DOA) iade') && (
                                 <div className="animate-in slide-in-from-top-2">
                                     <textarea
-                                        placeholder={returnReason === 'Diğer' ? "İade sebebini detaylıca yazınız..." : "Yapılan testleri ve gözlemleri detaylıca yazınız..."}
+                                        placeholder={returnReason === 'Diğer' ? "İade sebebini detaylıca yazınız..." : returnReason === 'Arıza Raporuyla (DOA) iade' ? "DOA Rapor detaylarını giriniz..." : "Yapılan testleri ve gözlemleri detaylıca yazınız..."}
                                         className={`w-full p-4 bg-gray-50 border ${returnReason === 'Diğer' ? 'border-red-200' : 'border-blue-200'} rounded-md mt-4 outline-none focus:bg-white transition-all font-medium text-sm resize-none shadow-inner`}
                                         rows="4"
                                         value={customReturnReason}

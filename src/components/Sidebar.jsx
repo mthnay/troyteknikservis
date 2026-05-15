@@ -1,6 +1,6 @@
 import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { hasPermission } from '../utils/permissions';
+import { hasPermission, ROLE_DISPLAY_NAMES } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
@@ -126,7 +126,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                     <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-gray-900 text-sm truncate">{currentUser?.name || 'Kullanıcı'}</h4>
                         <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider truncate bg-blue-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                            {currentUser?.role}
+                            {ROLE_DISPLAY_NAMES[currentUser?.role?.toLowerCase()] || currentUser?.role}
                         </p>
                     </div>
                 </div>

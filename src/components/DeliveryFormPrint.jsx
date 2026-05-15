@@ -156,10 +156,12 @@ const DeliveryFormPrint = ({ repair, signature, onClose }) => {
 
                                     {repair.diagnosisNotes && (
                                         <div className="group">
-                                            <p className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide mb-2 pl-2 group-hover:text-amber-500 transition-colors">Tanı ve İnceleme Notu</p>
-                                            <div className="p-4 bg-[#f5f5f7] rounded-24 text-xs leading-relaxed text-gray-800 border border-gray-100 italic relative overflow-hidden">
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500/30"></div>
-                                                "{repair.diagnosisNotes}"
+                                            <p className="text-[10px] font-semibold text-gray-300 text-xs uppercase tracking-wide mb-2 pl-2 group-hover:text-amber-500 transition-colors">
+                                                {repair.diagnosisNotes.startsWith('DOA RAPORU:') ? 'Resmi Arıza Raporu (DOA)' : 'Tanı ve İnceleme Notu'}
+                                            </p>
+                                            <div className={`p-4 rounded-24 text-xs leading-relaxed border italic relative overflow-hidden ${repair.diagnosisNotes.startsWith('DOA RAPORU:') ? 'bg-red-50 text-red-900 border-red-200' : 'bg-[#f5f5f7] text-gray-800 border-gray-100'}`}>
+                                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${repair.diagnosisNotes.startsWith('DOA RAPORU:') ? 'bg-red-500' : 'bg-amber-500/30'}`}></div>
+                                                "{repair.diagnosisNotes.replace('DOA RAPORU: ', '')}"
                                             </div>
                                         </div>
                                     )}

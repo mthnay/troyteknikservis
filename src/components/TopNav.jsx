@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Home, Wrench, Users, BarChart2, Settings, Truck, Clock, Package, LogOut, CheckCircle, Archive as ArchiveIcon, MessageCircle, Megaphone, Search, ChevronDown, X, Recycle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { hasPermission, ROLES } from '../utils/permissions';
+import { hasPermission, ROLES, ROLE_DISPLAY_NAMES } from '../utils/permissions';
 import MyPhoneIcon from './LocalIcons';
 import NotificationCenter from './NotificationCenter';
 import RepairHistoryModal from './RepairHistoryModal';
@@ -288,7 +288,7 @@ const TopNav = ({ activeTab, setActiveTab }) => {
                     <div className="flex items-center gap-3">
                         <div className="text-right hidden sm:block">
                             <div className="text-sm font-semibold text-gray-900 leading-none">{currentUser?.name || 'Kullanıcı'}</div>
-                            <div className="text-[10px] font-medium text-gray-500 mt-1 uppercase tracking-widest">{currentUser?.role}</div>
+                            <div className="text-[10px] font-medium text-gray-500 mt-1 uppercase tracking-widest">{ROLE_DISPLAY_NAMES[currentUser?.role?.toLowerCase()] || currentUser?.role}</div>
                         </div>
                         <button
                             onClick={logout}

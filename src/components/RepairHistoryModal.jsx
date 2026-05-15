@@ -277,11 +277,14 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
             const diagDate = repair.history?.find(h => h.status.includes('Teşhis') || h.status.includes('Teklif'))?.date || defaultDate;
             let text = repair.diagnosisNotes;
             if (repair.quoteAmount) text += `\n>> Teklif Tutarı: ${repair.quoteAmount} ₺`;
+            
+            const isDOA = text.startsWith('DOA RAPORU:');
+            
             stream.push({ 
-                status: 'Arıza Tanı Raporu', 
-                text: text, 
+                status: isDOA ? 'Arıza Raporu (DOA)' : 'Arıza Tanı Raporu', 
+                text: isDOA ? text.replace('DOA RAPORU: ', '') : text, 
                 date: diagDate, 
-                streamType: 'report', 
+                streamType: isDOA ? 'doa' : 'report', 
                 user: 'Arıza Tespit' 
             });
         }
@@ -305,6 +308,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
     // Helpers
     const getStatusIcon = (status) => {
         if (status === 'Dahili Not') return <MessageCircle size={14} />;
+        if (status.includes('DOA')) return <Shield size={14} />;
         if (status.includes('Teknisyen Notu') || status.includes('Raporu')) return <FileText size={14} />;
         if (status.includes('Kayıt')) return <Phone size={14} />;
         if (status.includes('Teklif') || status.includes('Onay')) return <AlertCircle size={14} />;
@@ -317,6 +321,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
 
     const getStatusColor = (status) => {
         if (status === 'Dahili Not') return 'bg-yellow-500 border-yellow-200';
+        if (status.includes('DOA')) return 'bg-red-600 border-red-200';
         if (status.includes('Teknisyen Notu')) return 'bg-indigo-500 border-indigo-200';
         if (status.includes('Tanı Raporu')) return 'bg-orange-500 border-orange-200';
         if (status.includes('Kapanış')) return 'bg-teal-500 border-teal-200';
@@ -650,6 +655,7 @@ const RepairHistoryModal = ({ repair: initialRepair, onClose, onDiagnose }) => {
                                                 <div className={`bg-white p-6 rounded-lg transition-all hover:-translate-y-1 hover:shadow-xl ${
                                                     entry.streamType === 'note' ? 'border-2 border-yellow-200 shadow-sm bg-yellow-50/20' 
                                                     : entry.streamType === 'report' ? 'border-2 border-purple-200 shadow-sm bg-purple-50/20' 
+                                                    : entry.streamType === 'doa' ? 'border-2 border-red-200 shadow-sm bg-red-50/30'
                                                     : 'border border-gray-100 shadow-sm'
                                                 }`}>
                                                     <div className="flex justify-between items-start mb-4">
