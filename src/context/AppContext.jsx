@@ -134,6 +134,7 @@ export const AppProvider = ({ children }) => {
     const [customers, setCustomers] = useState([]);
     const [earnings, setEarnings] = useState([]);
     const [alerts, setAlerts] = useState([]);
+    const [clearedAlertIds, setClearedAlertIds] = useState([]);
     const [roles, setRoles] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [serviceTerms, setServiceTerms] = useState({
@@ -171,16 +172,22 @@ export const AppProvider = ({ children }) => {
         const newAlerts = [];
         repairsList.forEach(r => {
             const sla = checkSLA(r);
-            if (sla) {
+            if (sla && !clearedAlertIds.includes(r.id)) {
                 newAlerts.push({ id: r.id, repair: r, ...sla });
             }
         });
         setAlerts(newAlerts);
     };
 
+    const clearAllAlerts = () => {
+        const allIds = alerts.map(a => a.id);
+        setClearedAlertIds(prev => [...new Set([...prev, ...allIds])]);
+        setAlerts([]);
+    };
+
     useEffect(() => {
         if (repairs.length > 0) computeAlerts(repairs);
-    }, [repairs]);
+    }, [repairs, clearedAlertIds]);
 
     const uploadMedia = async (file) => {
         try {
@@ -911,34 +918,34 @@ export const AppProvider = ({ children }) => {
     const showToast = (message, type = 'info') => setToast({ message, type, isVisible: true });
     const hideToast = () => setToast(prev => ({ ...prev, isVisible: false }));
 
+    const { isAdmin, isStaff } = React.useMemo(() => {
+        if (!currentUser) return { isAdmin: false, isStaff: false };
+        const role = currentUser.role?.toLowerCase() || '';
+        const normalized = role.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+        return {
+            isAdmin: normalized === 'admin' || normalized === 'superadmin' || normalized === 'yonetici',
+            isStaff: ['technician', 'reception', 'accountant', 'teknisyen', 'storemanager'].includes(normalized)
+        };
+    }, [currentUser]);
+
     // Filtered service points based on user permissions
     const visibleServicePoints = React.useMemo(() => {
         if (!currentUser) return [];
-
-        const role = currentUser.role?.toLowerCase() || '';
-        const normalizedRole = role.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
-
-        // Administrative roles that CAN see all stores
-        const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superadmin' || normalizedRole === 'yonetici';
-
-        // Check both the role string and the specific permission
         const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
-
-        // IF they are an admin OR they specifically have the permission AND they are not a technician/receptionist
-        const isStaffRole = normalizedRole === 'technician' || normalizedRole === 'reception' || normalizedRole === 'accountant' || normalizedRole === 'teknisyen';
-
-        if ((isAdminRole || hasViewAllPerm) && !isStaffRole) {
+        if ((isAdmin || hasViewAllPerm) && !isStaff) {
             return servicePoints;
         }
+        return servicePoints.filter(sp => String(sp.id) === String(currentUser.storeId));
+    }, [servicePoints, currentUser, isAdmin, isStaff]);
 
-        // Normal users and staff roles MUST be restricted to their assigned store
-        const userStoreId = String(currentUser.storeId);
-        const filtered = servicePoints.filter(sp => String(sp.id) === userStoreId);
-
-        console.log(`[StoreRestriction] User: ${currentUser.name}, Role: ${role}, StoreID: ${userStoreId}, Visible Count: ${filtered.length}`);
-
-        return filtered;
-    }, [servicePoints, currentUser]);
+    const filterByStore = React.useCallback((list, storeIdKey = 'storeId') => {
+        if (!currentUser) return [];
+        const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
+        if ((isAdmin || hasViewAllPerm) && !isStaff) {
+            return selectedStoreId === 0 ? list : list.filter(item => String(item[storeIdKey]) === String(selectedStoreId));
+        }
+        return list.filter(item => String(item[storeIdKey]) === String(currentUser.storeId));
+    }, [currentUser, isAdmin, isStaff, selectedStoreId]);
 
     return (
         <AppContext.Provider value={{
@@ -952,36 +959,40 @@ export const AppProvider = ({ children }) => {
             visibleServicePoints,
             searchQuery,
             setSearchQuery,
-            inventory: inventory.filter(i => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId)) : String(i.storeId) === String(currentUser?.storeId)),
+            inventory: filterByStore(inventory),
             allInventory: inventory,
             technicians: (() => {
-                const baseTechnicians = technicians.filter(t => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(t.storeId) === String(selectedStoreId)) : String(t.storeId) === String(currentUser?.storeId));
-
-                // Kullanıcılar arasından teknisyen rolündekileri bul
+                const baseTechnicians = filterByStore(technicians);
                 const technicianUsers = users
-                    .filter(u => (u.role?.toLowerCase() === 'technician' || u.role === 'Teknisyen') && (hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(u.storeId) === String(selectedStoreId)) : String(u.storeId) === String(currentUser?.storeId)))
+                    .filter(u => {
+                        const isTech = u.role?.toLowerCase() === 'technician' || u.role === 'Teknisyen';
+                        if (!isTech) return false;
+                        const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
+                        if ((isAdmin || hasViewAllPerm) && !isStaff) {
+                            return selectedStoreId === 0 || String(u.storeId) === String(selectedStoreId);
+                        }
+                        return String(u.storeId) === String(currentUser.storeId);
+                    })
                     .map(u => ({
                         ...u,
                         name: u.name,
                         id: u.id || u._id,
                         specialty: u.specialty || 'Genel Teknisyen',
                         status: 'Müsait',
-                        isUserAcc: true // Kullanıcı hesabından geldiğini belirtmek için
+                        isUserAcc: true
                     }));
 
-                // Çakışanları temizle (Hem teknisyen hem kullanıcı olarak eklenmişse kullanıcıyı baz al veya tekilleştir)
                 const combined = [...baseTechnicians];
                 technicianUsers.forEach(uTech => {
                     const exists = combined.some(ct => (ct.name?.toLowerCase() === uTech.name?.toLowerCase()) || (ct.email?.toLowerCase() === uTech.email?.toLowerCase()));
                     if (!exists) combined.push(uTech);
                 });
-
                 return combined;
             })(),
             allTechnicians: technicians,
-            customers: customers.filter(c => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(c.storeId) === String(selectedStoreId)) : String(c.storeId) === String(currentUser?.storeId)),
+            customers: filterByStore(customers),
             allCustomers: customers,
-            earnings: earnings.filter(e => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(e.storeId) === String(selectedStoreId)) : String(e.storeId) === String(currentUser?.storeId)),
+            earnings: filterByStore(earnings),
             allEarnings: earnings,
             login, logout, addUser, updateUser, removeUser, addRepair, removeRepair, updateRepair, updateRepairStatus,
             addTechnician, updateTechnician, removeTechnician, assignTechnician, completeJob, addServicePoint, updateServicePoint, removeServicePoint,
@@ -992,7 +1003,7 @@ export const AppProvider = ({ children }) => {
             notificationTemplates, setNotificationTemplates: (s) => { setNotificationTemplates(s); saveSettings('notificationTemplates', s); },
             serviceTerms, setServiceTerms: (s) => { setServiceTerms(s); saveSettings('serviceTerms', s); },
             roles, addRole, updateRole, deleteRole,
-            selectedStoreId, setSelectedStoreId, showToast, alerts, checkSLA, API_URL, sendWhatsApp, uploadMedia
+            selectedStoreId, setSelectedStoreId, showToast, alerts: alerts.filter(a => !clearedAlertIds.includes(a.id)), checkSLA, API_URL, sendWhatsApp, uploadMedia, clearAllAlerts
         }}>
             {children}
             {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}

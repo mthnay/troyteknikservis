@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Wrench, Clock, CheckCircle, Play, Search, Filter, Eye, Plus, X, UserPlus, Trash2, ShieldCheck, Mail, Award, Edit3, Activity, RotateCcw, Save, Pause, Box, FileText, ChevronRight, Zap, AlertCircle, Camera, ArrowRight } from 'lucide-react';
+import { Users, Wrench, Clock, CheckCircle, Play, Search, Filter, Eye, Plus, X, UserPlus, Trash2, ShieldCheck, Mail, Award, Edit3, Activity, RotateCcw, Save, Pause, Box, FileText, ChevronRight, Zap, AlertCircle, Camera, ArrowRight, Phone } from 'lucide-react';
 import TechnicianWorkspace from './TechnicianWorkspace';
 import MyPhoneIcon from './LocalIcons';
 import RepairHistoryModal from './RepairHistoryModal';

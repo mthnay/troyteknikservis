@@ -4,7 +4,7 @@ import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
 
 const NotificationCenter = ({ onSelectRepair }) => {
-    const { alerts } = useAppContext();
+    const { alerts, clearAllAlerts } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
 
     const handleSelect = (repair) => {
@@ -108,7 +108,13 @@ const NotificationCenter = ({ onSelectRepair }) => {
                         {/* Footer */}
                         {alerts.length > 0 && (
                             <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
-                                <button className="text-xs font-semibold text-blue-600 text-xs uppercase tracking-wide hover:text-blue-800 transition-colors">
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        clearAllAlerts();
+                                    }}
+                                    className="text-xs font-semibold text-blue-600 text-[10px] uppercase tracking-wide hover:text-blue-800 transition-colors"
+                                >
                                     Tümünü Temizle
                                 </button>
                             </div>

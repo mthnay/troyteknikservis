@@ -211,8 +211,8 @@ const Dashboard = () => {
     }, [inventory]);
 
     const { date, time } = {
-        date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', weekday: 'long' }),
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }),
+        time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
     };
 
     return (

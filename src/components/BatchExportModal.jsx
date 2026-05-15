@@ -191,7 +191,7 @@ const DeliveryFormContainer = ({ repair }) => {
                 <div className="flex gap-4">
                     <div className="w-16 h-16 bg-black text-white flex items-center justify-center font-semibold text-3xl">T</div>
                     <div>
-                        <h1 className="text-3xl font-semibold text-black uppercase">Troy Servis</h1>
+                        <h1 className="text-3xl font-semibold text-black uppercase">OSS Services</h1>
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Cihaz Teslim ve Onarım Onay Formu</p>
                     </div>
                 </div>
@@ -224,7 +224,7 @@ const DeliveryFormContainer = ({ repair }) => {
             <div className="mt-auto grid grid-cols-2 gap-12 pt-8 border-t border-gray-300">
                 <div className="text-left">
                     <p className="text-[9px] font-semibold text-gray-400 uppercase mb-4">Teslim Eden</p>
-                    <p className="text-xs font-bold uppercase">Troy Teknik Servis</p>
+                    <p className="text-xs font-bold uppercase">OSS Operating Software Solution</p>
                 </div>
                 <div className="text-left">
                     <p className="text-[9px] font-semibold text-gray-400 uppercase mb-2">Teslim Alan (Müşteri)</p>
