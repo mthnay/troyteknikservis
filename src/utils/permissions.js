@@ -6,7 +6,7 @@ export const ROLES = {
     STORE_MANAGER: 'storemanager',
     RECEPTION: 'reception',
     TECHNICIAN: 'technician',
-    LOGISTICS: 'logistic'
+    ACCOUNTANT: 'accountant'
 };
 
 export const ROLE_DISPLAY_NAMES = {
@@ -15,9 +15,9 @@ export const ROLE_DISPLAY_NAMES = {
     [ROLES.STORE_MANAGER]: 'MAĞAZA YÖNETİCİSİ',
     [ROLES.RECEPTION]: 'BANKO / KARŞILAMA',
     [ROLES.TECHNICIAN]: 'TEKNİSYEN',
-    [ROLES.LOGISTICS]: 'LOJİSTİK',
-    'accountant': 'LOJİSTİK',
-    'muhasebe': 'LOJİSTİK',
+    [ROLES.ACCOUNTANT]: 'MUHASEBE',
+    'muhasebe': 'MUHASEBE',
+    'logistic': 'MUHASEBE',
     'teknisyen': 'TEKNİSYEN'
 };
 
@@ -60,8 +60,7 @@ const ROLE_PERMISSIONS = {
         'view_kbb',
         'view_technicians'
     ],
-    [ROLES.LOGISTICS]: [
-        'view_all_stores',
+    [ROLES.ACCOUNTANT]: [
         'view_earnings',
         'manage_stock',
         'view_kbb',
@@ -101,7 +100,7 @@ export const hasPermission = (user, permission) => {
     if (userRole === 'admin') userRole = ROLES.SUPER_ADMIN;
     if (userRole === 'teknisyen') userRole = ROLES.TECHNICIAN;
     if (userRole === 'yonetici') userRole = ROLES.YONETICI;
-    if (userRole === 'accountant' || userRole === 'muhasebe') userRole = ROLES.LOGISTICS;
+    if (userRole === 'muhasebe' || userRole === 'logistic') userRole = ROLES.ACCOUNTANT;
 
     // First check dynamic roles
     const dynamicRole = dynamicRoles.find(r => r.name.toLowerCase() === userRole || r.displayName.toLowerCase() === userRole);
