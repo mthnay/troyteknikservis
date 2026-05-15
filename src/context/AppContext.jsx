@@ -8,10 +8,10 @@ export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
 
-    const API_URL = import.meta.env.VITE_API_URL || 
-                    (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                     ? 'http://localhost:5001/api' 
-                     : '/api');
+    const API_URL = import.meta.env.VITE_API_URL ||
+        (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:5001/api'
+            : '/api');
 
     const apiFetch = async (url, options = {}) => {
         const token = sessionStorage.getItem('token');
@@ -224,7 +224,7 @@ export const AppProvider = ({ children }) => {
                     }
                 }
                 if (servicePointsRes.ok) setServicePoints(await servicePointsRes.json());
-                
+
                 let queryParams = '';
                 if (!hasPermission(currentUser, 'view_all_stores') && currentUser.storeId) {
                     queryParams = `?storeId=${currentUser.storeId}`;
@@ -289,7 +289,7 @@ export const AppProvider = ({ children }) => {
         };
         fetchData();
     }, [currentUser]);
-    
+
     // Force store restriction for unauthorized users
     useEffect(() => {
         if (currentUser && !hasPermission(currentUser, 'view_all_stores')) {
@@ -323,11 +323,11 @@ export const AppProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
-            
+
             if (res.ok) {
                 const data = await res.json();
                 setCurrentUser(data.user);
-                
+
                 // SuperAdmin ve Yönetici için varsayılan olarak Tüm Mağazalar (0)
                 const role = data.user.role?.toLowerCase();
                 if (role === 'superadmin' || role === 'admin' || role === 'yonetici') {
@@ -378,7 +378,7 @@ export const AppProvider = ({ children }) => {
             if (res.ok) {
                 const updated = await res.json();
                 console.log("[AppContext] Update success:", updated);
-                
+
                 setUsers(prev => prev.map(u => {
                     const uId = String(u._id || u.id);
                     const updatedId = String(updated._id || updated.id);
@@ -397,9 +397,9 @@ export const AppProvider = ({ children }) => {
                 console.error("[AppContext] Update failed on server:", res.status, errorData);
                 throw new Error(errorData.message || `Sunucu hatası: ${res.status}`);
             }
-        } catch (error) { 
-            console.error("[AppContext] Network error updating user:", error); 
-            return false; 
+        } catch (error) {
+            console.error("[AppContext] Network error updating user:", error);
+            return false;
         }
     };
 
@@ -467,7 +467,7 @@ export const AppProvider = ({ children }) => {
 
         if (updates.status && updates.status !== repair.status) {
             newHistory = [...newHistory, { status: updates.status, date: new Date().toLocaleString(), note: updates.historyNote || 'Durum güncellendi.' }];
-            
+
             // Performans Takibi için Tarihsel Damgalar
             if (updates.status === 'İşlemde' && !repair.startedAt) {
                 extraUpdates.startedAt = new Date();
@@ -704,7 +704,7 @@ export const AppProvider = ({ children }) => {
 
     const processStockMovement = async (repairId, parts) => {
         if (!parts || parts.length === 0) return true;
-        
+
         try {
             // Backend endpoint to process stock movement in one go
             // This is safer than multiple manual updates to prevent race conditions
@@ -722,13 +722,13 @@ export const AppProvider = ({ children }) => {
             } else {
                 // Fallback: If endpoint doesn't exist, we'll need to do it manually (for backward compatibility)
                 console.warn("process-movement endpoint not found, falling back to manual updates.");
-                
+
                 for (const part of parts) {
                     const storeId = part.storeId || currentUser?.storeId || 0;
-                    
+
                     // 1. KGB'den Düş
-                    const kgbItem = inventory.find(i => 
-                        i.partNumber === part.partNumber && 
+                    const kgbItem = inventory.find(i =>
+                        i.partNumber === part.partNumber &&
                         (String(i.storeId) === String(storeId)) &&
                         (i.warehouseType === 'KGB' || !i.warehouseType)
                     );
@@ -736,15 +736,15 @@ export const AppProvider = ({ children }) => {
                     if (kgbItem) {
                         const newQuantity = Math.max(0, kgbItem.quantity - 1);
                         const newSerials = (kgbItem.kgbSerials || []).filter(s => s !== part.kgbSerial);
-                        await updateInventoryItem(kgbItem._id || kgbItem.id, { 
+                        await updateInventoryItem(kgbItem._id || kgbItem.id, {
                             quantity: newQuantity,
-                            kgbSerials: newSerials 
+                            kgbSerials: newSerials
                         });
                     }
 
                     // 2. KBB'ye Gir
-                    const kbbItem = inventory.find(i => 
-                        i.partNumber === part.partNumber && 
+                    const kbbItem = inventory.find(i =>
+                        i.partNumber === part.partNumber &&
                         (String(i.storeId) === String(storeId)) &&
                         i.warehouseType === 'KBB'
                     );
@@ -752,7 +752,7 @@ export const AppProvider = ({ children }) => {
                     if (kbbItem) {
                         const newQuantity = (kbbItem.quantity || 0) + 1;
                         const newSerials = [...(kbbItem.kbbSerials || []), part.kbbSerial].filter(Boolean);
-                        await updateInventoryItem(kbbItem._id || kbbItem.id, { 
+                        await updateInventoryItem(kbbItem._id || kbbItem.id, {
                             quantity: newQuantity,
                             kbbSerials: newSerials
                         });
@@ -794,7 +794,7 @@ export const AppProvider = ({ children }) => {
                     const tIndex = next.findIndex(i => (i._id === targetItem._id) || (i.id === targetItem.id));
                     if (tIndex > -1) next[tIndex] = targetItem;
                     else next.push(targetItem);
-                    
+
                     return next;
                 });
                 return true;
@@ -914,19 +914,19 @@ export const AppProvider = ({ children }) => {
     // Filtered service points based on user permissions
     const visibleServicePoints = React.useMemo(() => {
         if (!currentUser) return [];
-        
+
         const role = currentUser.role?.toLowerCase() || '';
         const normalizedRole = role.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
-        
+
         // Administrative roles that CAN see all stores
         const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superadmin' || normalizedRole === 'yonetici';
-        
+
         // Check both the role string and the specific permission
         const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
 
-        // IF they are an admin OR they specifically have the permission AND they are not a technician/receptionist/manager
-        const isStaffRole = normalizedRole === 'technician' || normalizedRole === 'reception' || normalizedRole === 'accountant' || normalizedRole === 'teknisyen' || normalizedRole === 'storemanager';
-        
+        // IF they are an admin OR they specifically have the permission AND they are not a technician/receptionist
+        const isStaffRole = normalizedRole === 'technician' || normalizedRole === 'reception' || normalizedRole === 'accountant' || normalizedRole === 'teknisyen';
+
         if ((isAdminRole || hasViewAllPerm) && !isStaffRole) {
             return servicePoints;
         }
@@ -934,9 +934,9 @@ export const AppProvider = ({ children }) => {
         // Normal users and staff roles MUST be restricted to their assigned store
         const userStoreId = String(currentUser.storeId);
         const filtered = servicePoints.filter(sp => String(sp.id) === userStoreId);
-        
+
         console.log(`[StoreRestriction] User: ${currentUser.name}, Role: ${role}, StoreID: ${userStoreId}, Visible Count: ${filtered.length}`);
-        
+
         return filtered;
     }, [servicePoints, currentUser]);
 
@@ -956,7 +956,7 @@ export const AppProvider = ({ children }) => {
             allInventory: inventory,
             technicians: (() => {
                 const baseTechnicians = technicians.filter(t => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(t.storeId) === String(selectedStoreId)) : String(t.storeId) === String(currentUser?.storeId));
-                
+
                 // Kullanıcılar arasından teknisyen rolündekileri bul
                 const technicianUsers = users
                     .filter(u => (u.role?.toLowerCase() === 'technician' || u.role === 'Teknisyen') && (hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(u.storeId) === String(selectedStoreId)) : String(u.storeId) === String(currentUser?.storeId)))

@@ -194,14 +194,18 @@ const StockManagement = () => {
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setShowStoreDropdown(false)}></div>
                                     <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-2">
-                                        <button 
-                                            onClick={() => { setSelectedStoreId(0); setShowStoreDropdown(false); }}
-                                            className={`w-full px-4 py-2 text-left text-[13px] flex items-center justify-between hover:bg-gray-50 transition-colors ${selectedStoreId === 0 ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-600 font-medium'}`}
-                                        >
-                                            Tüm Mağazalar
-                                            {selectedStoreId === 0 && <Check size={14} />}
-                                        </button>
-                                        <div className="h-px bg-gray-100 my-1"></div>
+                                        {hasPermission(currentUser, 'view_all_stores') && !['technician', 'reception', 'teknisyen', 'storemanager'].includes(currentUser?.role?.toLowerCase()) && (
+                                            <>
+                                                <button 
+                                                    onClick={() => { setSelectedStoreId(0); setShowStoreDropdown(false); }}
+                                                    className={`w-full px-4 py-2 text-left text-[13px] flex items-center justify-between hover:bg-gray-50 transition-colors ${selectedStoreId === 0 ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-600 font-medium'}`}
+                                                >
+                                                    Tüm Mağazalar
+                                                    {selectedStoreId === 0 && <Check size={14} />}
+                                                </button>
+                                                <div className="h-px bg-gray-100 my-1"></div>
+                                            </>
+                                        )}
                                         {visibleServicePoints.map(s => (
                                             <button 
                                                 key={s.id}
