@@ -14,6 +14,9 @@ export const AppProvider = ({ children }) => {
             : '/api');
 
     const apiFetch = async (url, options = {}) => {
+        // Çıkış yapılıyorsa istekleri durdur
+        if (window.isLoggingOut) return new Response(JSON.stringify({ success: false, message: 'Logging out...' }), { status: 200 });
+
         const token = sessionStorage.getItem('token');
         const headers = {
             ...options.headers,
@@ -22,7 +25,7 @@ export const AppProvider = ({ children }) => {
         const res = await fetch(url, { ...options, headers });
         if (res.status === 401 && !url.includes('/login') && !url.includes('/forgot-password')) {
             const tokenInSession = sessionStorage.getItem('token');
-            if (tokenInSession) {
+            if (tokenInSession && !window.isLoggingOut) {
                 sessionStorage.clear();
                 setCurrentUser(null);
                 window.location.href = '/';
@@ -353,6 +356,7 @@ export const AppProvider = ({ children }) => {
     };
 
     const logout = () => {
+        window.isLoggingOut = true;
         sessionStorage.clear();
         setCurrentUser(null);
         window.location.href = '/';
