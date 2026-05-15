@@ -116,7 +116,7 @@ const DEVICE_DATABASE = [
 
 
 const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
-    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast, serviceTerms, currentUser, servicePoints } = useAppContext();
+    const { addRepair, customers, addCustomer, companyProfile, uploadMedia, showToast, serviceTerms, currentUser, servicePoints, visibleServicePoints } = useAppContext();
     const hasAllStores = currentUser?.role === 'admin' || currentUser?.role === ROLES?.SUPER_ADMIN || hasPermission(currentUser, 'view_all_stores');
 
     const [step, setStep] = useState(1);

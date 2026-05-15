@@ -121,7 +121,7 @@ export const AppProvider = ({ children }) => {
                 if (role === 'superadmin' || role === 'admin' || role === 'yonetici') {
                     return 0;
                 }
-                return user.storeId || 0;
+                return (user.storeId !== undefined && user.storeId !== null) ? Number(user.storeId) : 0;
             }
         } catch (e) {
             console.error("Store init error:", e);
@@ -289,6 +289,17 @@ export const AppProvider = ({ children }) => {
         };
         fetchData();
     }, [currentUser]);
+    
+    // Force store restriction for unauthorized users
+    useEffect(() => {
+        if (currentUser && !hasPermission(currentUser, 'view_all_stores')) {
+            const userStoreId = Number(currentUser.storeId);
+            if (selectedStoreId === 0 || selectedStoreId === '0' || Number(selectedStoreId) !== userStoreId) {
+                console.log("Enforcing store restriction for user:", currentUser.name);
+                setSelectedStoreId(userStoreId);
+            }
+        }
+    }, [currentUser, selectedStoreId]);
 
     useEffect(() => {
         if (currentUser) sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -321,8 +332,8 @@ export const AppProvider = ({ children }) => {
                 const role = data.user.role?.toLowerCase();
                 if (role === 'superadmin' || role === 'admin' || role === 'yonetici') {
                     setSelectedStoreId(0);
-                } else if (data.user.storeId) {
-                    setSelectedStoreId(data.user.storeId);
+                } else if (data.user.storeId !== undefined && data.user.storeId !== null) {
+                    setSelectedStoreId(Number(data.user.storeId));
                 }
                 sessionStorage.setItem('token', data.token);
                 return true;
@@ -918,7 +929,8 @@ export const AppProvider = ({ children }) => {
             allRepairs: repairs,
             users,
             currentUser,
-            servicePoints,
+            servicePoints: visibleServicePoints,
+            allServicePoints: servicePoints,
             visibleServicePoints,
             searchQuery,
             setSearchQuery,

@@ -9,7 +9,7 @@ import { isSuperAdmin, isYonetici } from '../utils/permissions';
 
 const Settings = () => {
     const {
-        servicePoints, addServicePoint, removeServicePoint, updateServicePoint,
+        servicePoints, allServicePoints, addServicePoint, removeServicePoint, updateServicePoint,
         users, addUser, updateUser, removeUser, currentUser,
         updateCustomer, removeCustomer,
         emailSettings, setEmailSettings,
@@ -392,7 +392,7 @@ const Settings = () => {
         const role = e.target.value;
         let storeId = newUser.storeId;
         if (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'admin' || role.toLowerCase() === 'yonetici') {
-            const merkez = servicePoints.find(sp => sp.type === 'Merkez' || sp.name.toLowerCase().includes('merkez'));
+            const merkez = allServicePoints.find(sp => sp.type === 'Merkez' || sp.name.toLowerCase().includes('merkez'));
             if (merkez) storeId = merkez.id;
         }
         setNewUser({ ...newUser, role, storeId });
@@ -403,7 +403,7 @@ const Settings = () => {
         const role = e.target.value;
         let storeId = editUserData.storeId;
         if (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'admin' || role.toLowerCase() === 'yonetici') {
-            const merkez = servicePoints.find(sp => sp.type === 'Merkez' || sp.name.toLowerCase().includes('merkez'));
+            const merkez = allServicePoints.find(sp => sp.type === 'Merkez' || sp.name.toLowerCase().includes('merkez'));
             if (merkez) storeId = merkez.id;
         }
         setEditUserData({ ...editUserData, role, storeId });
@@ -472,7 +472,7 @@ const Settings = () => {
             return;
         }
 
-        const point = servicePoints.find(p => String(p.id) === String(newEarning.storeId));
+        const point = allServicePoints.find(p => String(p.id) === String(newEarning.storeId));
 
         const success = await addEarning({
             ...newEarning,
@@ -572,7 +572,7 @@ const Settings = () => {
             case 'kbb_history':
                 // Helper for Ship-To
                 const getShipTo = (storeId) => {
-                    const point = servicePoints.find(p => String(p.id) === String(storeId));
+                    const point = allServicePoints.find(p => String(p.id) === String(storeId));
                     return point ? point.shipTo : 'Servis Merkezi';
                 };
 
@@ -732,7 +732,7 @@ const Settings = () => {
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
                                                     {items.map(item => {
-                                                        const store = servicePoints.find(sp => sp.id === item.storeId);
+                                                        const store = allServicePoints.find(sp => sp.id === item.storeId);
                                                         return (
                                                             <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                                                                 <td className="px-8 py-4 font-mono font-bold text-blue-600">{item.shipTo || (store ? store.shipTo : '-')}</td>
@@ -768,7 +768,7 @@ const Settings = () => {
                                                 onChange={e => setNewEarning({ ...newEarning, storeId: e.target.value })}
                                             >
                                                 <option value="">Mağaza Seçiniz...</option>
-                                                {servicePoints.map(sp => (
+                                                {allServicePoints.map(sp => (
                                                     <option key={sp.id} value={sp.id}>{sp.name} ({sp.shipTo})</option>
                                                 ))}
                                             </select>
@@ -1128,7 +1128,7 @@ const Settings = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {servicePoints.map(point => (
+                            {allServicePoints.map(point => (
                                 <div key={point.id} className="group bg-white rounded-lg border border-gray-100 p-6 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-500 relative flex flex-col h-full overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-125"></div>
                                     
@@ -1258,7 +1258,7 @@ const Settings = () => {
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-blue-500 outline-none transition-all appearance-none font-medium text-gray-700"
                                         value={newUser.storeId} onChange={e => setNewUser({ ...newUser, storeId: e.target.value })}
                                     >
-                                        {servicePoints.map(sp => (
+                                        {allServicePoints.map(sp => (
                                             <option key={sp.id} value={sp.id}>{sp.name}</option>
                                         ))}
                                     </select>
@@ -1272,7 +1272,7 @@ const Settings = () => {
                         {/* Yatay Personel Listesi */}
                         <div className="grid grid-cols-1 gap-4">
                             {users.map(u => {
-                                const store = servicePoints.find(sp => Number(sp.id) === Number(u.storeId));
+                                const store = allServicePoints.find(sp => Number(sp.id) === Number(u.storeId));
                                 const userId = u._id || u.id;
                                 const isEditing = editingUserId === userId;
                                 
@@ -1317,7 +1317,7 @@ const Settings = () => {
                                                         </select>
                                                         <select className="w-full px-4 py-2 bg-white rounded-md border border-gray-200 outline-none font-semibold text-[10px] uppercase" value={editUserData.storeId} onChange={e => setEditUserData({ ...editUserData, storeId: Number(e.target.value) })}>
                                                             <option value="0">GENEL MERKEZ</option>
-                                                            {servicePoints.map(sp => (
+                                                            {allServicePoints.map(sp => (
                                                                 <option key={sp.id} value={sp.id}>{sp.name.toUpperCase()}</option>
                                                             ))}
                                                         </select>

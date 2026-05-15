@@ -125,9 +125,8 @@ function App() {
         </div>
       )}
 
-      {/* Bottom Store Selector Navbar (view_all_stores izinli kullanıcılar için) */}
-      {hasPermission(currentUser, 'view_all_stores') && (
-        <div className="fixed bottom-0 left-0 w-full h-9 bg-white/90 backdrop-blur-md border-t border-black/5 flex items-center justify-between px-6 z-50 shadow-[0_-4px_24px_-6px_rgba(0,0,0,0.04)]">
+      {/* Bottom Store Selector Navbar */}
+      <div className="fixed bottom-0 left-0 w-full h-9 bg-white/90 backdrop-blur-md border-t border-black/5 flex items-center justify-between px-6 z-50 shadow-[0_-4px_24px_-6px_rgba(0,0,0,0.04)]">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Aktif Mağaza:</span>
               <div className="relative" ref={storeSelectRef}>
@@ -195,7 +194,6 @@ function App() {
                 OSS Operating Software Solution - 2026 Tüm Hakları Saklıdır
             </div>
         </div>
-      )}
     </div>
   );
 }
