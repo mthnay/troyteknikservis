@@ -507,7 +507,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                             >
                                 <MapPin size={14} className={showStoreSelect ? 'text-white' : 'text-blue-600'} />
                                 <span className="text-[11px] font-bold uppercase tracking-tight">
-                                    {servicePoints.find(sp => String(sp.id) === String(formData.storeId))?.name || 'Mağaza Seçiniz'}
+                                    {visibleServicePoints.find(sp => String(sp.id) === String(formData.storeId))?.name || 'Mağaza Seçiniz'}
                                 </span>
                                 <ChevronDown size={12} className={`transition-transform ${showStoreSelect ? 'rotate-180' : 'opacity-50'}`} />
                             </button>
@@ -518,7 +518,7 @@ const ServiceAcceptance = ({ setActiveTab, initialData, clearInitialData }) => {
                                         <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Mağaza Seçimi</span>
                                     </div>
                                     <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                                        {servicePoints.map(sp => (
+                                        {visibleServicePoints.map(sp => (
                                             <button
                                                 key={sp.id}
                                                 onClick={() => {

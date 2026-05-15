@@ -11,9 +11,8 @@ import { appConfirm, appPrompt } from '../utils/alert';
 import MyPhoneIcon from './LocalIcons';
 
 const StockManagement = () => {
-    const { 
         inventory, addInventoryItem, updateInventoryItem, removeInventoryItem, 
-        servicePoints, currentUser, showToast, selectedStoreId, setSelectedStoreId,
+        servicePoints, visibleServicePoints, currentUser, showToast, selectedStoreId, setSelectedStoreId,
         repairs, updateRepair
     } = useAppContext();
 
@@ -202,7 +201,7 @@ const StockManagement = () => {
                                             {selectedStoreId === 0 && <Check size={14} />}
                                         </button>
                                         <div className="h-px bg-gray-100 my-1"></div>
-                                        {servicePoints.map(s => (
+                                        {visibleServicePoints.map(s => (
                                             <button 
                                                 key={s.id}
                                                 onClick={() => { setSelectedStoreId(parseInt(s.id)); setShowStoreDropdown(false); }}
@@ -627,7 +626,7 @@ const StockManagement = () => {
                                         value={newPart.storeId}
                                         onChange={(e) => setNewPart({...newPart, storeId: e.target.value})}
                                     >
-                                        {servicePoints.map(s => (
+                                        {visibleServicePoints.map(s => (
                                             <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}
                                     </select>

@@ -116,6 +116,11 @@ export const AppProvider = ({ children }) => {
             const saved = sessionStorage.getItem('currentUser');
             if (saved && saved !== 'undefined' && saved !== 'null') {
                 const user = JSON.parse(saved);
+                // SuperAdmin ve Yönetici için varsayılan olarak Tüm Mağazalar (0)
+                const role = user.role?.toLowerCase();
+                if (role === 'superadmin' || role === 'admin' || role === 'yonetici') {
+                    return 0;
+                }
                 return user.storeId || 0;
             }
         } catch (e) {
@@ -311,7 +316,12 @@ export const AppProvider = ({ children }) => {
             if (res.ok) {
                 const data = await res.json();
                 setCurrentUser(data.user);
-                if (data.user && data.user.storeId) {
+                
+                // SuperAdmin ve Yönetici için varsayılan olarak Tüm Mağazalar (0)
+                const role = data.user.role?.toLowerCase();
+                if (role === 'superadmin' || role === 'admin' || role === 'yonetici') {
+                    setSelectedStoreId(0);
+                } else if (data.user.storeId) {
                     setSelectedStoreId(data.user.storeId);
                 }
                 sessionStorage.setItem('token', data.token);
@@ -890,6 +900,17 @@ export const AppProvider = ({ children }) => {
     const showToast = (message, type = 'info') => setToast({ message, type, isVisible: true });
     const hideToast = () => setToast(prev => ({ ...prev, isVisible: false }));
 
+    // Filtered service points based on user permissions
+    const visibleServicePoints = React.useMemo(() => {
+        if (!currentUser) return [];
+        // Admin, SuperAdmin or users with 'view_all_stores' permission see everything
+        if (hasPermission(currentUser, 'view_all_stores') || currentUser.role?.toLowerCase() === 'admin') {
+            return servicePoints;
+        }
+        // Others only see their assigned store
+        return servicePoints.filter(sp => String(sp.id) === String(currentUser.storeId));
+    }, [servicePoints, currentUser]);
+
     return (
         <AppContext.Provider value={{
             API_URL,
@@ -898,6 +919,7 @@ export const AppProvider = ({ children }) => {
             users,
             currentUser,
             servicePoints,
+            visibleServicePoints,
             searchQuery,
             setSearchQuery,
             inventory: inventory.filter(i => hasPermission(currentUser, 'view_all_stores') ? (selectedStoreId === 0 || String(i.storeId) === String(selectedStoreId)) : String(i.storeId) === String(currentUser?.storeId)),

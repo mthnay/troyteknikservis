@@ -23,7 +23,7 @@ import { useAppContext } from './context/AppContext';
 import { hasPermission } from './utils/permissions';
 
 function App() {
-  const { currentUser, selectedStoreId, setSelectedStoreId, servicePoints } = useAppContext();
+  const { currentUser, servicePoints, visibleServicePoints, selectedStoreId, setSelectedStoreId } = useAppContext();
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('oss_active_tab') || 'dashboard');
 
   useEffect(() => {
@@ -47,18 +47,11 @@ function App() {
   useEffect(() => {
     if (!currentUser) return;
     
-    // Eğer kullanıcı SuperAdmin veya Yönetici ise ve henüz bir mağaza seçilmemişse (veya 0 ise)
-    if ((currentUser.role?.toLowerCase() === 'superadmin' || currentUser.role?.toLowerCase() === 'admin' || currentUser.role?.toLowerCase() === 'yonetici') && selectedStoreId === 0) {
-        // Türü Merkez olan mağazayı bul
-        const merkez = servicePoints.find(sp => sp.type === 'Merkez' || sp.name?.toLowerCase().includes('merkez'));
-        if (merkez) {
-            setSelectedStoreId(merkez.id);
-        } else if (currentUser.storeId) {
-            setSelectedStoreId(currentUser.storeId);
-        }
-    } 
-    // Normal kullanıcılar için (veya adminler için merkez bulunamazsa) kendi mağazasını seç
-    else if (currentUser.storeId && selectedStoreId === 0) {
+    const role = currentUser.role?.toLowerCase();
+    const isPrivileged = role === 'superadmin' || role === 'admin' || role === 'yonetici';
+
+    // Normal kullanıcılar için (SuperAdmin/Yönetici olmayanlar) kendi mağazasını otomatik seç
+    if (!isPrivileged && currentUser.storeId && selectedStoreId === 0) {
         setSelectedStoreId(currentUser.storeId);
     }
   }, [currentUser, servicePoints]);
@@ -157,29 +150,42 @@ function App() {
                               <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Mağaza Değiştir</span>
                           </div>
                           <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                              <button
-                                  onClick={() => { setSelectedStoreId(0); setShowStoreSelect(false); }}
-                                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-3 transition-all
-                                      ${selectedStoreId === 0 ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-                                  `}
-                              >
-                                  <div className={`w-2 h-2 rounded-full ${selectedStoreId === 0 ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                  Tüm Mağazalar
-                                  {selectedStoreId === 0 && <Check size={12} className="ml-auto text-blue-500" />}
-                              </button>
-                              {servicePoints.map(point => (
-                                  <button
-                                      key={point.id}
-                                      onClick={() => { setSelectedStoreId(point.id); setShowStoreSelect(false); }}
-                                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-3 transition-all
-                                          ${selectedStoreId === point.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-                                      `}
-                                  >
-                                      <div className={`w-2 h-2 rounded-full ${selectedStoreId === point.id ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                      {point.name}
-                                      {selectedStoreId === point.id && <Check size={12} className="ml-auto text-blue-500" />}
-                                  </button>
-                              ))}
+                                {hasPermission(currentUser, 'view_all_stores') && (
+                                    <button 
+                                        onClick={() => { setSelectedStoreId(0); setShowStoreSelect(false); }}
+                                        className={`w-full px-5 py-4 text-left flex items-center justify-between border-b border-gray-50 transition-colors ${selectedStoreId === 0 ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-600 font-medium hover:bg-gray-50'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedStoreId === 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                                <LayoutGrid size={16} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[13px]">Tüm Mağazalar</span>
+                                                <span className="text-[10px] opacity-60">Genel görünüm</span>
+                                            </div>
+                                        </div>
+                                        {selectedStoreId === 0 && <Check size={16} strokeWidth={3} />}
+                                    </button>
+                                )}
+
+                                {visibleServicePoints.map((store) => (
+                                    <button 
+                                        key={store.id}
+                                        onClick={() => { setSelectedStoreId(Number(store.id)); setShowStoreSelect(false); }}
+                                        className={`w-full px-5 py-4 text-left flex items-center justify-between transition-colors ${Number(selectedStoreId) === Number(store.id) ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-600 font-medium hover:bg-gray-50'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${Number(selectedStoreId) === Number(store.id) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                                <MapPin size={16} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[13px]">{store.name}</span>
+                                                <span className="text-[10px] opacity-60">Ship-To: {store.shipTo}</span>
+                                            </div>
+                                        </div>
+                                        {Number(selectedStoreId) === Number(store.id) && <Check size={16} strokeWidth={3} />}
+                                    </button>
+                                ))}
                           </div>
                       </div>
                   )}
