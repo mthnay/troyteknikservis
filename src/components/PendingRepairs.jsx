@@ -33,10 +33,8 @@ const PendingRepairs = ({ setActiveTab }) => {
     // Status Columns for Board View
     const BOARD_COLUMNS = [
         { id: 'Beklemede', label: 'Yeni Kayıt', color: 'bg-gray-400' },
-        { id: 'İnceleniyor', label: 'Teşhis Bekliyor', color: 'bg-blue-500' },
-        { id: 'Parça Bekleniyor', label: 'Parça Bekleniyor', color: 'bg-orange-500' },
-        { id: 'Onarımda', label: 'Onarım Sürecinde', color: 'bg-purple-500' },
-        { id: 'Hazır', label: 'Teslimata Hazır', color: 'bg-green-500' }
+        { id: 'İşlemde', label: 'Atölyede İşlemde', color: 'bg-blue-500' },
+        { id: 'Parça Bekleniyor', label: 'Parça Bekleniyor', color: 'bg-orange-500' }
     ];
 
     const isSlaBreached = (repair) => {
@@ -222,7 +220,7 @@ const PendingRepairs = ({ setActiveTab }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {filteredRepairs.filter(r => r.status === 'Beklemede' || viewMode === 'list').map(repair => (
+                                {filteredRepairs.filter(r => ['Beklemede', 'İşlemde', 'Parça Bekleniyor'].includes(r.status)).map(repair => (
                                     <tr key={repair.id} className="hover:bg-gray-50/80 transition-colors group cursor-pointer" onClick={() => setSelectedHistoryRepair(repair)}>
                                         <td className="px-6 py-5">
                                             <div className="flex flex-col">
