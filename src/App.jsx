@@ -149,7 +149,7 @@ function App() {
                               <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Mağaza Değiştir</span>
                           </div>
                           <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                                {hasPermission(currentUser, 'view_all_stores') && !['technician', 'reception', 'teknisyen'].includes(currentUser?.role?.toLowerCase()) && (
+                                {hasPermission(currentUser, 'view_all_stores') && !['technician', 'reception', 'teknisyen', 'storemanager'].includes(currentUser?.role?.toLowerCase()) && (
                                     <button 
                                         onClick={() => { setSelectedStoreId(0); setShowStoreSelect(false); }}
                                         className={`w-full px-5 py-4 text-left flex items-center justify-between border-b border-gray-50 transition-colors ${selectedStoreId === 0 ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-600 font-medium hover:bg-gray-50'}`}
