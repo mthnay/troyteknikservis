@@ -84,13 +84,13 @@ export const hasPermission = (user, permission) => {
     if (!user || !user.role) return false;
     
     // Map roles for compatibility (case-insensitive normalization)
-    let userRole = user.role;
-    if (userRole.toLowerCase() === 'admin') userRole = ROLES.SUPER_ADMIN;
-    if (userRole.toLowerCase() === 'teknisyen') userRole = ROLES.TECHNICIAN;
-    if (userRole.toLowerCase() === 'yonetici') userRole = ROLES.YONETICI;
+    let userRole = user.role.toLowerCase();
+    if (userRole === 'admin') userRole = ROLES.SUPER_ADMIN;
+    if (userRole === 'teknisyen') userRole = ROLES.TECHNICIAN;
+    if (userRole === 'yonetici') userRole = ROLES.YONETICI;
 
     // First check dynamic roles
-    const dynamicRole = dynamicRoles.find(r => r.name.toLowerCase() === userRole.toLowerCase() || r.displayName.toLowerCase() === userRole.toLowerCase());
+    const dynamicRole = dynamicRoles.find(r => r.name.toLowerCase() === userRole || r.displayName.toLowerCase() === userRole);
     if (dynamicRole) {
         // If it's a dynamic role, check its permissions array
         return dynamicRole.permissions && dynamicRole.permissions.includes(permission);

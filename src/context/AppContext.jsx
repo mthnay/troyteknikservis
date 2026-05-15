@@ -914,12 +914,25 @@ export const AppProvider = ({ children }) => {
     // Filtered service points based on user permissions
     const visibleServicePoints = React.useMemo(() => {
         if (!currentUser) return [];
-        // Admin, SuperAdmin or users with 'view_all_stores' permission see everything
-        if (hasPermission(currentUser, 'view_all_stores') || currentUser.role?.toLowerCase() === 'admin') {
+        
+        const role = currentUser.role?.toLowerCase() || '';
+        // Normalleştirilmiş rol kontrolü (Türkçe karakter toleranslı)
+        const normalizedRole = role.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+        
+        const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superadmin' || normalizedRole === 'yonetici';
+        const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
+
+        if (isAdminRole || hasViewAllPerm) {
             return servicePoints;
         }
-        // Others only see their assigned store
-        return servicePoints.filter(sp => String(sp.id) === String(currentUser.storeId));
+
+        // Normal users only see their assigned store
+        const userStoreId = String(currentUser.storeId);
+        const filtered = servicePoints.filter(sp => String(sp.id) === userStoreId);
+        
+        console.log(`[StoreRestriction] User: ${currentUser.name}, Role: ${role}, StoreID: ${userStoreId}, Visible Count: ${filtered.length}`);
+        
+        return filtered;
     }, [servicePoints, currentUser]);
 
     return (
