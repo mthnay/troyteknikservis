@@ -283,7 +283,7 @@ const TopNav = ({ activeTab, setActiveTab }) => {
 
                     <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
 
-                    <NotificationCenter />
+                    <NotificationCenter onSelectRepair={(repair) => setSelectedSearchRepair(repair)} />
 
                     <div className="flex items-center gap-3">
                         <div className="text-right hidden sm:block">

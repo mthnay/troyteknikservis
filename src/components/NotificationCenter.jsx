@@ -3,9 +3,16 @@ import { Bell, AlertCircle, Clock, ChevronRight, X, Info } from 'lucide-react';
 import MyPhoneIcon from './LocalIcons';
 import { useAppContext } from '../context/AppContext';
 
-const NotificationCenter = () => {
+const NotificationCenter = ({ onSelectRepair }) => {
     const { alerts } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
+
+    const handleSelect = (repair) => {
+        if (onSelectRepair) {
+            onSelectRepair(repair);
+            setIsOpen(false);
+        }
+    };
 
     const criticalCount = alerts.filter(a => a.type === 'critical').length;
 
@@ -51,7 +58,11 @@ const NotificationCenter = () => {
                             {alerts.length > 0 ? (
                                 <div className="divide-y divide-gray-50">
                                     {alerts.map((alert, idx) => (
-                                        <div key={idx} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
+                                        <div 
+                                            key={idx} 
+                                            onClick={() => handleSelect(alert.repair)}
+                                            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer group"
+                                        >
                                             <div className="flex gap-4">
                                                 <div className={`mt-1 p-2 rounded-md shrink-0 ${
                                                     alert.type === 'critical' ? 'bg-red-50 text-red-500' :
