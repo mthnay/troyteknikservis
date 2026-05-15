@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, AlertCircle, Wrench, Plus, Trash2, DollarSign, Mail, ArrowRight, ArrowLeft, ChevronRight, Activity, Zap, RotateCcw, Check, Sparkles } from 'lucide-react';
+import { X, Save, AlertCircle, Wrench, Plus, Trash2, DollarSign, Mail, ArrowRight, ArrowLeft, ChevronRight, Activity, Zap, RotateCcw, Check, Sparkles, CheckCircle } from 'lucide-react';
 import CustomerNotificationModal from './CustomerNotificationModal';
 import { useAppContext } from '../context/AppContext';
 import ConfirmationModal from './ConfirmationModal';
