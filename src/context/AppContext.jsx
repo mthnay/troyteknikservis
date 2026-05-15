@@ -21,13 +21,13 @@ export const AppProvider = ({ children }) => {
         };
         const res = await fetch(url, { ...options, headers });
         if (res.status === 401 && !url.includes('/login') && !url.includes('/forgot-password')) {
-            const currentToken = sessionStorage.getItem('token');
-            if (currentToken) {
+            const tokenInSession = sessionStorage.getItem('token');
+            if (tokenInSession) {
                 sessionStorage.clear();
                 setCurrentUser(null);
                 window.location.href = '/';
+                throw new Error('Oturum süresi doldu, lütfen tekrar giriş yapın.');
             }
-            throw new Error('Oturum süresi doldu, lütfen tekrar giriş yapın.');
         }
         return res;
     };
@@ -353,9 +353,8 @@ export const AppProvider = ({ children }) => {
     };
 
     const logout = () => {
-        sessionStorage.clear(); // Tüm verileri temizle
-        setCurrentUser(null);
-        window.location.href = '/'; // Sayfayı kökten yenile ve başa dön
+        sessionStorage.clear();
+        window.location.href = '/';
     };
 
     const addUser = async (user) => {
