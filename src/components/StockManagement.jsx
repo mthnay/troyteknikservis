@@ -11,6 +11,7 @@ import { appConfirm, appPrompt } from '../utils/alert';
 import MyPhoneIcon from './LocalIcons';
 
 const StockManagement = () => {
+    const { 
         inventory, addInventoryItem, updateInventoryItem, removeInventoryItem, 
         servicePoints, visibleServicePoints, currentUser, showToast, selectedStoreId, setSelectedStoreId,
         repairs, updateRepair
