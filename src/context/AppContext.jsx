@@ -118,7 +118,7 @@ export const AppProvider = ({ children }) => {
                 const user = JSON.parse(saved);
                 // SuperAdmin ve Yönetici için varsayılan olarak Tüm Mağazalar (0)
                 const role = user.role?.toLowerCase();
-                if (role === 'superadmin' || role === 'admin' || role === 'yonetici') {
+                if (role === 'superadmin' || role === 'admin' || role === 'yonetici' || role === 'logistic') {
                     return 0;
                 }
                 return (user.storeId !== undefined && user.storeId !== null) ? Number(user.storeId) : 0;
@@ -923,7 +923,7 @@ export const AppProvider = ({ children }) => {
         const normalized = role.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
         return {
             isAdmin: normalized === 'admin' || normalized === 'superadmin' || normalized === 'yonetici',
-            isStaff: ['technician', 'reception', 'logistic', 'accountant', 'teknisyen', 'storemanager'].includes(normalized)
+            isStaff: ['technician', 'reception', 'teknisyen', 'storemanager'].includes(normalized)
         };
     }, [currentUser]);
 

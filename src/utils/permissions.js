@@ -61,6 +61,7 @@ const ROLE_PERMISSIONS = {
         'view_technicians'
     ],
     [ROLES.LOGISTICS]: [
+        'view_all_stores',
         'view_earnings',
         'manage_stock',
         'view_kbb',

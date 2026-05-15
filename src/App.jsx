@@ -48,7 +48,7 @@ function App() {
     if (!currentUser) return;
 
     const role = currentUser.role?.toLowerCase();
-    const isPrivileged = role === 'superadmin' || role === 'admin' || role === 'yonetici';
+    const isPrivileged = role === 'superadmin' || role === 'admin' || role === 'yonetici' || role === 'logistic';
 
     // Normal kullanıcılar için (SuperAdmin/Yönetici olmayanlar) kendi mağazasını otomatik seç
     if (!isPrivileged && currentUser.storeId && selectedStoreId === 0) {
