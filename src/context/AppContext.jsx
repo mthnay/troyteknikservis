@@ -916,17 +916,22 @@ export const AppProvider = ({ children }) => {
         if (!currentUser) return [];
         
         const role = currentUser.role?.toLowerCase() || '';
-        // Normalleştirilmiş rol kontrolü (Türkçe karakter toleranslı)
         const normalizedRole = role.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
         
+        // Administrative roles that CAN see all stores
         const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superadmin' || normalizedRole === 'yonetici';
+        
+        // Check both the role string and the specific permission
         const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
 
-        if (isAdminRole || hasViewAllPerm) {
+        // IF they are an admin OR they specifically have the permission AND they are not a technician/receptionist
+        const isStaffRole = normalizedRole === 'technician' || normalizedRole === 'reception' || normalizedRole === 'accountant' || normalizedRole === 'teknisyen';
+        
+        if ((isAdminRole || hasViewAllPerm) && !isStaffRole) {
             return servicePoints;
         }
 
-        // Normal users only see their assigned store
+        // Normal users and staff roles MUST be restricted to their assigned store
         const userStoreId = String(currentUser.storeId);
         const filtered = servicePoints.filter(sp => String(sp.id) === userStoreId);
         
