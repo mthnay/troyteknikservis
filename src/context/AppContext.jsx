@@ -1000,6 +1000,7 @@ export const AppProvider = ({ children }) => {
                     .filter(u => {
                         const isTech = u.role?.toLowerCase() === 'technician' || u.role === 'Teknisyen';
                         if (!isTech) return false;
+                        if (!currentUser) return false;
                         const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
                         if ((isAdmin || hasViewAllPerm) && !isStaff) {
                             return selectedStoreId === 0 || String(u.storeId) === String(selectedStoreId);
