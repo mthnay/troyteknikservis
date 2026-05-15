@@ -24,6 +24,7 @@ import { hasPermission } from './utils/permissions';
 
 function App() {
   const { currentUser, servicePoints, visibleServicePoints, selectedStoreId, setSelectedStoreId } = useAppContext();
+  const role = currentUser?.role?.toLowerCase();
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('oss_active_tab') || 'dashboard');
 
   useEffect(() => {
@@ -46,8 +47,6 @@ function App() {
   // Kullanıcı giriş yaptığında veya değiştiğinde, seçili mağazayı güncelle
   useEffect(() => {
     if (!currentUser) return;
-
-    const role = currentUser.role?.toLowerCase();
     const isPrivileged = role === 'superadmin' || role === 'admin' || role === 'yonetici';
 
     // Normal kullanıcılar için (SuperAdmin/Yönetici olmayanlar) kendi mağazasını otomatik seç
@@ -134,21 +133,23 @@ function App() {
                   </div>
                   <div className="max-h-64 overflow-y-auto custom-scrollbar">
                     {/* All Stores option - only for true admins who are not staff */}
-                    <button
-                      onClick={() => { setSelectedStoreId(0); setShowStoreSelect(false); }}
-                      className={`w-full px-5 py-4 text-left flex items-center justify-between border-b border-gray-50 transition-colors ${selectedStoreId === 0 ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-600 font-medium hover:bg-gray-50'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedStoreId === 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                          <LayoutGrid size={16} />
+                    {(role === 'superadmin' || role === 'admin' || role === 'yonetici') && (
+                      <button
+                        onClick={() => { setSelectedStoreId(0); setShowStoreSelect(false); }}
+                        className={`w-full px-5 py-4 text-left flex items-center justify-between border-b border-gray-50 transition-colors ${selectedStoreId === 0 ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-gray-600 font-medium hover:bg-gray-50'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedStoreId === 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                            <LayoutGrid size={16} />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[13px]">Tüm Mağazalar</span>
+                            <span className="text-[10px] opacity-60">Genel görünüm</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-[13px]">Tüm Mağazalar</span>
-                          <span className="text-[10px] opacity-60">Genel görünüm</span>
-                        </div>
-                      </div>
-                      {selectedStoreId === 0 && <Check size={16} strokeWidth={3} />}
-                    </button>
+                        {selectedStoreId === 0 && <Check size={16} strokeWidth={3} />}
+                      </button>
+                    )}
 
                     {visibleServicePoints.map((store) => (
                       <button
