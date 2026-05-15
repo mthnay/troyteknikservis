@@ -924,8 +924,8 @@ export const AppProvider = ({ children }) => {
         // Check both the role string and the specific permission
         const hasViewAllPerm = hasPermission(currentUser, 'view_all_stores');
 
-        // IF they are an admin OR they specifically have the permission AND they are not a technician/receptionist
-        const isStaffRole = normalizedRole === 'technician' || normalizedRole === 'reception' || normalizedRole === 'accountant' || normalizedRole === 'teknisyen';
+        // IF they are an admin OR they specifically have the permission AND they are not a technician/receptionist/manager
+        const isStaffRole = normalizedRole === 'technician' || normalizedRole === 'reception' || normalizedRole === 'accountant' || normalizedRole === 'teknisyen' || normalizedRole === 'storemanager';
         
         if ((isAdminRole || hasViewAllPerm) && !isStaffRole) {
             return servicePoints;
